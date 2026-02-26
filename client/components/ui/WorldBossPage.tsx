@@ -1267,23 +1267,23 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
   const hasParty = partySlimes.length > 0;
 
   return (
-    <div className="absolute inset-0 z-50 bg-[#0a0a1a] flex flex-col" style={{ bottom: 76 }}>
+    <div className="absolute inset-0 z-50 flex flex-col minigame-container" style={{ bottom: 76 }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-black/30 shrink-0 overlay-header">
+      <div className="flex items-center justify-between px-4 py-2.5 shrink-0 overlay-header minigame-header">
         <div className="flex items-center gap-2.5">
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white text-sm transition">{"\u2190"}</button>
+          <button onClick={onClose} className="minigame-back-btn">{"\u2190"}</button>
           <div>
-            <h2 className="text-white font-bold text-sm">{"\u2694\uFE0F"} \uC6D4\uB4DC \uBCF4\uC2A4</h2>
-            {countdown && <span className="text-white/30 text-[9px]">{"\u23F0"} {countdown}</span>}
+            <h2 className="text-gold font-bold text-sm font-serif-game" style={{ letterSpacing: "0.05em" }}>{"\u2694\uFE0F"} 월드 보스</h2>
+            {countdown && <span className="text-[9px]" style={{ color: "rgba(245,230,200,0.4)" }}>{"\u23F0"} {countdown}</span>}
           </div>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setShowGuide(true)}
-            className="w-7 h-7 rounded-full bg-white/8 hover:bg-white/12 flex items-center justify-center text-white/50 hover:text-white text-[11px] font-bold transition"
-            title="\uAC00\uC774\uB4DC">
-            ?
+            className="minigame-guide-toggle"
+            title="가이드">
+            {"📖"} 가이드
           </button>
-          <span className="text-white/30 text-[10px]">{my_attacks}/{max_attacks}</span>
+          <span className="text-[10px] font-serif-game" style={{ color: "rgba(201,168,76,0.5)" }}>{my_attacks}/{max_attacks}</span>
         </div>
       </div>
 
@@ -1293,10 +1293,10 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
         {/* HP overlay */}
         <div className="absolute bottom-0 left-0 right-0 px-4 pb-2">
           <div className="flex items-center justify-between text-[9px] mb-1">
-            <span className="text-white/50 font-bold">{boss.name}</span>
-            <span className="text-white/40 tabular-nums">{boss.current_hp.toLocaleString()} / {boss.max_hp.toLocaleString()}</span>
+            <span className="font-bold font-serif-game" style={{ color: "#F5E6C8" }}>{boss.name}</span>
+            <span className="tabular-nums" style={{ color: "rgba(245,230,200,0.5)" }}>{boss.current_hp.toLocaleString()} / {boss.max_hp.toLocaleString()}</span>
           </div>
-          <div className="h-2.5 bg-black/50 backdrop-blur-sm rounded-full overflow-hidden border border-white/10">
+          <div className="h-2.5 bg-black/50 backdrop-blur-sm rounded-full overflow-hidden" style={{ border: "1px solid rgba(139,105,20,0.2)" }}>
             <div className="h-full rounded-full transition-all duration-700" style={{
               width: `${hpPct}%`,
               background: hpPct > 50 ? "linear-gradient(90deg, #55EFC4, #00B894)" : hpPct > 20 ? "linear-gradient(90deg, #FFEAA7, #FDCB6E)" : "linear-gradient(90deg, #FF6B6B, #E17055)",
@@ -1322,17 +1322,15 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
               }} />
             );
           })}
-          <span className="text-white/30 text-[9px] font-bold ml-1 shrink-0">{stageLabel}</span>
+          <span className="text-[9px] font-bold ml-1 shrink-0 font-serif-game" style={{ color: "rgba(201,168,76,0.5)" }}>{stageLabel}</span>
         </div>
 
         {!boss.defeated ? (
           <>
             {/* Party slots (5 slots) */}
-            <div className="rounded-xl p-2.5" style={{
-              background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
-            }}>
+            <div className="minigame-section">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-white/50 text-[10px] font-bold">{"\u2694\uFE0F"} \uD30C\uD2F0 ({partySlimes.length}/5)</span>
+                <span className="text-[10px] font-bold font-serif-game" style={{ color: "rgba(245,230,200,0.5)" }}>{"\u2694\uFE0F"} 파티 ({partySlimes.length}/5)</span>
                 <div className="flex items-center gap-2">
                   {slimes.length > 0 && partySlimes.length < 5 && (
                     <button onClick={autoFillParty} className="text-[9px] text-[#C9A84C] hover:text-[#D4AF37] font-bold transition">
@@ -1369,7 +1367,7 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
                           ? slStrong
                             ? `1.5px solid ${slCol}60`
                             : `1px solid ${slCol}30`
-                          : "1px dashed rgba(255,255,255,0.1)",
+                          : "1px dashed rgba(201,168,76,0.2)",
                       }}>
                       {sl ? (
                         <>
@@ -1398,9 +1396,9 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
 
             {/* Slime picker dropdown */}
             {showSelect && (
-              <div className="max-h-48 overflow-y-auto rounded-xl bg-[#121220] border border-white/[0.08]">
+              <div className="max-h-48 overflow-y-auto rounded-xl" style={{ background: "#2C1810", border: "1px solid rgba(201,168,76,0.15)" }}>
                 {sorted.filter((s) => !partySlimes.includes(s.id)).length === 0 ? (
-                  <div className="px-3 py-4 text-center text-white/20 text-[11px]">\uC120\uD0DD \uAC00\uB2A5\uD55C \uC2AC\uB77C\uC784\uC774 \uC5C6\uC2B5\uB2C8\uB2E4</div>
+                  <div className="px-3 py-4 text-center text-[11px]" style={{ color: "rgba(245,230,200,0.25)" }}>선택 가능한 슬라임이 없습니다</div>
                 ) : (
                   sorted.filter((s) => !partySlimes.includes(s.id)).map((s) => {
                     const sa = isStrong(s.element, boss.element);
@@ -1422,10 +1420,12 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
 
             {/* Attack button */}
             <button onClick={attack} disabled={!hasParty || attacking || my_attacks >= max_attacks}
-              className="w-full py-3 rounded-xl font-bold text-sm text-[#0a0a1a] disabled:opacity-30 transition active:scale-[0.97]"
+              className="w-full py-3 rounded-xl font-bold text-sm disabled:opacity-30 transition active:scale-[0.97] font-serif-game"
               style={{
-                background: attacking ? "linear-gradient(135deg, #636E72, #2D3436)" : "linear-gradient(135deg, #FF6B6B, #E17055)",
-                boxShadow: !attacking && hasParty ? "0 4px 20px rgba(255,107,107,0.3)" : "none",
+                background: attacking ? "linear-gradient(135deg, #4A2515, #3D2017)" : "linear-gradient(135deg, rgba(201,168,76,0.25), rgba(212,175,55,0.2))",
+                color: attacking ? "rgba(201,168,76,0.5)" : "#D4AF37",
+                border: "1.5px solid rgba(201,168,76,0.4)",
+                boxShadow: !attacking && hasParty ? "0 4px 20px rgba(201,168,76,0.15)" : "none",
               }}>
               {attacking
                 ? "\u2694\uFE0F \uACF5\uACA9 \uC911..."
@@ -1450,38 +1450,41 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
 
         {/* Stats row */}
         <div className="flex gap-2">
-          <div className="flex-1 bg-white/[0.04] rounded-xl p-2.5 text-center border border-white/[0.04]">
-            <div className="text-white/25 text-[9px]">\uB0B4 \uCD1D \uB370\uBBF8\uC9C0</div>
-            <div className="text-white font-bold text-[13px] tabular-nums">{my_damage.toLocaleString()}</div>
+          <div className="flex-1 minigame-stat-box text-center">
+            <div className="text-[9px]" style={{ color: "rgba(245,230,200,0.3)" }}>내 총 데미지</div>
+            <div className="text-parchment font-bold text-[13px] tabular-nums font-serif-game">{my_damage.toLocaleString()}</div>
           </div>
-          <div className="flex-1 bg-white/[0.04] rounded-xl p-2.5 text-center border border-white/[0.04]">
-            <div className="text-white/25 text-[9px]">\uB0B4 \uB7AD\uD0B9</div>
-            <div className="text-white font-bold text-[13px] tabular-nums">
+          <div className="flex-1 minigame-stat-box text-center">
+            <div className="text-[9px]" style={{ color: "rgba(245,230,200,0.3)" }}>내 랭킹</div>
+            <div className="text-parchment font-bold text-[13px] tabular-nums font-serif-game">
               {my_rank > 0 ? `#${my_rank}` : "-"}
             </div>
           </div>
-          <div className="flex-1 bg-white/[0.04] rounded-xl p-2.5 text-center border border-white/[0.04]">
-            <div className="text-white/25 text-[9px]">\uACA9\uD30C \uBCF4\uC0C1</div>
-            <div className="text-[#FFEAA7] font-bold text-[13px]">{boss.reward_gold}G +{boss.reward_gems}{"\uD83D\uDC8E"}</div>
+          <div className="flex-1 minigame-stat-box text-center">
+            <div className="text-[9px]" style={{ color: "rgba(245,230,200,0.3)" }}>격파 보상</div>
+            <div className="text-gold font-bold text-[13px] font-serif-game">{boss.reward_gold}G +{boss.reward_gems}{"\uD83D\uDC8E"}</div>
           </div>
         </div>
 
         {/* Ranking */}
-        <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] overflow-hidden">
-          <div className="px-3 py-2 border-b border-white/[0.06] flex items-center justify-between">
-            <span className="text-white/50 text-[11px] font-bold">{"\u2694\uFE0F"} \uB370\uBBF8\uC9C0 \uB7AD\uD0B9</span>
-            <span className="text-white/20 text-[9px]">{top_attackers.length}\uBA85 \uCC38\uC5EC</span>
+        <div className="minigame-section overflow-hidden">
+          <div className="px-3 py-2 flex items-center justify-between" style={{ borderBottom: "1px solid rgba(201,168,76,0.1)" }}>
+            <span className="text-[11px] font-bold font-serif-game" style={{ color: "rgba(245,230,200,0.5)" }}>{"\u2694\uFE0F"} 데미지 랭킹</span>
+            <span className="text-[9px]" style={{ color: "rgba(245,230,200,0.25)" }}>{top_attackers.length}명 참여</span>
           </div>
           {top_attackers.length === 0 ? (
-            <div className="px-3 py-6 text-center text-white/15 text-[11px]">\uC544\uC9C1 \uACF5\uACA9 \uAE30\uB85D\uC774 \uC5C6\uC2B5\uB2C8\uB2E4</div>
+            <div className="px-3 py-6 text-center text-[11px]" style={{ color: "rgba(245,230,200,0.2)" }}>아직 공격 기록이 없습니다</div>
           ) : (
             top_attackers.map((a, i) => (
-              <div key={i} className="px-3 py-2 flex items-center gap-2 border-b border-white/[0.03] last:border-0"
-                style={{ background: i < 3 ? `linear-gradient(135deg, ${["rgba(255,234,167,0.04)", "rgba(212,175,55,0.03)", "rgba(255,159,243,0.03)"][i]}, transparent)` : undefined }}>
-                <span className="text-[10px] w-5 text-center font-bold" style={{ color: i < 3 ? ["#FFEAA7", "#D4AF37", "#FF9FF3"][i] : "rgba(255,255,255,0.2)" }}>
+              <div key={i} className="px-3 py-2 flex items-center gap-2 last:border-0"
+                style={{
+                  background: i < 3 ? `linear-gradient(135deg, ${["rgba(201,168,76,0.08)", "rgba(201,168,76,0.05)", "rgba(201,168,76,0.03)"][i]}, transparent)` : undefined,
+                  borderBottom: "1px solid rgba(201,168,76,0.06)",
+                }}>
+                <span className="text-[10px] w-5 text-center font-bold" style={{ color: i < 3 ? ["#FFEAA7", "#D4AF37", "#C9A84C"][i] : "rgba(245,230,200,0.2)" }}>
                   {i < 3 ? ["\uD83E\uDD47", "\uD83E\uDD48", "\uD83E\uDD49"][i] : i + 1}
                 </span>
-                <span className="text-white/60 text-[11px] flex-1 truncate">{a.nickname}</span>
+                <span className="text-[11px] flex-1 truncate" style={{ color: "rgba(245,230,200,0.6)" }}>{a.nickname}</span>
                 <span className="text-[#FF6B6B] text-[10px] font-bold tabular-nums">{a.damage.toLocaleString()}</span>
               </div>
             ))

@@ -1312,11 +1312,11 @@ export default function SlimeRace({ onClose }: Props) {
   };
 
   return (
-    <div className="absolute inset-0 z-50 bg-[#060614] flex flex-col">
+    <div className="absolute inset-0 z-50 flex flex-col minigame-container">
       {/* Floating close button */}
       <button
         onClick={onClose}
-        className="absolute right-3 z-20 w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white/50 hover:text-white text-sm transition"
+        className="absolute right-3 z-20 minigame-back-btn"
         style={{ top: "calc(env(safe-area-inset-top, 0px) + 12px)" }}
       >
         {"\u2715"}
@@ -1324,39 +1324,51 @@ export default function SlimeRace({ onClose }: Props) {
 
       {raceState === "select" && (
         <div className="flex-1 overflow-y-auto game-scroll p-4" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 48px)" }}>
-          <h2 className="text-white font-bold text-base text-center mb-1">{"\uD83C\uDFC3 \uC2AC\uB77C\uC784 \uB808\uC774\uC2A4"}</h2>
-          <p className="text-[#B2BEC3] text-xs text-center mb-1">
-            {"\uC7A5\uC560\uBB3C\uC744 \uD53C\uD558\uBA70 \uB2EC\uB824\uC694! HP\uAC00 0\uC774 \uB418\uBA74 \uACBD\uAE30 \uC885\uB8CC"}
+          <h2 className="text-gold font-bold text-base text-center mb-1 font-serif-game" style={{ letterSpacing: "0.05em" }}>{"\uD83C\uDFC3"} 슬라임 레이스</h2>
+          <p className="text-xs text-center mb-3" style={{ color: "rgba(245,230,200,0.45)" }}>
+            장애물을 피하며 달려요! HP가 0이 되면 경기 종료
           </p>
-          <p className="text-[#636e72] text-[10px] text-center mb-1">
-            {"\uD0ED/\u2191 \uC810\uD504 | \u2191\u2191 \uB354\uBE14\uC810\uD504 | \u2193/\uC2A4\uC640\uC774\uD504 \uC5CE\uB4DC\uB9AC\uAE30"}
-          </p>
-          <p className="text-[#A29BFE] text-[10px] text-center mb-4">
-            {"\uCF64\uBCF4 15+ \u2192 FEVER MODE (x15 \uC810\uC218, \uBB34\uC801) | \uB0A0\uC528\uAC00 \uBC14\uB00C\uC5B4\uC694!"}
-          </p>
+
+          {/* Collapsible guide */}
+          <div className="max-w-[360px] mx-auto mb-3">
+            <button onClick={() => {
+              const el = document.getElementById("race-guide");
+              if (el) el.style.display = el.style.display === "none" ? "block" : "none";
+            }} className="minigame-guide-toggle mx-auto">
+              {"📖"} 조작법 & 가이드
+            </button>
+            <div id="race-guide" className="minigame-guide-content mt-2" style={{ display: "none" }}>
+              <p><strong>조작:</strong> 탭/↑ 점프 | ↑↑ 더블점프 | ↓/스와이프 엎드리기</p>
+              <p><strong>장애물:</strong> 바위·선인장·불꽃·가시 = 점프 | 톱날·레이저 = 엎드리기</p>
+              <p><strong>콤보:</strong> 장애물 회피 시 콤보 +1, 콤보가 높을수록 점수 배율 증가</p>
+              <p><strong>FEVER:</strong> 콤보 15+ 달성 시 FEVER MODE (x15 점수, 무적 5초)</p>
+              <p><strong>날씨:</strong> 비·바람·눈이 번갈아 나타나며 시야와 속도에 영향</p>
+              <p><strong>파워업:</strong> 부스트(가속) / 쉴드(보호) / 하트(HP회복) / 더블(2x점수)</p>
+            </div>
+          </div>
+
           <div className="space-y-2 max-w-[360px] mx-auto">
             {slimes.map((slime) => {
               const sp = species.find((s) => s.id === slime.species_id);
               const isSelected = slime.id === selectedSlimeId;
-              const c = elementColors[slime.element] || "#55EFC4";
               return (
                 <button
                   key={slime.id}
                   onClick={() => setSelectedSlimeId(slime.id)}
                   className="w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left"
                   style={{
-                    background: isSelected ? `${c}15` : "rgba(255,255,255,0.02)",
-                    border: isSelected ? `1px solid ${c}40` : "1px solid rgba(255,255,255,0.06)",
+                    background: isSelected ? "rgba(201,168,76,0.1)" : "rgba(44,24,16,0.6)",
+                    border: isSelected ? "1px solid rgba(201,168,76,0.35)" : "1px solid rgba(201,168,76,0.1)",
                   }}
                 >
                   <img src={generateSlimeIconSvg(slime.element, 40, undefined, undefined, slime.species_id)} alt="" className="w-10 h-10 drop-shadow-md" />
                   <div className="flex-1 min-w-0">
-                    <div className="text-white text-xs font-medium truncate">
+                    <div className="text-xs font-medium truncate text-parchment font-serif-game">
                       {slime.name || sp?.name || "???"}
                     </div>
-                    <div className="text-[9px] text-[#B2BEC3]">Lv.{slime.level}</div>
+                    <div className="text-[9px]" style={{ color: "rgba(245,230,200,0.4)" }}>Lv.{slime.level}</div>
                   </div>
-                  {isSelected && <span className="text-xs font-bold" style={{ color: c }}>{"\u2713"}</span>}
+                  {isSelected && <span className="text-xs font-bold text-gold">{"\u2713"}</span>}
                 </button>
               );
             })}
@@ -1366,7 +1378,7 @@ export default function SlimeRace({ onClose }: Props) {
             disabled={!selectedSlimeId}
             className="btn-primary w-full max-w-[360px] mx-auto block py-3 text-sm mt-4 font-bold active:scale-95 transition-transform"
           >
-            {"\uD83C\uDFC3 \uB808\uC774\uC2A4 \uC2DC\uC791!"}
+            {"\uD83C\uDFC3"} 레이스 시작!
           </button>
         </div>
       )}
@@ -1374,11 +1386,11 @@ export default function SlimeRace({ onClose }: Props) {
       {raceState === "countdown" && (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <span className="text-8xl font-black text-[#FFEAA7] animate-bounce" key={countdown}
-              style={{ textShadow: "0 0 60px rgba(255,234,167,0.5)" }}>
+            <span className="font-black animate-bounce font-serif-game" key={countdown}
+              style={{ fontSize: "7rem", color: "#D4AF37", textShadow: "0 0 80px rgba(212,175,55,0.6), 0 0 30px rgba(201,168,76,0.4)" }}>
               {countdown}
             </span>
-            <p className="text-[#B2BEC3] text-sm mt-4">{"\uC900\uBE44\uD558\uC138\uC694!"}</p>
+            <p className="text-sm mt-4" style={{ color: "rgba(245,230,200,0.5)" }}>준비하세요!</p>
           </div>
         </div>
       )}
@@ -1420,7 +1432,7 @@ export default function SlimeRace({ onClose }: Props) {
                     </>
                   )}
                 </span>
-                <span className="text-[#A29BFE] text-sm font-bold tabular-nums">{distance}m</span>
+                <span className="text-sm font-bold tabular-nums" style={{ color: "#C9A84C" }}>{distance}m</span>
               </div>
             </div>
 
@@ -1431,8 +1443,8 @@ export default function SlimeRace({ onClose }: Props) {
                   style={{
                     background: "linear-gradient(90deg, rgba(255,107,107,0.2), rgba(255,234,167,0.2), rgba(85,239,196,0.2), rgba(116,185,255,0.2), rgba(162,155,254,0.2))",
                     color: "#FFEAA7",
-                    border: "1px solid rgba(255,234,167,0.3)",
-                    boxShadow: "0 0 10px rgba(255,234,167,0.2)",
+                    border: "2px solid rgba(201,168,76,0.5)",
+                    boxShadow: "0 0 16px rgba(255,234,167,0.3), 0 0 30px rgba(201,168,76,0.15)",
                   }}>
                   {"FEVER x15!"}
                 </div>
@@ -1459,7 +1471,7 @@ export default function SlimeRace({ onClose }: Props) {
             {/* Race canvas */}
             <div className="rounded-2xl overflow-hidden border mx-auto"
               style={{
-                borderColor: fever ? `hsla(${(Date.now() * 0.3) % 360},100%,70%,0.3)` : "rgba(255,255,255,0.08)",
+                borderColor: fever ? `hsla(${(Date.now() * 0.3) % 360},100%,70%,0.3)` : "rgba(139,105,20,0.2)",
                 transform: screenShake > 0 ? `translate(${(Math.random() - 0.5) * 10}px, ${(Math.random() - 0.5) * 10}px)` : undefined,
                 boxShadow: fever
                   ? `0 0 30px hsla(${(Date.now() * 0.3) % 360},100%,70%,0.15), 0 0 60px hsla(${(Date.now() * 0.3 + 120) % 360},100%,70%,0.08)`
@@ -1477,17 +1489,17 @@ export default function SlimeRace({ onClose }: Props) {
 
           {/* Controls legend */}
           <div className="flex items-center justify-center gap-2 mt-2.5 flex-wrap">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ background: "rgba(85,239,196,0.08)", border: "1px solid rgba(85,239,196,0.12)" }}>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ background: "rgba(85,239,196,0.08)", border: "1px solid rgba(139,105,20,0.15)" }}>
               <span className="text-[10px] text-[#55EFC4] font-bold">{"\u2191 / TAP"}</span>
-              <span className="text-[9px] text-white/30">{"\uC810\uD504"}</span>
+              <span className="text-[9px]" style={{ color: "rgba(245,230,200,0.3)" }}>점프</span>
             </div>
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ background: "rgba(255,234,167,0.08)", border: "1px solid rgba(255,234,167,0.12)" }}>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ background: "rgba(255,234,167,0.08)", border: "1px solid rgba(139,105,20,0.15)" }}>
               <span className="text-[10px] text-[#FFEAA7] font-bold">{"\u2191\u2191"}</span>
-              <span className="text-[9px] text-white/30">{"\uB354\uBE14"}</span>
+              <span className="text-[9px]" style={{ color: "rgba(245,230,200,0.3)" }}>더블</span>
             </div>
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ background: "rgba(162,155,254,0.08)", border: "1px solid rgba(162,155,254,0.12)" }}>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ background: "rgba(162,155,254,0.08)", border: "1px solid rgba(139,105,20,0.15)" }}>
               <span className="text-[10px] text-[#A29BFE] font-bold">{"\u2193 / SWIPE"}</span>
-              <span className="text-[9px] text-white/30">{"\uC5CE\uB4DC\uB9AC\uAE30"}</span>
+              <span className="text-[9px]" style={{ color: "rgba(245,230,200,0.3)" }}>엎드리기</span>
             </div>
             {weather !== "clear" && (
               <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{
@@ -1505,39 +1517,43 @@ export default function SlimeRace({ onClose }: Props) {
         <div className="flex-1 flex flex-col items-center justify-center p-6">
           <div className="animate-scale-in text-center game-panel rounded-2xl p-6 w-full max-w-[340px]">
             <span className="text-5xl block animate-celebrate-bounce">{"\uD83C\uDFC6"}</span>
-            <h3 className="text-white font-bold text-lg mt-3">{"\uB808\uC774\uC2A4 \uC644\uB8CC!"}</h3>
+            <h3 className="text-parchment font-bold text-lg mt-3 font-serif-game">레이스 완료!</h3>
 
-            <div className="text-4xl font-black mt-2 animate-number-pop" style={{
-              background: "linear-gradient(135deg, #FFEAA7, #55EFC4)",
+            <div className="text-4xl font-black mt-2 animate-number-pop font-serif-game" style={{
+              background: "linear-gradient(135deg, #D4AF37, #C9A84C)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
-            }}>{result.score}{"\uC810"}</div>
+            }}>{result.score}점</div>
 
             <div className="flex items-center justify-center gap-5 mt-3">
               <div className="text-center">
-                <div className="text-[#A29BFE] text-sm font-bold">{result.distance}m</div>
-                <div className="text-[9px] text-[#B2BEC3]">{"\uAC70\uB9AC"}</div>
+                <div className="text-sm font-bold font-serif-game" style={{ color: "#C9A84C" }}>{result.distance}m</div>
+                <div className="text-[9px]" style={{ color: "rgba(245,230,200,0.35)" }}>거리</div>
               </div>
               <div className="text-center">
-                <div className="text-[#55EFC4] text-sm font-bold">x{result.maxCombo}</div>
-                <div className="text-[9px] text-[#B2BEC3]">{"\uCD5C\uB300 \uCF64\uBCF4"}</div>
+                <div className="text-[#55EFC4] text-sm font-bold font-serif-game">x{result.maxCombo}</div>
+                <div className="text-[9px]" style={{ color: "rgba(245,230,200,0.35)" }}>최대 콤보</div>
               </div>
               <div className="text-center">
                 <div className="text-[#FFEAA7] text-sm font-bold flex items-center gap-1 justify-center">
                   <img src="/assets/icons/gold.png" alt="" className="w-4 h-4 pixel-art" />
                   +{result.gold}
                 </div>
-                <div className="text-[9px] text-[#B2BEC3]">{"\uACE8\uB4DC"}</div>
+                <div className="text-[9px]" style={{ color: "rgba(245,230,200,0.35)" }}>골드</div>
               </div>
               <div className="text-center">
-                <div className="text-[#FF9FF3] text-sm font-bold">+{result.exp}</div>
-                <div className="text-[9px] text-[#B2BEC3]">{"\uACBD\uD5D8\uCE58"}</div>
+                <div className="text-[#FF9FF3] text-sm font-bold font-serif-game">+{result.exp}</div>
+                <div className="text-[9px]" style={{ color: "rgba(245,230,200,0.35)" }}>경험치</div>
               </div>
             </div>
 
             <div className="flex gap-2 mt-5">
-              <button onClick={onClose} className="flex-1 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[#B2BEC3] text-xs">
-                {"\uB2EB\uAE30"}
+              <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-xs font-serif-game" style={{
+                background: "rgba(44,24,16,0.6)",
+                border: "1px solid rgba(201,168,76,0.15)",
+                color: "rgba(245,230,200,0.5)",
+              }}>
+                닫기
               </button>
               <button onClick={() => setRaceState("select")} className="flex-1 btn-primary py-2.5 text-xs font-bold">
                 다시하기

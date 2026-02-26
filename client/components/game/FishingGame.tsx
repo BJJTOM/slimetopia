@@ -1149,22 +1149,20 @@ export default function FishingGame({ onClose }: Props) {
       background: "linear-gradient(180deg, #061428 0%, #0a2a4a 30%, #0d3a5c 60%, #1a4a6a 100%)",
     }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-black/30 relative z-20 overlay-header">
+      <div className="flex items-center justify-between px-4 py-3 relative z-20 overlay-header minigame-header">
         <div className="flex items-center gap-3">
-          <h2 className="text-white font-bold text-sm">{"\uD83C\uDFA3 \uB0DA\uC2DC"}</h2>
+          <button onClick={onClose} className="minigame-back-btn">{"\u2190"}</button>
+          <h2 className="text-gold font-bold text-sm font-serif-game" style={{ letterSpacing: "0.05em" }}>{"\uD83C\uDFA3"} 낚시</h2>
           {combo > 1 && (
             <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
-              style={{ background: "rgba(255,234,167,0.15)", color: "#FFEAA7", border: "1px solid rgba(255,234,167,0.2)" }}>
-              {"\uD83D\uDD25"} {combo}{"\uC5F0\uC18D!"}
+              style={{ background: "rgba(201,168,76,0.15)", color: "#D4AF37", border: "1px solid rgba(201,168,76,0.25)" }}>
+              {"\uD83D\uDD25"} {combo}연속!
             </span>
           )}
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-[#74B9FF] text-[10px] font-bold tabular-nums">
-            {"\uD83D\uDC1F"} {remaining}/10
-          </span>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white text-sm transition">{"\u2190"}</button>
-        </div>
+        <span className="text-[10px] font-bold tabular-nums font-serif-game" style={{ color: "rgba(201,168,76,0.5)" }}>
+          {"\uD83D\uDC1F"} {remaining}/10
+        </span>
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center p-4 relative"
@@ -1179,39 +1177,46 @@ export default function FishingGame({ onClose }: Props) {
           <div className="text-center animate-fade-in">
             <div className="mb-5">
               <span className="text-5xl block mb-3">{"\uD83C\uDFA3"}</span>
-              <h3 className="text-white font-bold text-base mb-1">{"\uC5F0\uBABB \uB0DA\uC2DC"}</h3>
-              <p className="text-white/40 text-xs">{"\uB0DA\uC2EF\uB300\uB97C \uB358\uC838 \uBB3C\uACE0\uAE30\uB97C \uC7A1\uC544\uBCF4\uC138\uC694!"}</p>
+              <h3 className="font-bold text-base mb-1 font-serif-game" style={{ color: "#F5E6C8" }}>연못 낚시</h3>
+              <p className="text-xs" style={{ color: "rgba(245,230,200,0.45)" }}>낚싯대를 던져 물고기를 잡아보세요!</p>
             </div>
+
+            {/* Collapsible guide */}
+            <div className="max-w-[280px] mx-auto mb-3">
+              <button onClick={() => {
+                const el = document.getElementById("fish-guide");
+                if (el) el.style.display = el.style.display === "none" ? "block" : "none";
+              }} className="minigame-guide-toggle mx-auto">
+                {"📖"} 가이드
+              </button>
+              <div id="fish-guide" className="minigame-guide-content mt-2 text-left" style={{ display: "none" }}>
+                <p><strong>등급별 확률:</strong> 일반 50% / 희귀 30% / 보물 15% / 전설 5%</p>
+                <p><strong>물고기 크기:</strong> 소형(x0.5보상) / 보통(x1) / 대형(x1.5) / 초대형(x2)</p>
+                <p><strong>행동 패턴:</strong> 차분 / 겁쟁이 / 돌진형 / 잠수형 / 변덕형</p>
+                <p><strong>보물 이벤트:</strong> 진행도 65%+ 시 랜덤 발생, 보상 2배!</p>
+                <p><strong>콤보:</strong> 연속 성공 시 콤보 보너스 골드 획득</p>
+              </div>
+            </div>
+
             <div className="game-panel rounded-xl p-4 mb-5 max-w-[280px] mx-auto text-left">
-              <div className="text-[10px] text-white/30 font-bold mb-2">{"\uC870\uC791\uBC95"}</div>
+              <div className="text-[10px] font-bold mb-2 font-serif-game" style={{ color: "rgba(201,168,76,0.5)" }}>조작법</div>
               <div className="space-y-1.5">
                 <div className="flex items-start gap-2">
-                  <span className="text-[#74B9FF] text-[10px] font-bold shrink-0">1.</span>
-                  <span className="text-white/50 text-[10px]">{"\uD0ED\uD558\uC5EC \uB0DA\uC2EF\uB300\uB97C \uB358\uC9C4\uB2E4"}</span>
+                  <span className="text-[10px] font-bold shrink-0" style={{ color: "#C9A84C" }}>1.</span>
+                  <span className="text-[10px]" style={{ color: "rgba(245,230,200,0.5)" }}>탭하여 낚싯대를 던진다</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="text-[#FFEAA7] text-[10px] font-bold shrink-0">2.</span>
-                  <span className="text-white/50 text-[10px]">{"!\uAC00 \uB728\uBA74 \uBE60\uB974\uAC8C \uD0ED!"}</span>
+                  <span className="text-[10px] font-bold shrink-0" style={{ color: "#C9A84C" }}>2.</span>
+                  <span className="text-[10px]" style={{ color: "rgba(245,230,200,0.5)" }}>!가 뜨면 빠르게 탭!</span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="text-[#55EFC4] text-[10px] font-bold shrink-0">3.</span>
-                  <span className="text-white/50 text-[10px]">{"\uAF2D \uB204\uB974\uACE0 \uB5BC\uBA70 \uCD08\uB85D \uC874\uC744 \uBB3C\uACE0\uAE30\uC5D0 \uB9DE\uCDB0\uC694!"}</span>
-                </div>
-              </div>
-              <div className="text-[10px] text-white/30 font-bold mt-3 mb-1.5">{"\uD2B9\uC218 \uC2DC\uC2A4\uD15C"}</div>
-              <div className="space-y-1">
-                <div className="flex items-start gap-2">
-                  <span className="text-[#FFD700] text-[10px] shrink-0">{"\uD83D\uDCB0"}</span>
-                  <span className="text-white/40 text-[10px]">{"\uBCF4\uBB3C \uC774\uBCA4\uD2B8 — \uC7A1\uB294 \uC911 \uB09C\uC785\uB85C \uBC1C\uC0DD, \uBCF4\uC0C1 2\uBC30!"}</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-[#FFEAA7] text-[10px] shrink-0">{"\uD83D\uDC1F"}</span>
-                  <span className="text-white/40 text-[10px]">{"\uBB3C\uACE0\uAE30 \uD06C\uAE30 — \uC18C\uD615/\uBCF4\uD1B5/\uB300\uD615/\uCD08\uB300\uD615 \uB9CC\uD07C \uBCF4\uC0C1!"}</span>
+                  <span className="text-[10px] font-bold shrink-0" style={{ color: "#C9A84C" }}>3.</span>
+                  <span className="text-[10px]" style={{ color: "rgba(245,230,200,0.5)" }}>꾹 누르고 떼며 초록 존을 물고기에 맞춰요!</span>
                 </div>
               </div>
             </div>
-            <button onClick={startFishing} className="btn-primary px-10 py-3.5 text-sm font-bold active:scale-95 transition-transform">
-              {"\uD83C\uDFA3 \uB0DA\uC2DC \uC2DC\uC791!"}
+            <button onClick={startFishing} className="minigame-btn-gold px-10 py-3.5 text-sm active:scale-95 transition-transform">
+              {"\uD83C\uDFA3"} 낚시 시작!
             </button>
           </div>
         )}
@@ -1240,8 +1245,8 @@ export default function FishingGame({ onClose }: Props) {
                 {"\uD0ED\uD558\uC5EC \uB358\uC9C0\uAE30!"} <span className="text-[#55EFC4]">{"\uCD08\uB85D \uC601\uC5ED = \uBCF4\uB108\uC2A4!"}</span>
               </p>
             </div>
-            <button onClick={handleCast} className="btn-primary px-10 py-3 text-sm font-bold mt-4 active:scale-95 transition-transform">
-              {"\uD83C\uDFAF \uB358\uC9C0\uAE30!"}
+            <button onClick={handleCast} className="minigame-btn-gold px-10 py-3 text-sm mt-4 active:scale-95 transition-transform">
+              {"\uD83C\uDFAF"} 던지기!
             </button>
           </div>
         )}
@@ -1272,13 +1277,14 @@ export default function FishingGame({ onClose }: Props) {
               </span>
             </div>
             <button onClick={handleBiteTap}
-              className="px-12 py-4 text-base font-black rounded-2xl active:scale-95 transition-transform animate-pulse"
+              className="px-12 py-4 text-base font-black rounded-2xl active:scale-95 transition-transform animate-pulse font-serif-game"
               style={{
-                background: "linear-gradient(135deg, #FF6B6B, #E17055)",
-                color: "white",
-                boxShadow: "0 0 30px rgba(255,107,107,0.5), 0 4px 12px rgba(0,0,0,0.3)",
+                background: "linear-gradient(135deg, rgba(201,168,76,0.3), rgba(212,175,55,0.25))",
+                color: "#D4AF37",
+                border: "2px solid rgba(201,168,76,0.5)",
+                boxShadow: "0 0 30px rgba(201,168,76,0.3), 0 4px 12px rgba(0,0,0,0.3)",
               }}>
-              {"\uD83C\uDFA3 \uC9C0\uAE08 \uB0DA\uC544\uCC44\uAE30!"} ({Math.max(0, Math.ceil((BITE_WINDOW - biteTimer) / 1000))}s)
+              {"\uD83C\uDFA3"} 지금 낚아채기! ({Math.max(0, Math.ceil((BITE_WINDOW - biteTimer) / 1000))}s)
             </button>
           </div>
         )}
@@ -1311,7 +1317,7 @@ export default function FishingGame({ onClose }: Props) {
                     color: "#FFD700",
                     border: "1px solid rgba(255,215,0,0.3)",
                   }}>
-                  {"\uD83D\uDCB0 TREASURE!"}
+                  {"\uD83D\uDCB0 보물!"}
                 </span>
               )}
             </div>
@@ -1409,10 +1415,10 @@ export default function FishingGame({ onClose }: Props) {
                     </span>
                   </div>
                   {perfectCatch && (
-                    <p className="text-[10px] text-[#55EFC4] mt-1 font-bold animate-celebrate-bounce">{"\u2728 PERFECT CATCH!"}</p>
+                    <p className="text-[10px] text-[#55EFC4] mt-1 font-bold animate-celebrate-bounce">{"\u2728"} 완벽한 낚시!</p>
                   )}
                   {treasureActive && (
-                    <p className="text-[10px] text-[#FFD700] mt-0.5 font-bold animate-celebrate-bounce">{"\uD83D\uDCB0 TREASURE BONUS! x2"}</p>
+                    <p className="text-[10px] text-[#FFD700] mt-0.5 font-bold animate-celebrate-bounce">{"\uD83D\uDCB0"} 보물 보너스! x2</p>
                   )}
                   <div className="flex items-center justify-center gap-4 mt-3">
                     {result.gold > 0 && (
@@ -1445,12 +1451,13 @@ export default function FishingGame({ onClose }: Props) {
             )}
             <div className="flex gap-2 mt-4">
               <button onClick={onClose}
-                className="flex-1 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[#B2BEC3] text-xs hover:bg-white/10 transition">
-                {"\uB2EB\uAE30"}
+                className="flex-1 py-2.5 rounded-xl text-xs transition font-serif-game"
+                style={{ background: "rgba(44,24,16,0.6)", border: "1px solid rgba(201,168,76,0.15)", color: "rgba(245,230,200,0.5)" }}>
+                닫기
               </button>
               {remaining > 0 && (
-                <button onClick={startFishing} className="flex-1 btn-primary py-2.5 text-xs font-bold">
-                  {"\uB2E4\uC2DC \uB0DA\uC2DC"} ({remaining})
+                <button onClick={startFishing} className="flex-1 minigame-btn-gold py-2.5 text-xs">
+                  다시 낚시 ({remaining})
                 </button>
               )}
             </div>
