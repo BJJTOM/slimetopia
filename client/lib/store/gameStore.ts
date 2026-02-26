@@ -305,7 +305,7 @@ interface GameState {
   mergeSlotA: string | null;
   mergeSlotB: string | null;
   showMergeResult: MergeResult | null;
-  activePanel: "home" | "inventory" | "codex" | "merge" | "explore" | "discovery" | "shop" | "achievements" | "leaderboard";
+  activePanel: "home" | "inventory" | "codex" | "merge" | "explore" | "discovery" | "shop" | "gacha" | "achievements" | "leaderboard";
   cooldowns: CooldownMap;
   reactionMessage: { slimeId: string; text: string } | null;
   levelUpInfo: LevelUpInfo | null;
@@ -488,6 +488,7 @@ interface GameState {
   // Food inventory actions
   fetchFoodInventory: (token: string) => Promise<void>;
   applyFood: (token: string, itemId: number, slimeId: string) => Promise<boolean>;
+  applyFoodBatch: (token: string, itemId: number, slimeId: string, quantity: number) => Promise<boolean>;
 
   // Community actions
   setShowCommunity: (show: boolean) => void;
@@ -1218,6 +1219,25 @@ export const useGameStore = create<GameState>((set, get) => ({
         "/api/food/apply", token, { method: "POST", body: { item_id: itemId, slime_id: slimeId } }
       );
       // Update slime stats in state
+      set((s) => ({
+        slimes: s.slimes.map((sl) =>
+          sl.id === res.slime_id ? { ...sl, affection: res.affection, hunger: res.hunger, condition: res.condition } : sl
+        ),
+        foodInventory: s.foodInventory.map((f) =>
+          f.item_id === itemId ? { ...f, quantity: res.remaining } : f
+        ).filter((f) => f.quantity > 0),
+      }));
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  applyFoodBatch: async (token, itemId, slimeId, quantity) => {
+    try {
+      const res = await authApi<{ slime_id: string; affection: number; hunger: number; condition: number; remaining: number }>(
+        "/api/food/apply-batch", token, { method: "POST", body: { item_id: itemId, slime_id: slimeId, quantity } }
+      );
       set((s) => ({
         slimes: s.slimes.map((sl) =>
           sl.id === res.slime_id ? { ...sl, affection: res.affection, hunger: res.hunger, condition: res.condition } : sl

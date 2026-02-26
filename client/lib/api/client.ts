@@ -176,3 +176,30 @@ export async function checkHealth() {
     "/api/health"
   );
 }
+
+// Proactive token refresh on tab visibility change
+if (typeof window !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      const token = localStorage.getItem("access_token");
+      const refreshToken = localStorage.getItem("refresh_token");
+      if (token && refreshToken) {
+        // Proactively refresh the token when the tab becomes visible
+        tryRefreshToken().then((newToken) => {
+          if (newToken) {
+            // Sync new token to Zustand store if available
+            try {
+              const { useAuthStore } = require("@/lib/store/authStore");
+              const store = useAuthStore.getState();
+              if (store.accessToken !== newToken) {
+                store.setTokens(newToken, localStorage.getItem("refresh_token") || "");
+              }
+            } catch {
+              // Store may not be loaded yet, tokens are already in localStorage
+            }
+          }
+        });
+      }
+    }
+  });
+}

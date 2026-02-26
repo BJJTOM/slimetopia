@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { api } from "@/lib/api/client";
+import { api, authApi } from "@/lib/api/client";
 
 interface User {
   id: string;
@@ -49,9 +49,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     set({ isLoading: true });
     try {
-      const user = await api<User>("/api/user/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const user = await authApi<User>("/api/user/me", token);
+      // Update token in case it was refreshed
+      const newToken = localStorage.getItem("access_token");
+      if (newToken && newToken !== token) {
+        set({ accessToken: newToken, refreshToken: localStorage.getItem("refresh_token") });
+      }
       set({ user, isLoading: false });
     } catch {
       // Token expired or invalid — clear auth so page redirects to login

@@ -1075,3 +1075,90 @@ func (h *Handler) ApplyFood(c *fiber.Ctx) error {
 		"remaining": qty - 1,
 	})
 }
+
+func (h *Handler) ApplyFoodBatch(c *fiber.Ctx) error {
+	userID := c.Locals("user_id").(string)
+
+	var body struct {
+		ItemID   int    `json:"item_id"`
+		SlimeID  string `json:"slime_id"`
+		Quantity int    `json:"quantity"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "item_id, slime_id, quantity required"})
+	}
+	if body.Quantity <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "quantity must be > 0"})
+	}
+
+	ctx := c.Context()
+	pool := h.slimeRepo.Pool()
+
+	// Check inventory
+	var qty int
+	err := pool.QueryRow(ctx,
+		`SELECT quantity FROM food_inventory WHERE user_id = $1 AND item_id = $2`,
+		userID, body.ItemID).Scan(&qty)
+	if err != nil || qty <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "먹이가 없습니다"})
+	}
+
+	// Clamp quantity to available stock
+	useQty := body.Quantity
+	if useQty > qty {
+		useQty = qty
+	}
+
+	// Get slime
+	slime, err := h.slimeRepo.FindByID(ctx, body.SlimeID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "slime not found"})
+	}
+	if uuidToString(slime.UserID) != userID {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "not your slime"})
+	}
+
+	// Apply food effects × quantity
+	var hungerBonus, affectionBonus int
+	switch body.ItemID {
+	case 3:
+		hungerBonus = 50
+		affectionBonus = 5
+	case 4:
+		hungerBonus = 100
+		affectionBonus = 10
+	case 7:
+		hungerBonus = 100
+		affectionBonus = 20
+	case 8:
+		hungerBonus = 80
+		affectionBonus = 15
+	default:
+		hungerBonus = 50
+		affectionBonus = 5
+	}
+
+	newHunger := clamp(slime.Hunger+hungerBonus*useQty, 0, 100)
+	newAffection := clamp(slime.Affection+affectionBonus*useQty, 0, 100)
+
+	if err := h.slimeRepo.UpdateStats(ctx, body.SlimeID, newAffection, newHunger, slime.Condition); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to apply food"})
+	}
+
+	// Decrement inventory
+	pool.Exec(ctx,
+		`UPDATE food_inventory SET quantity = quantity - $3 WHERE user_id = $1 AND item_id = $2`,
+		userID, body.ItemID, useQty)
+
+	LogGameAction(pool, userID, "apply_food_batch", "item", 0, 0, 0, map[string]interface{}{
+		"item_id": body.ItemID, "slime_id": body.SlimeID, "quantity": useQty,
+	})
+
+	return c.JSON(fiber.Map{
+		"slime_id":  body.SlimeID,
+		"affection": newAffection,
+		"hunger":    newHunger,
+		"condition": slime.Condition,
+		"remaining": qty - useQty,
+	})
+}

@@ -238,7 +238,8 @@ export default function HomePage() {
             { panel: "codex" as const, icon: "\uD83D\uDCD6", label: "\uB3C4\uAC10" },
             { panel: "achievements" as const, icon: "\uD83C\uDFC6", label: "\uC5C5\uC801" },
             { panel: "leaderboard" as const, icon: "\uD83D\uDC51", label: "\uB7AD\uD0B9" },
-            { panel: "inventory" as const, icon: "\uD83C\uDF92", label: "\uBCF4\uAD00\uD568" },
+            { panel: "inventory" as const, icon: "\uD83C\uDF92", label: "\uC778\uBCA4\uD1A0\uB9AC" },
+            { panel: "gacha" as const, icon: "\uD83E\uDD5A", label: "\uBF51\uAE30" },
             { panel: "shop" as const, icon: "\uD83D\uDED2", label: "\uC0C1\uC810" },
           ] as const).map(({ panel, icon, label }) => (
             <button key={panel} onClick={() => setActivePanel(panel)} style={{

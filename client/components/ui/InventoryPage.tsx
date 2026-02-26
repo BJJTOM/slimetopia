@@ -26,7 +26,7 @@ const FOOD_ITEMS: Record<number, { name: string; icon: string; desc: string }> =
 
 export default function InventoryPage() {
   const token = useAuthStore((s) => s.accessToken);
-  const { slimes, species, selectSlime, equippedAccessories, feedSlime, fetchSlimes, getCooldownRemaining, foodInventory, fetchFoodInventory, applyFood } = useGameStore();
+  const { slimes, species, selectSlime, equippedAccessories, feedSlime, fetchSlimes, getCooldownRemaining, foodInventory, fetchFoodInventory, applyFood, applyFoodBatch, slimeCapacity, slimeCapacityNextTier, fetchCapacityInfo, expandCapacity } = useGameStore();
   const [sortBy, setSortBy] = useState<SortKey>("level");
   const [filterElement, setFilterElement] = useState("all");
   const [filterGrade, setFilterGrade] = useState("all");
@@ -39,9 +39,14 @@ export default function InventoryPage() {
   const [feedingSlimeId, setFeedingSlimeId] = useState<string | null>(null);
   const [applyingFood, setApplyingFood] = useState(false);
 
+  const [feedQty, setFeedQty] = useState(1);
+
   useEffect(() => {
-    if (token) fetchFoodInventory(token);
-  }, [token, fetchFoodInventory]);
+    if (token) {
+      fetchFoodInventory(token);
+      fetchCapacityInfo(token);
+    }
+  }, [token, fetchFoodInventory, fetchCapacityInfo]);
 
   const totalFoodCount = foodInventory.reduce((sum, f) => sum + f.quantity, 0);
 
@@ -212,6 +217,78 @@ export default function InventoryPage() {
       <div className="flex-1 overflow-y-auto game-scroll p-3" style={{
         background: "linear-gradient(180deg, #1A0E08 0%, #241510 100%)",
       }}>
+        {/* Capacity Expansion Banner */}
+        <div className="rounded-lg p-3 mb-3 relative overflow-hidden" style={{
+          background: "linear-gradient(160deg, #2C1F15, #1E140D)",
+          border: "1.5px solid rgba(139,105,20,0.3)",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(139,105,20,0.05)",
+        }}>
+          <div className="absolute top-0.5 left-0.5 w-3 h-3 pointer-events-none" style={{ opacity: 0.4 }}>
+            <div className="absolute top-0 left-0 w-full h-px" style={{ background: "#8B6914" }} />
+            <div className="absolute top-0 left-0 w-px h-full" style={{ background: "#8B6914" }} />
+          </div>
+          <div className="absolute top-0.5 right-0.5 w-3 h-3 pointer-events-none" style={{ opacity: 0.4 }}>
+            <div className="absolute top-0 right-0 w-full h-px" style={{ background: "#8B6914" }} />
+            <div className="absolute top-0 right-0 w-px h-full" style={{ background: "#8B6914" }} />
+          </div>
+
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">{"\uD83D\uDCE6"}</span>
+              <div>
+                <p className="text-xs font-bold" style={{ color: "#F5E6C8", fontFamily: "Georgia, serif" }}>슬라임 인벤토리</p>
+                <p className="text-[10px]" style={{ color: "#C9A84C" }}>{slimes.length} / {slimeCapacity}마리</p>
+              </div>
+            </div>
+            {slimeCapacityNextTier && (
+              <button
+                onClick={async () => {
+                  if (!token) return;
+                  if (confirm(`인벤토리를 ${slimeCapacityNextTier.to}칸으로 확장하시겠습니까?\n비용: ${slimeCapacityNextTier.gold_cost.toLocaleString()}G${slimeCapacityNextTier.gems_cost > 0 ? ` + ${slimeCapacityNextTier.gems_cost}\uD83D\uDC8E` : ""}`)) {
+                    const ok = await expandCapacity(token);
+                    if (ok) toastSuccess(`인벤토리가 ${slimeCapacityNextTier.to}칸으로 확장되었습니다!`, "\uD83D\uDCE6");
+                    else toastError("확장에 실패했습니다. 재화를 확인해주세요.");
+                  }
+                }}
+                className="px-3 py-1.5 rounded-md text-[10px] font-bold transition-all active:scale-95"
+                style={{
+                  background: "linear-gradient(135deg, #6B3A2A, #3D2017)",
+                  color: "#F5E6C8",
+                  border: "1px solid #8B6914",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.2), inset 0 1px 0 rgba(139,105,20,0.3)",
+                  fontFamily: "Georgia, serif",
+                }}
+              >
+                {slimeCapacityNextTier.to}칸 확장
+                <span className="ml-1 opacity-70" style={{ color: "#C9A84C" }}>
+                  {slimeCapacityNextTier.gold_cost > 0 ? `${(slimeCapacityNextTier.gold_cost / 1000).toFixed(0)}K` : ""}
+                  {slimeCapacityNextTier.gems_cost > 0 ? ` +${slimeCapacityNextTier.gems_cost}\uD83D\uDC8E` : ""}
+                </span>
+              </button>
+            )}
+            {!slimeCapacityNextTier && (
+              <span className="text-[10px] font-bold px-2 py-1 rounded-md" style={{
+                background: "rgba(139,105,20,0.1)",
+                color: "#D4AF37",
+                border: "1px solid rgba(139,105,20,0.3)",
+                fontFamily: "Georgia, serif",
+              }}>MAX</span>
+            )}
+          </div>
+          <div className="h-1.5 rounded-full overflow-hidden" style={{
+            background: "rgba(0,0,0,0.3)",
+            border: "1px solid rgba(139,105,20,0.15)",
+          }}>
+            <div className="h-full rounded-full transition-all relative overflow-hidden" style={{
+              width: `${Math.min(100, (slimes.length / slimeCapacity) * 100)}%`,
+              background: slimes.length >= slimeCapacity
+                ? "linear-gradient(90deg, #C0392B, #E74C3C)"
+                : "linear-gradient(90deg, #8B6914, #C9A84C, #D4AF37)",
+              boxShadow: "0 0 6px rgba(201,168,76,0.3)",
+            }} />
+          </div>
+        </div>
+
         {slimes.length === 0 ? (
           <div className="text-center py-16">
             <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
@@ -610,7 +687,7 @@ export default function InventoryPage() {
                   <p className="text-xs font-bold" style={{
                     color: "#F5E6C8",
                     fontFamily: "Georgia, 'Times New Roman', serif",
-                  }}>먹이 보관함</p>
+                  }}>먹이 인벤토리</p>
                   <p className="text-[10px]" style={{ color: "rgba(201,168,76,0.4)" }}>{totalFoodCount}개 보유 중</p>
                 </div>
                 <span className="text-xs" style={{ color: "#8B6914" }}>{"\u2192"}</span>
@@ -655,7 +732,7 @@ export default function InventoryPage() {
                 <h3 className="font-bold text-sm" style={{
                   color: "#2C1810",
                   fontFamily: "Georgia, 'Times New Roman', serif",
-                }}>{"\uD83C\uDF56"} 먹이 보관함</h3>
+                }}>{"\uD83C\uDF56"} 먹이 인벤토리</h3>
                 <button onClick={() => { setShowFoodPanel(false); setFeedingSlimeId(null); }}
                   className="w-7 h-7 rounded-md flex items-center justify-center transition"
                   style={{
@@ -799,43 +876,77 @@ export default function InventoryPage() {
                     {foodInventory.map((f) => {
                       const info = FOOD_ITEMS[f.item_id];
                       if (!info) return null;
+                      const maxQty = f.quantity;
+                      const QTY_OPTIONS = [1, 3, 5, 10].filter(q => q <= maxQty);
+                      if (maxQty > 10 && !QTY_OPTIONS.includes(maxQty)) QTY_OPTIONS.push(maxQty);
                       return (
-                        <button key={f.item_id}
-                          onClick={async () => {
-                            if (!token || applyingFood) return;
-                            setApplyingFood(true);
-                            const ok = await applyFood(token, f.item_id, feedingSlimeId);
-                            if (ok) toastSuccess(`${info.name}을(를) 먹였습니다!`, info.icon);
-                            else toastError("먹이 적용에 실패했습니다");
-                            setApplyingFood(false);
-                          }}
-                          disabled={applyingFood}
-                          className="w-full flex items-center gap-3 p-3 rounded-lg transition-all active:scale-[0.98]"
+                        <div key={f.item_id} className="rounded-lg overflow-hidden"
                           style={{
                             background: "linear-gradient(135deg, rgba(255,255,255,0.5), rgba(232,213,176,0.6))",
                             border: "1px solid rgba(139,105,20,0.25)",
                             boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-                            opacity: applyingFood ? 0.6 : 1,
                           }}>
-                          <span className="text-xl">{info.icon}</span>
-                          <div className="flex-1 text-left">
-                            <p className="text-xs font-bold" style={{
-                              color: "#2C1810",
-                              fontFamily: "Georgia, serif",
-                            }}>{info.name}</p>
-                            <p className="text-[10px]" style={{ color: "#6B3A2A" }}>{info.desc}</p>
-                          </div>
-                          <div className="text-right">
-                            <span className="font-bold text-xs" style={{
+                          <div className="flex items-center gap-3 p-3">
+                            <span className="text-xl">{info.icon}</span>
+                            <div className="flex-1 text-left">
+                              <p className="text-xs font-bold" style={{ color: "#2C1810", fontFamily: "Georgia, serif" }}>{info.name}</p>
+                              <p className="text-[10px]" style={{ color: "#6B3A2A" }}>{info.desc}</p>
+                            </div>
+                            <span className="font-bold text-xs px-2 py-0.5 rounded-sm" style={{
                               color: "#3D2017",
+                              background: "linear-gradient(135deg, rgba(201,168,76,0.2), rgba(139,105,20,0.1))",
+                              border: "1px solid rgba(139,105,20,0.3)",
                               fontFamily: "Georgia, serif",
                             }}>{f.quantity}개</span>
-                            <p className="text-[9px] font-bold" style={{
-                              color: "#C0392B",
-                              fontFamily: "Georgia, serif",
-                            }}>먹이기</p>
                           </div>
-                        </button>
+                          {/* Quantity selector */}
+                          <div className="px-3 pb-3">
+                            <div className="flex items-center gap-1.5 mb-2">
+                              {QTY_OPTIONS.map((q) => (
+                                <button key={q} onClick={() => setFeedQty(q)}
+                                  className="flex-1 py-1 rounded-md text-[9px] font-bold transition"
+                                  style={{
+                                    background: feedQty === q
+                                      ? "linear-gradient(135deg, rgba(107,58,42,0.3), rgba(61,32,23,0.2))"
+                                      : "rgba(107,58,42,0.08)",
+                                    color: feedQty === q ? "#3D2017" : "#6B3A2A",
+                                    border: feedQty === q ? "1px solid rgba(139,105,20,0.4)" : "1px solid rgba(139,105,20,0.12)",
+                                    fontFamily: "Georgia, serif",
+                                  }}>
+                                  {q === maxQty ? "전체" : `${q}개`}
+                                </button>
+                              ))}
+                            </div>
+                            <button
+                              onClick={async () => {
+                                if (!token || applyingFood) return;
+                                setApplyingFood(true);
+                                const useQty = Math.min(feedQty, maxQty);
+                                let ok: boolean;
+                                if (useQty === 1) {
+                                  ok = await applyFood(token, f.item_id, feedingSlimeId);
+                                } else {
+                                  ok = await applyFoodBatch(token, f.item_id, feedingSlimeId, useQty);
+                                }
+                                if (ok) toastSuccess(`${info.name}을(를) ${useQty}개 먹였습니다!`, info.icon);
+                                else toastError("먹이 적용에 실패했습니다");
+                                setApplyingFood(false);
+                                setFeedQty(1);
+                              }}
+                              disabled={applyingFood}
+                              className="w-full py-2 rounded-md text-[11px] font-bold transition-all active:scale-[0.98]"
+                              style={{
+                                background: "linear-gradient(135deg, #6B3A2A, #3D2017)",
+                                color: "#F5E6C8",
+                                border: "1px solid rgba(139,105,20,0.4)",
+                                boxShadow: "0 1px 4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(139,105,20,0.2)",
+                                opacity: applyingFood ? 0.6 : 1,
+                                fontFamily: "Georgia, serif",
+                              }}>
+                              {applyingFood ? "적용 중..." : `${info.icon} ${Math.min(feedQty, maxQty)}개 먹이기`}
+                            </button>
+                          </div>
+                        </div>
                       );
                     })}
                   </div>

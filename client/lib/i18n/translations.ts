@@ -102,7 +102,7 @@ const ko: TranslationMap = {
 
   // Bottom nav
   "home": "홈",
-  "inventory": "보관함",
+  "inventory": "인벤토리",
   "codex": "도감",
   "merge": "합성",
   "explore": "탐험",

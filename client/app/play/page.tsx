@@ -31,6 +31,7 @@ import ProfilePage from "@/components/ui/ProfilePage";
 import DiscoveryPage from "@/components/ui/DiscoveryPage";
 import MiniContentsPage from "@/components/ui/MiniContentsPage";
 import CollectionPage from "@/components/ui/CollectionPage";
+import GachaPage from "@/components/ui/GachaPage";
 import { useAndroidBackButton } from "@/lib/useBackButton";
 
 const GameCanvas = dynamic(() => import("@/components/game/GameCanvas"), {
@@ -146,6 +147,7 @@ export default function PlayPage() {
         {activePanel === "merge" && <MergePage />}
         {activePanel === "discovery" && <DiscoveryPage />}
         {activePanel === "shop" && <ShopPage />}
+        {activePanel === "gacha" && <GachaPage />}
         {activePanel === "codex" && <CodexPage />}
         {activePanel === "achievements" && <AchievementPage />}
         {activePanel === "leaderboard" && <LeaderboardPage />}

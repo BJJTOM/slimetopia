@@ -544,7 +544,7 @@ function ManualMergeTab({
           </div>
 
           <p className="text-[11px] px-1 mb-2 font-medium" style={{ color: "#C9A84C", fontFamily: "Georgia, serif" }}>
-            {"\uD83E\uDDEA"} 재료 보관함
+            {"\uD83E\uDDEA"} 재료 인벤토리
             <span className="text-[9px] ml-1.5" style={{ color: "#8B6914" }}>
               {materialInventory.length}종
             </span>
