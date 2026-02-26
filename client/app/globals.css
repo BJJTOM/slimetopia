@@ -1172,3 +1172,66 @@ body {
   animation: nebula-drift 15s ease-in-out infinite;
   pointer-events: none;
 }
+
+/* ===== Login Page Buttons ===== */
+.login-btn-guest {
+  background: linear-gradient(135deg, #55EFC4, #00D2D3, #00B894);
+  color: #0a0a1a;
+  box-shadow: 0 4px 24px rgba(85, 239, 196, 0.35), inset 0 1px 0 rgba(255,255,255,0.2);
+  position: relative;
+  overflow: hidden;
+}
+.login-btn-guest::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: btn-shimmer 3s ease-in-out infinite;
+}
+@keyframes btn-shimmer {
+  0% { transform: translateX(-100%); }
+  60%, 100% { transform: translateX(100%); }
+}
+.login-btn-guest:hover:not(:disabled) {
+  box-shadow: 0 6px 32px rgba(85, 239, 196, 0.5), inset 0 1px 0 rgba(255,255,255,0.25);
+}
+
+.login-btn-email {
+  background: rgba(162, 155, 254, 0.12);
+  border: 1px solid rgba(162, 155, 254, 0.2);
+  color: #C8B6FF;
+  box-shadow: 0 2px 12px rgba(162, 155, 254, 0.08);
+}
+.login-btn-email:hover:not(:disabled) {
+  background: rgba(162, 155, 254, 0.18);
+  border-color: rgba(162, 155, 254, 0.3);
+}
+
+.login-btn-register {
+  background: linear-gradient(135deg, #FF9FF3, #A29BFE);
+  color: #0a0a1a;
+  box-shadow: 0 4px 20px rgba(255, 159, 243, 0.25);
+}
+.login-btn-register:hover:not(:disabled) {
+  box-shadow: 0 6px 28px rgba(255, 159, 243, 0.4);
+}
+
+.login-input {
+  width: 100%;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 14px;
+  transition: border-color 0.2s, background 0.2s;
+  outline: none;
+}
+.login-input::placeholder {
+  color: rgba(178, 190, 195, 0.3);
+}
+.login-input:focus {
+  border-color: rgba(162, 155, 254, 0.4);
+  background: rgba(255, 255, 255, 0.07);
+}
