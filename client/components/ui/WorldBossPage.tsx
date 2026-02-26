@@ -88,6 +88,11 @@ const ELEM_DARK: Record<string, string> = {
   light: "#FDD835", dark: "#2D3436", celestial: "#E84393",
 };
 
+const elementEmojis: Record<string, string> = {
+  fire: "🔥", water: "💧", grass: "🌿", earth: "🪨", electric: "⚡",
+  ice: "❄️", wind: "🌪️", poison: "☠️", light: "✨", dark: "🌑", celestial: "💫",
+};
+
 const STRONG: Record<string, string[]> = {
   fire: ["grass", "ice"], water: ["fire", "earth"], grass: ["water", "electric"],
   electric: ["water", "wind"], ice: ["grass", "wind"], earth: ["fire", "electric", "poison"],
@@ -1186,6 +1191,10 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
         bossRef.current = { ...bossRef.current, current_hp: res.boss_hp_remaining, defeated: res.defeated };
       }
 
+      // Save best damage for hub display
+      const prevBest = parseInt(localStorage.getItem("boss_best_damage") || "0", 10);
+      if (res.damage > prevBest) localStorage.setItem("boss_best_damage", String(res.damage));
+
       // Show result modal after animation
       setTimeout(() => {
         setAttackResult({
@@ -1327,6 +1336,35 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
 
         {!boss.defeated ? (
           <>
+            {/* Element weakness hint banner */}
+            <div className="rounded-xl px-3 py-2 flex items-center gap-2" style={{
+              background: `linear-gradient(135deg, ${ELEM_COL[boss.element] || "#A29BFE"}10, transparent)`,
+              border: `1px solid ${ELEM_COL[boss.element] || "#A29BFE"}20`,
+            }}>
+              <span className="text-base">{elementEmojis[boss.element] || "\u2753"}</span>
+              <div className="flex-1">
+                <p className="text-[10px] font-bold" style={{ color: ELEM_COL[boss.element] || "#A29BFE" }}>
+                  {elementNames[boss.element] || boss.element} 속성 보스
+                </p>
+                <p className="text-[9px]" style={{ color: "rgba(245,230,200,0.4)" }}>
+                  {BOSS_STAGES[(boss.stage || 1) - 1]?.desc || "유리한 속성 슬라임을 배치하세요!"}
+                </p>
+              </div>
+              {(() => {
+                const hpPct = boss.max_hp > 0 ? (boss.current_hp / boss.max_hp) * 100 : 100;
+                const phase = getPhase(hpPct);
+                if (phase === "normal") return null;
+                return (
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full animate-pulse" style={{
+                    background: phase === "critical" ? "rgba(255,107,107,0.2)" : "rgba(255,165,0,0.15)",
+                    color: phase === "critical" ? "#FF6B6B" : "#FFA500",
+                    border: `1px solid ${phase === "critical" ? "rgba(255,107,107,0.3)" : "rgba(255,165,0,0.2)"}`,
+                  }}>
+                    {phase === "critical" ? "위험!" : "분노!"}
+                  </span>
+                );
+              })()}
+            </div>
             {/* Party slots (5 slots) */}
             <div className="minigame-section">
               <div className="flex items-center justify-between mb-2">
@@ -1350,6 +1388,7 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
                   const sl = sid ? slimes.find((s) => s.id === sid) : null;
                   const slCol = sl ? ELEM_COL[sl.element] || "#A29BFE" : "#636E72";
                   const slStrong = sl ? isStrong(sl.element, boss.element) : false;
+                  const slWeak = sl ? isWeak(sl.element, boss.element) : false;
                   return (
                     <button key={idx}
                       onClick={() => {
@@ -1366,7 +1405,9 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
                         border: sl
                           ? slStrong
                             ? `1.5px solid ${slCol}60`
-                            : `1px solid ${slCol}30`
+                            : slWeak
+                              ? `1.5px solid rgba(255,107,107,0.4)`
+                              : `1px solid ${slCol}30`
                           : "1px dashed rgba(201,168,76,0.2)",
                       }}>
                       {sl ? (
@@ -1375,6 +1416,9 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
                           <span className="text-[7px] text-white/50 font-bold">Lv.{sl.level}</span>
                           {slStrong && (
                             <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#55EFC4] text-[7px] text-[#0a0a1a] font-bold flex items-center justify-center">{"\u2191"}</span>
+                          )}
+                          {slWeak && (
+                            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#FF6B6B] text-[7px] text-white font-bold flex items-center justify-center">{"\u2193"}</span>
                           )}
                         </>
                       ) : (

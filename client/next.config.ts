@@ -1,9 +1,10 @@
 import type { NextConfig } from "next";
 
+// Capacitor build requires specific configuration
+const isCapacitorBuild = process.env.CAPACITOR_BUILD === "true";
+
 // Static export: Capacitor builds OR Cloudflare Pages (when API URL is configured externally)
-const isStaticExport =
-  process.env.CAPACITOR_BUILD === "true" ||
-  process.env.STATIC_EXPORT === "true";
+const isStaticExport = isCapacitorBuild || process.env.STATIC_EXPORT === "true";
 
 const nextConfig: NextConfig = {
   // Static export for Capacitor (Android/iOS) and Cloudflare Pages

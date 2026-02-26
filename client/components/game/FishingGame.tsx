@@ -137,6 +137,33 @@ interface JellyFish {
   pulsePhase: number;
 }
 
+// ===== Fish Journal — track unique catches in localStorage =====
+const JOURNAL_KEY = "fishing_journal";
+function getJournal(): Record<string, { count: number; bestSize: FishSize; firstCatch: number }> {
+  if (typeof window === "undefined") return {};
+  try { return JSON.parse(localStorage.getItem(JOURNAL_KEY) || "{}"); } catch { return {}; }
+}
+function saveToJournal(name: string, size: FishSize) {
+  const journal = getJournal();
+  const existing = journal[name];
+  const sizeRank: Record<FishSize, number> = { tiny: 0, normal: 1, large: 2, jumbo: 3 };
+  if (existing) {
+    existing.count += 1;
+    if (sizeRank[size] > sizeRank[existing.bestSize]) existing.bestSize = size;
+  } else {
+    journal[name] = { count: 1, bestSize: size, firstCatch: Date.now() };
+  }
+  localStorage.setItem(JOURNAL_KEY, JSON.stringify(journal));
+  // Also update total catches for hub display
+  const totalKey = "fishing_total_catches";
+  const total = parseInt(localStorage.getItem(totalKey) || "0", 10) + 1;
+  localStorage.setItem(totalKey, String(total));
+  return { isNew: !existing, totalUnique: Object.keys(journal).length };
+}
+
+// Total unique fish names possible
+const TOTAL_FISH_TYPES = Object.values(FISH_VARIETIES).reduce((sum, v) => sum + v.names.length, 0);
+
 export default function FishingGame({ onClose }: Props) {
   const token = useAuthStore((s) => s.accessToken);
 
@@ -152,6 +179,7 @@ export default function FishingGame({ onClose }: Props) {
   const [currentRarity, setCurrentRarity] = useState("common");
   const [fishSize, setFishSize] = useState<FishSize>("normal");
   const [treasureActive, setTreasureActive] = useState(false);
+  const [journalInfo, setJournalInfo] = useState<{ isNew: boolean; totalUnique: number } | null>(null);
 
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
@@ -1069,6 +1097,9 @@ export default function FishingGame({ onClose }: Props) {
           rarity: res.rarity,
         });
         setFailed(false);
+        // Save to fish journal
+        const jInfo = saveToJournal(res.catch_name, fishSizeRef.current);
+        setJournalInfo(jInfo);
         const parts = [`${res.gold_reward}G`];
         if (res.gems_reward > 0) parts.push(`${res.gems_reward}\uD83D\uDC8E`);
         toastReward(`${res.catch_name} \uB0DA\uC2DC \uC131\uACF5! ${parts.join(" + ")}`, "\uD83D\uDC1F");
@@ -1438,6 +1469,28 @@ export default function FishingGame({ onClose }: Props) {
                     <p className="text-[10px] text-[#FFEAA7] mt-2 font-bold animate-number-pop">
                       {"\uD83D\uDD25"} {combo}{"\uC5F0\uC18D \uC131\uACF5!"} {combo >= 5 ? "\uB300\uB2E8\uD574\uC694!" : combo >= 3 ? "\uC88B\uC544\uC694!" : ""}
                     </p>
+                  )}
+                  {/* Fish Journal Progress */}
+                  {journalInfo && (
+                    <div className="mt-3 pt-3" style={{ borderTop: "1px solid rgba(245,230,200,0.08)" }}>
+                      {journalInfo.isNew && (
+                        <p className="text-[11px] font-bold mb-1 animate-celebrate-bounce" style={{ color: "#55EFC4" }}>
+                          📖 NEW! 도감에 등록되었습니다!
+                        </p>
+                      )}
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="text-[10px]" style={{ color: "rgba(245,230,200,0.35)" }}>🐟 도감 수집</span>
+                        <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(245,230,200,0.1)" }}>
+                          <div className="h-full rounded-full transition-all" style={{
+                            width: `${Math.min(100, (journalInfo.totalUnique / TOTAL_FISH_TYPES) * 100)}%`,
+                            background: "linear-gradient(90deg, #74B9FF, #55EFC4)",
+                          }} />
+                        </div>
+                        <span className="text-[10px] font-bold" style={{ color: "#74B9FF", fontVariantNumeric: "tabular-nums" }}>
+                          {journalInfo.totalUnique}/{TOTAL_FISH_TYPES}
+                        </span>
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>

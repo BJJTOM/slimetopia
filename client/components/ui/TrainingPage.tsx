@@ -51,12 +51,31 @@ const GRADE_PRIORITY: Record<string, number> = {
 
 type SortMode = "grade" | "level" | "name";
 
+// Milestones (minutes) with label + emoji
+const MILESTONES = [
+  { mins: 60, label: "1시간 돌파!", emoji: "🔥" },
+  { mins: 120, label: "2시간 달성!", emoji: "💪" },
+  { mins: 240, label: "4시간! 절반 완료", emoji: "⚡" },
+  { mins: 480, label: "MAX! 수령하세요!", emoji: "🏆" },
+];
+
+// Exercise types for banner animation variety
+type ExerciseType = "jump" | "squat" | "pushup";
+const EXERCISE_CYCLE: ExerciseType[] = ["jump", "squat", "pushup", "jump", "squat"];
+const EXERCISE_DURATION = 4; // seconds per exercise
+
 function formatDuration(mins: number): string {
   if (mins < 1) return "방금 시작";
   if (mins < 60) return `${mins}분`;
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   return m > 0 ? `${h}시간 ${m}분` : `${h}시간`;
+}
+
+function addTrainingExpToStorage(exp: number) {
+  if (typeof window === "undefined") return;
+  const prev = parseInt(localStorage.getItem("training_total_exp") || "0", 10);
+  localStorage.setItem("training_total_exp", String(prev + exp));
 }
 
 function rgba(hex: string, a: number) {
@@ -96,18 +115,46 @@ function drawTrainingBanner(
   fg.addColorStop(0, "rgba(201,168,76,0.08)"); fg.addColorStop(1, "transparent");
   ctx.fillStyle = fg; ctx.fillRect(0, floorY, w, h - floorY);
 
-  // === Animated Slime ===
+  // === Animated Slime with exercise variety ===
   const cx = w * 0.22;
   const baseY = floorY - 18;
-  // Bounce (jumping exercise)
-  const jumpCycle = t * 2.5;
-  const jumpPhase = jumpCycle % 1;
-  const jumpHeight = jumpPhase < 0.4 ? Math.sin(jumpPhase / 0.4 * Math.PI) * 18 : 0;
-  const squash = jumpPhase > 0.4 && jumpPhase < 0.5 ? 0.85 : jumpPhase < 0.1 ? 0.9 : 1;
+
+  // Cycle through exercises
+  const exerciseIdx = Math.floor(t / EXERCISE_DURATION) % EXERCISE_CYCLE.length;
+  const exercise = EXERCISE_CYCLE[exerciseIdx];
+  const phaseInExercise = (t % EXERCISE_DURATION) / EXERCISE_DURATION;
+
+  let jumpHeight = 0;
+  let squash = 1;
+  let stretchX = 1;
+  let offsetX = 0;
+
+  if (exercise === "jump") {
+    const jumpCycle = t * 2.5;
+    const jumpPhase = jumpCycle % 1;
+    jumpHeight = jumpPhase < 0.4 ? Math.sin(jumpPhase / 0.4 * Math.PI) * 18 : 0;
+    squash = jumpPhase > 0.4 && jumpPhase < 0.5 ? 0.85 : jumpPhase < 0.1 ? 0.9 : 1;
+  } else if (exercise === "squat") {
+    // Squatting motion: flatten and widen
+    const sqCycle = t * 2;
+    const sqPhase = sqCycle % 1;
+    const sqDown = sqPhase < 0.5 ? Math.sin(sqPhase / 0.5 * Math.PI) : 0;
+    squash = 1 - sqDown * 0.3;
+    stretchX = 1 + sqDown * 0.2;
+  } else if (exercise === "pushup") {
+    // Push-up: lean forward and bob up/down
+    const puCycle = t * 1.8;
+    const puPhase = puCycle % 1;
+    const puDown = puPhase < 0.5 ? Math.sin(puPhase / 0.5 * Math.PI) * 0.3 : 0;
+    squash = 1 - puDown * 0.25;
+    offsetX = 4; // lean slightly forward
+    jumpHeight = -puDown * 6; // go down instead of up
+  }
+
   const sy = baseY - jumpHeight;
 
-  ctx.save(); ctx.translate(cx, sy);
-  ctx.scale(1 + (1 - squash) * 0.3, squash);
+  ctx.save(); ctx.translate(cx + offsetX, sy);
+  ctx.scale((1 + (1 - squash) * 0.3) * stretchX, squash);
 
   // Shadow
   ctx.beginPath(); ctx.ellipse(0, 18 + jumpHeight * 0.5, 16 * (1 - jumpHeight / 50), 3, 0, 0, Math.PI * 2);
@@ -150,14 +197,23 @@ function drawTrainingBanner(
 
   ctx.restore();
 
-  // Sweat drops when jumping
-  if (jumpPhase < 0.05 && Math.random() < 0.5) {
+  // Sweat drops from exercising
+  const sweatChance = exercise === "pushup" ? 0.06 : exercise === "squat" ? 0.04 : (jumpHeight < 1 && Math.random() < 0.5 ? 0.5 : 0);
+  if (Math.random() < sweatChance) {
     particles.push({
       x: cx + (Math.random() - 0.5) * 20, y: sy - 10,
       vx: (Math.random() - 0.5) * 1.5, vy: -(1 + Math.random()),
       life: 0, maxLife: 0.8 + Math.random() * 0.4, size: 2 + Math.random(), type: "sweat",
     });
   }
+
+  // Exercise label (bottom of banner)
+  const exerciseLabels: Record<ExerciseType, string> = { jump: "점프 훈련", squat: "스쿼트", pushup: "팔굽혀펴기" };
+  ctx.save();
+  ctx.font = "bold 9px Georgia, 'Times New Roman', serif"; ctx.textAlign = "center";
+  ctx.fillStyle = `rgba(201,168,76,${0.25 + Math.sin(t * 3) * 0.05})`;
+  ctx.fillText(exerciseLabels[exercise], cx, h * 0.95);
+  ctx.restore();
 
   // === Dumbbell on floor ===
   const dbX = w * 0.48, dbY = floorY - 6;
@@ -250,6 +306,38 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
   const [sortMode, setSortMode] = useState<SortMode>("grade");
   const [lastCollectedSlot, setLastCollectedSlot] = useState<string | null>(null);
   const [showGuide, setShowGuide] = useState(false);
+  const [milestone, setMilestone] = useState<{ label: string; emoji: string } | null>(null);
+  const [realtimeExp, setRealtimeExp] = useState<Record<string, number>>({});
+  const seenMilestones = useRef<Set<string>>(new Set());
+
+  // Real-time EXP ticker: recalculate every second based on started_at
+  useEffect(() => {
+    if (!data?.slots.length) return;
+    const tick = () => {
+      const now = Date.now();
+      const expMap: Record<string, number> = {};
+      for (const slot of data.slots) {
+        const startedMs = new Date(slot.started_at).getTime();
+        const elapsedMins = Math.min(480, Math.floor((now - startedMs) / 60000));
+        const baseExp = elapsedMins * 2; // 2 EXP per minute
+        expMap[slot.id] = Math.floor(baseExp * slot.multiplier);
+
+        // Check milestones
+        for (const ms of MILESTONES) {
+          const key = `${slot.id}-${ms.mins}`;
+          if (elapsedMins >= ms.mins && !seenMilestones.current.has(key)) {
+            seenMilestones.current.add(key);
+            setMilestone({ label: `${slot.name} ${ms.label}`, emoji: ms.emoji });
+            setTimeout(() => setMilestone(null), 3000);
+          }
+        }
+      }
+      setRealtimeExp(expMap);
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [data]);
 
   // Canvas refs
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -371,6 +459,7 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
       let msg = `EXP +${res.exp_gained} 획득!`;
       if (res.level_up) msg += ` Lv.${res.new_level} 달성!`;
       toastReward(msg, "🏋️");
+      addTrainingExpToStorage(res.exp_gained);
       await fetchTraining();
       if (token) fetchSlimes(token);
 
@@ -409,6 +498,7 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
       let msg = `총 EXP +${totalExp} 획득!`;
       if (levelUps > 0) msg += ` ${levelUps}마리 레벨업!`;
       toastReward(msg, "🏋️");
+      addTrainingExpToStorage(totalExp);
     }
     fetchTraining();
     if (token) fetchSlimes(token);
@@ -419,7 +509,7 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
   const availableSlimes = slimes.filter((s) => !trainedSlimeIds.includes(s.id));
   const filledSlots = data?.slots.length || 0;
   const maxSlots = data?.max_slots || 3;
-  const totalPendingExp = data?.slots.reduce((s, sl) => s + sl.pending_exp, 0) || 0;
+  const totalPendingExp = data?.slots.reduce((s, sl) => s + (realtimeExp[sl.id] ?? sl.pending_exp), 0) || 0;
   const hasCollectable = (data?.slots.length || 0) > 0 && totalPendingExp > 0;
 
   return (
@@ -483,11 +573,33 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
         <canvas ref={canvasRef} className="w-full h-full" />
       </div>
 
+      {/* Milestone celebration banner */}
+      {milestone && (
+        <div className="shrink-0 px-4 py-2.5" style={{
+          background: "linear-gradient(135deg, rgba(212,175,55,0.15), rgba(201,168,76,0.08))",
+          borderBottom: "1px solid rgba(201,168,76,0.2)",
+          animation: "codex-stagger 0.3s ease-out",
+        }}>
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-lg">{milestone.emoji}</span>
+            <span className="text-[12px] font-bold" style={{ color: "#D4AF37", fontFamily: "Georgia, 'Times New Roman', serif" }}>
+              {milestone.label}
+            </span>
+            <span className="text-lg">{milestone.emoji}</span>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
         {/* Training slots */}
         {data?.slots.map((slot, idx) => {
-          const progressPercent = Math.min(100, (slot.elapsed_mins / 480) * 100);
-          const isCapped = slot.elapsed_mins >= 480;
+          // Use real-time calculated EXP if available, otherwise fallback to API value
+          const liveExp = realtimeExp[slot.id] ?? slot.pending_exp;
+          // Recalculate elapsed from started_at for smoother progress
+          const nowMs = Date.now();
+          const elapsedFromStart = Math.min(480, Math.floor((nowMs - new Date(slot.started_at).getTime()) / 60000));
+          const progressPercent = Math.min(100, (elapsedFromStart / 480) * 100);
+          const isCapped = elapsedFromStart >= 480;
           const gradeCol = GRADE_COLORS[slot.grade] || "#888";
           const progressAngle = (progressPercent / 100) * Math.PI * 2;
 
@@ -546,7 +658,7 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
                       <span style={{ color: "rgba(201,168,76,0.2)" }}>|</span>
                       <span style={{ color: "rgba(245,230,200,0.45)" }}>{elementNames[slot.element] || slot.element}</span>
                       <span style={{ color: "rgba(201,168,76,0.2)" }}>|</span>
-                      <span style={{ color: "rgba(245,230,200,0.45)" }}>{formatDuration(slot.elapsed_mins)}</span>
+                      <span style={{ color: "rgba(245,230,200,0.45)" }}>{formatDuration(elapsedFromStart)}</span>
                     </div>
                     {/* Progress bar */}
                     <div className="mt-2">
@@ -560,7 +672,7 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
                         }} />
                       </div>
                       <div className="flex justify-between mt-0.5">
-                        <span className="text-[8px]" style={{ color: "rgba(245,230,200,0.25)" }}>{formatDuration(slot.elapsed_mins)}</span>
+                        <span className="text-[8px]" style={{ color: "rgba(245,230,200,0.25)" }}>{formatDuration(elapsedFromStart)}</span>
                         <span className={`text-[8px] font-bold`} style={{ color: isCapped ? "#D4AF37" : "rgba(245,230,200,0.3)" }}>
                           {isCapped ? "최대!" : "8시간"}
                         </span>
@@ -574,7 +686,7 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
                       color: isCapped ? "#D4AF37" : "#C9A84C",
                       textShadow: isCapped ? "0 0 10px rgba(212,175,55,0.3)" : "none",
                       fontFamily: "Georgia, 'Times New Roman', serif",
-                    }}>+{slot.pending_exp}</div>
+                    }}>+{liveExp}</div>
                     <div className="text-[9px]" style={{ color: "rgba(245,230,200,0.3)" }}>EXP</div>
                     {slot.multiplier > 1 && (
                       <div className="text-[8px] font-bold mt-0.5 px-1 rounded" style={{
@@ -601,7 +713,7 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
                     fontFamily: "Georgia, 'Times New Roman', serif",
                   }}
                 >
-                  {collecting === slot.id ? "수령 중..." : `EXP 수령 (+${slot.pending_exp})`}
+                  {collecting === slot.id ? "수령 중..." : `EXP 수령 (+${liveExp})`}
                 </button>
                 <button
                   onClick={() => collectTraining(slot.id, true)}

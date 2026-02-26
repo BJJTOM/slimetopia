@@ -10,8 +10,11 @@ const config: CapacitorConfig = {
     allowMixedContent: true,
   },
   server: {
-    androidScheme: isLiveReload ? "http" : "https",
-    // Live reload: load from dev server instead of bundled files
+    androidScheme: "https",
+    // Production: load login page from Cloudflare Pages directly
+    // This avoids Capacitor bridge timing issues with landing page detection
+    url: "https://slimetopia.pages.dev/login/",
+    // Dev: live reload from local dev server
     ...(isLiveReload && {
       url: process.env.LIVE_RELOAD_URL,
       cleartext: true,
@@ -19,7 +22,6 @@ const config: CapacitorConfig = {
   },
   plugins: {
     App: {},
-    // Native HTTP — bypasses WebView mixed-content & CORS restrictions
     CapacitorHttp: {
       enabled: true,
     },

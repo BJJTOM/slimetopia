@@ -31,7 +31,7 @@ interface Obstacle {
 interface PowerUp {
   x: number;
   y: number;
-  type: "boost" | "shield" | "heart" | "double";
+  type: "boost" | "shield" | "heart" | "double" | "magnet";
   collected: boolean;
 }
 
@@ -102,7 +102,7 @@ export default function SlimeRace({ onClose }: Props) {
   const [combo, setCombo] = useState(0);
   const [maxCombo, setMaxCombo] = useState(0);
   const [jumping, setJumping] = useState(false);
-  const [result, setResult] = useState<{ score: number; gold: number; exp: number; maxCombo: number; distance: number } | null>(null);
+  const [result, setResult] = useState<{ score: number; gold: number; exp: number; maxCombo: number; distance: number; isNewBest: boolean; stars: number } | null>(null);
   const [remaining] = useState(999); // unlimited
   const [screenShake, setScreenShake] = useState(0);
   const [activePowerUp, setActivePowerUp] = useState<{ type: string; timer: number } | null>(null);
@@ -176,19 +176,27 @@ export default function SlimeRace({ onClose }: Props) {
     const slimeId = selectedSlimeIdRef.current;
     if (!tk || !slimeId) return;
 
+    // Personal best tracking
+    const prevBest = parseInt(localStorage.getItem("slimerace_best_score") || "0", 10);
+    const isNewBest = finalScore > prevBest;
+    if (isNewBest) localStorage.setItem("slimerace_best_score", String(finalScore));
+
+    // Star rating: 1-5 based on score thresholds
+    const stars = finalScore >= 10000 ? 5 : finalScore >= 5000 ? 4 : finalScore >= 2000 ? 3 : finalScore >= 500 ? 2 : 1;
+
     try {
       const res = await authApi<{ score: number; gold_reward: number; exp_reward: number }>(
         "/api/race/finish",
         tk,
         { method: "POST", body: { slime_id: slimeId, score: finalScore } },
       );
-      setResult({ score: res.score, gold: res.gold_reward, exp: res.exp_reward, maxCombo: finalMaxCombo, distance: finalDistance });
+      setResult({ score: res.score, gold: res.gold_reward, exp: res.exp_reward, maxCombo: finalMaxCombo, distance: finalDistance, isNewBest, stars });
       if (res.gold_reward > 0) {
         toastReward(`\uB808\uC774\uC2A4 \uC644\uB8CC! ${res.gold_reward}G \uD68D\uB4DD`, "\uD83C\uDFC3");
       }
       useAuthStore.getState().fetchUser();
     } catch {
-      setResult({ score: finalScore, gold: 0, exp: 0, maxCombo: finalMaxCombo, distance: finalDistance });
+      setResult({ score: finalScore, gold: 0, exp: 0, maxCombo: finalMaxCombo, distance: finalDistance, isNewBest, stars });
     }
     setRaceState("result");
   }, []);
@@ -497,7 +505,7 @@ export default function SlimeRace({ onClose }: Props) {
       lastPowerUpSpawn += DT;
       if (lastPowerUpSpawn > 5000 + Math.random() * 4000) {
         lastPowerUpSpawn = 0;
-        const types: PowerUp["type"][] = hpRef.current < MAX_HP ? ["boost", "shield", "heart", "double"] : ["boost", "shield", "double"];
+        const types: PowerUp["type"][] = hpRef.current < MAX_HP ? ["boost", "shield", "heart", "double", "magnet"] : ["boost", "shield", "double", "magnet"];
         const t = types[Math.floor(Math.random() * types.length)];
         powerUpsRef.current.push({ x: TRACK_W + 20, y: GROUND_Y - 50 - Math.random() * 20, type: t, collected: false });
       }
@@ -661,6 +669,11 @@ export default function SlimeRace({ onClose }: Props) {
             setActivePowerUp({ type: "double", timer: 4000 });
             popupsRef.current.push({ x: pu.x, y: pu.y - 10, text: "\u2728 DOUBLE!", life: 800, color: "#55EFC4" });
             setTimeout(() => { doubleRef.current = false; setActivePowerUp(null); }, 4000);
+          } else if (pu.type === "magnet") {
+            magnetRef.current = true;
+            setActivePowerUp({ type: "magnet", timer: 5000 });
+            popupsRef.current.push({ x: pu.x, y: pu.y - 10, text: "🧲 MAGNET!", life: 800, color: "#A29BFE" });
+            setTimeout(() => { magnetRef.current = false; setActivePowerUp(null); }, 5000);
           }
         }
       }
@@ -948,8 +961,8 @@ export default function SlimeRace({ onClose }: Props) {
     // Power-ups
     for (const pu of powerUpsRef.current) {
       if (pu.collected) continue;
-      const puColors: Record<string, string> = { boost: "#FFEAA7", shield: "#74B9FF", heart: "#FF6B6B", double: "#55EFC4" };
-      const puIcons: Record<string, string> = { boost: "\u26A1", shield: "\uD83D\uDEE1", heart: "\u2764", double: "\u00D72" };
+      const puColors: Record<string, string> = { boost: "#FFEAA7", shield: "#74B9FF", heart: "#FF6B6B", double: "#55EFC4", magnet: "#A29BFE" };
+      const puIcons: Record<string, string> = { boost: "\u26A1", shield: "\uD83D\uDEE1", heart: "\u2764", double: "\u00D72", magnet: "M" };
       const puFloat = Math.sin(Date.now() * 0.004 + pu.x * 0.05) * 3;
       const py = pu.y + puFloat;
       // Glow
@@ -1517,37 +1530,65 @@ export default function SlimeRace({ onClose }: Props) {
         <div className="flex-1 flex flex-col items-center justify-center p-6">
           <div className="animate-scale-in text-center game-panel rounded-2xl p-6 w-full max-w-[340px]">
             <span className="text-5xl block animate-celebrate-bounce">{"\uD83C\uDFC6"}</span>
-            <h3 className="text-parchment font-bold text-lg mt-3 font-serif-game">레이스 완료!</h3>
+            <h3 className="text-parchment font-bold text-lg mt-2 font-serif-game">레이스 완료!</h3>
 
-            <div className="text-4xl font-black mt-2 animate-number-pop font-serif-game" style={{
-              background: "linear-gradient(135deg, #D4AF37, #C9A84C)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}>{result.score}점</div>
+            {/* Star rating */}
+            <div className="flex items-center justify-center gap-1 mt-2">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <span key={s} className="text-xl" style={{
+                  opacity: s <= result.stars ? 1 : 0.2,
+                  filter: s <= result.stars ? "none" : "grayscale(1)",
+                  animation: s <= result.stars ? `codex-stagger 0.3s ease-out ${s * 100}ms both` : undefined,
+                }}>⭐</span>
+              ))}
+            </div>
 
-            <div className="flex items-center justify-center gap-5 mt-3">
-              <div className="text-center">
+            {/* Score + New Best badge */}
+            <div className="relative inline-block">
+              <div className="text-4xl font-black mt-2 animate-number-pop font-serif-game" style={{
+                background: "linear-gradient(135deg, #D4AF37, #C9A84C)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}>{result.score.toLocaleString()}점</div>
+              {result.isNewBest && (
+                <span className="absolute -top-1 -right-12 text-[9px] font-bold px-2 py-0.5 rounded-full animate-pulse"
+                  style={{
+                    background: "linear-gradient(135deg, #FF6B6B, #E17055)",
+                    color: "white",
+                    boxShadow: "0 2px 8px rgba(255,107,107,0.4)",
+                  }}>NEW BEST!</span>
+              )}
+            </div>
+
+            {/* Stats grid */}
+            <div className="grid grid-cols-4 gap-2 mt-3 px-1">
+              <div className="text-center py-2 rounded-lg" style={{ background: "rgba(201,168,76,0.08)" }}>
                 <div className="text-sm font-bold font-serif-game" style={{ color: "#C9A84C" }}>{result.distance}m</div>
                 <div className="text-[9px]" style={{ color: "rgba(245,230,200,0.35)" }}>거리</div>
               </div>
-              <div className="text-center">
+              <div className="text-center py-2 rounded-lg" style={{ background: "rgba(85,239,196,0.08)" }}>
                 <div className="text-[#55EFC4] text-sm font-bold font-serif-game">x{result.maxCombo}</div>
                 <div className="text-[9px]" style={{ color: "rgba(245,230,200,0.35)" }}>최대 콤보</div>
               </div>
-              <div className="text-center">
+              <div className="text-center py-2 rounded-lg" style={{ background: "rgba(255,234,167,0.08)" }}>
                 <div className="text-[#FFEAA7] text-sm font-bold flex items-center gap-1 justify-center">
                   <img src="/assets/icons/gold.png" alt="" className="w-4 h-4 pixel-art" />
                   +{result.gold}
                 </div>
                 <div className="text-[9px]" style={{ color: "rgba(245,230,200,0.35)" }}>골드</div>
               </div>
-              <div className="text-center">
+              <div className="text-center py-2 rounded-lg" style={{ background: "rgba(255,159,243,0.08)" }}>
                 <div className="text-[#FF9FF3] text-sm font-bold font-serif-game">+{result.exp}</div>
                 <div className="text-[9px]" style={{ color: "rgba(245,230,200,0.35)" }}>경험치</div>
               </div>
             </div>
 
-            <div className="flex gap-2 mt-5">
+            {/* Personal best */}
+            <div className="mt-3 text-[10px]" style={{ color: "rgba(245,230,200,0.3)" }}>
+              🏆 최고 기록: <span style={{ color: "#FFEAA7" }}>{parseInt(localStorage.getItem("slimerace_best_score") || "0", 10).toLocaleString()}점</span>
+            </div>
+
+            <div className="flex gap-2 mt-4">
               <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-xs font-serif-game" style={{
                 background: "rgba(44,24,16,0.6)",
                 border: "1px solid rgba(201,168,76,0.15)",
