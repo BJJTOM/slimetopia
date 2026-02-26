@@ -2,9 +2,7 @@ package repository
 
 import (
 	"context"
-	"encoding/json"
 	"math/rand"
-	"os"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -63,30 +61,37 @@ func NewMissionRepository(pool *pgxpool.Pool) *MissionRepository {
 }
 
 func (r *MissionRepository) loadMissions() {
-	paths := []string{
-		"../shared/missions.json",
-		"shared/missions.json",
-		"/app/shared/missions.json",
-	}
-	for _, path := range paths {
-		data, err := os.ReadFile(path)
-		if err != nil {
-			continue
-		}
-		var wrapper struct {
-			Missions          []MissionDef       `json:"missions"`
-			AttendanceRewards []AttendanceReward  `json:"attendance_rewards"`
-		}
-		if err := json.Unmarshal(data, &wrapper); err != nil {
-			log.Error().Err(err).Msg("Failed to parse missions.json")
-			continue
-		}
-		r.missionDefs = wrapper.Missions
-		r.attendanceRewards = wrapper.AttendanceRewards
-		log.Info().Int("missions", len(r.missionDefs)).Int("attendance", len(r.attendanceRewards)).Msg("Loaded mission data")
+	ctx := context.Background()
+
+	// Load missions from DB
+	rows, err := r.pool.Query(ctx, `SELECT id, name, description, action, target, reward_gold, reward_gems FROM game_missions WHERE is_active = true ORDER BY id`)
+	if err != nil {
+		log.Warn().Err(err).Msg("Failed to load missions from DB")
 		return
 	}
-	log.Warn().Msg("No missions.json found")
+	defer rows.Close()
+	for rows.Next() {
+		var m MissionDef
+		if rows.Scan(&m.ID, &m.Name, &m.Description, &m.Action, &m.Target, &m.Reward.Gold, &m.Reward.Gems) == nil {
+			r.missionDefs = append(r.missionDefs, m)
+		}
+	}
+
+	// Load attendance rewards from DB
+	rows2, err := r.pool.Query(ctx, `SELECT day, gold, gems FROM game_attendance_rewards ORDER BY day`)
+	if err != nil {
+		log.Warn().Err(err).Msg("Failed to load attendance rewards from DB")
+		return
+	}
+	defer rows2.Close()
+	for rows2.Next() {
+		var a AttendanceReward
+		if rows2.Scan(&a.Day, &a.Gold, &a.Gems) == nil {
+			r.attendanceRewards = append(r.attendanceRewards, a)
+		}
+	}
+
+	log.Info().Int("missions", len(r.missionDefs)).Int("attendance", len(r.attendanceRewards)).Msg("Loaded mission data from DB")
 }
 
 // GetOrCreateDaily returns today's daily missions for a user, creating them if needed.

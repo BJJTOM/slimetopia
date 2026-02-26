@@ -1,0 +1,188 @@
+{{define "mutations.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+{{if eq .Message "created"}}<div class="msg-success">생성 완료</div>
+{{else if eq .Message "updated"}}<div class="msg-success">수정 완료</div>
+{{else if eq .Message "saved"}}<div class="msg-success">저장 완료</div>
+{{else if eq .Message "deleted"}}<div class="msg-success">삭제 완료</div>
+{{else if eq .Message "error"}}<div class="msg-error">오류가 발생했습니다</div>
+{{end}}
+
+{{if .Error}}
+<div class="msg-error">{{.Error}}</div>
+{{end}}
+
+<!-- Create Form -->
+{{if .ShowCreate}}
+<div class="stat-card" style="margin-bottom: 24px;">
+  <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #55efc4;">새 돌연변이 레시피 생성</div>
+  <form method="POST" action="/admin/gamedata/mutations/create">
+    <div class="form-row">
+      <label style="min-width: 160px;">Required Element A</label>
+      <select name="required_element_a" required style="width: 160px;">
+        <option value="">선택</option>
+        <option value="water">water</option>
+        <option value="fire">fire</option>
+        <option value="grass">grass</option>
+        <option value="light">light</option>
+        <option value="dark">dark</option>
+        <option value="ice">ice</option>
+        <option value="electric">electric</option>
+        <option value="poison">poison</option>
+        <option value="earth">earth</option>
+        <option value="wind">wind</option>
+        <option value="celestial">celestial</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 160px;">Required Element B</label>
+      <select name="required_element_b" required style="width: 160px;">
+        <option value="">선택</option>
+        <option value="water">water</option>
+        <option value="fire">fire</option>
+        <option value="grass">grass</option>
+        <option value="light">light</option>
+        <option value="dark">dark</option>
+        <option value="ice">ice</option>
+        <option value="electric">electric</option>
+        <option value="poison">poison</option>
+        <option value="earth">earth</option>
+        <option value="wind">wind</option>
+        <option value="celestial">celestial</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 160px;">Required Material</label>
+      <input type="number" name="required_material" placeholder="소재 ID" required style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 160px;">Result Species ID</label>
+      <input type="number" name="result_species_id" placeholder="결과 종족 ID" required style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 160px;">Min Collection Score</label>
+      <input type="number" name="min_collection_score" placeholder="최소 컬렉션 점수" value="0" style="width: 120px;" />
+    </div>
+    <div style="display: flex; gap: 8px; margin-top: 8px;">
+      <button type="submit" class="btn btn-primary">생성</button>
+      <a href="/admin/gamedata/mutations" class="btn btn-danger btn-sm" style="display: inline-flex; align-items: center;">취소</a>
+    </div>
+  </form>
+</div>
+{{end}}
+
+<!-- Edit Form -->
+{{if .EditItem}}
+{{with .EditItem}}
+<div class="stat-card" style="margin-bottom: 24px; border-color: rgba(162,155,254,0.3);">
+  <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #a29bfe;">돌연변이 #{{.ID}} 수정</div>
+  <form method="POST" action="/admin/gamedata/mutations/{{.ID}}/update">
+    <div class="form-row">
+      <label style="min-width: 160px;">ID</label>
+      <span style="font-size: 13px; color: #636e72;">#{{.ID}} (변경 불가)</span>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 160px;">Required Element A</label>
+      <select name="required_element_a" required style="width: 160px;">
+        <option value="water" {{if eq .RequiredElementA "water"}}selected{{end}}>water</option>
+        <option value="fire" {{if eq .RequiredElementA "fire"}}selected{{end}}>fire</option>
+        <option value="grass" {{if eq .RequiredElementA "grass"}}selected{{end}}>grass</option>
+        <option value="light" {{if eq .RequiredElementA "light"}}selected{{end}}>light</option>
+        <option value="dark" {{if eq .RequiredElementA "dark"}}selected{{end}}>dark</option>
+        <option value="ice" {{if eq .RequiredElementA "ice"}}selected{{end}}>ice</option>
+        <option value="electric" {{if eq .RequiredElementA "electric"}}selected{{end}}>electric</option>
+        <option value="poison" {{if eq .RequiredElementA "poison"}}selected{{end}}>poison</option>
+        <option value="earth" {{if eq .RequiredElementA "earth"}}selected{{end}}>earth</option>
+        <option value="wind" {{if eq .RequiredElementA "wind"}}selected{{end}}>wind</option>
+        <option value="celestial" {{if eq .RequiredElementA "celestial"}}selected{{end}}>celestial</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 160px;">Required Element B</label>
+      <select name="required_element_b" required style="width: 160px;">
+        <option value="water" {{if eq .RequiredElementB "water"}}selected{{end}}>water</option>
+        <option value="fire" {{if eq .RequiredElementB "fire"}}selected{{end}}>fire</option>
+        <option value="grass" {{if eq .RequiredElementB "grass"}}selected{{end}}>grass</option>
+        <option value="light" {{if eq .RequiredElementB "light"}}selected{{end}}>light</option>
+        <option value="dark" {{if eq .RequiredElementB "dark"}}selected{{end}}>dark</option>
+        <option value="ice" {{if eq .RequiredElementB "ice"}}selected{{end}}>ice</option>
+        <option value="electric" {{if eq .RequiredElementB "electric"}}selected{{end}}>electric</option>
+        <option value="poison" {{if eq .RequiredElementB "poison"}}selected{{end}}>poison</option>
+        <option value="earth" {{if eq .RequiredElementB "earth"}}selected{{end}}>earth</option>
+        <option value="wind" {{if eq .RequiredElementB "wind"}}selected{{end}}>wind</option>
+        <option value="celestial" {{if eq .RequiredElementB "celestial"}}selected{{end}}>celestial</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 160px;">Required Material</label>
+      <input type="number" name="required_material" value="{{.RequiredMaterial}}" required style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 160px;">Result Species ID</label>
+      <input type="number" name="result_species_id" value="{{.ResultSpeciesID}}" required style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 160px;">Min Collection Score</label>
+      <input type="number" name="min_collection_score" value="{{.MinCollectionScore}}" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 160px;">Active</label>
+      <input type="checkbox" name="is_active" {{if .IsActive}}checked{{end}} style="width: auto;" />
+      <span style="font-size: 11px; color: #636e72;">비활성화 시 게임에서 사용 불가</span>
+    </div>
+    <div style="display: flex; gap: 8px; margin-top: 8px;">
+      <button type="submit" class="btn btn-primary">저장</button>
+      <a href="/admin/gamedata/mutations" class="btn btn-danger btn-sm" style="display: inline-flex; align-items: center;">취소</a>
+    </div>
+  </form>
+</div>
+{{end}}
+{{end}}
+
+<!-- Header -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+  <p style="font-size: 12px; color: #636e72;">총 {{.Total}}개 돌연변이 레시피</p>
+  {{if not .ShowCreate}}
+  <a href="/admin/gamedata/mutations?create=1" class="btn btn-primary btn-sm">+ 새 돌연변이</a>
+  {{end}}
+</div>
+
+<!-- Mutations Table -->
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Element A</th>
+      <th>Element B</th>
+      <th>Required Material</th>
+      <th>Result Species</th>
+      <th>Min Collection Score</th>
+      <th>Active</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Mutations}}
+    <tr style="{{if not .IsActive}}opacity: 0.5;{{end}}">
+      <td style="color: #636e72;">{{.ID}}</td>
+      <td><span class="badge" style="background: rgba(116,185,255,0.15); color: #74b9ff;">{{.RequiredElementA}}</span></td>
+      <td><span class="badge" style="background: rgba(116,185,255,0.15); color: #74b9ff;">{{.RequiredElementB}}</span></td>
+      <td style="color: #ffeaa7;">{{.RequiredMaterial}}</td>
+      <td style="color: #55efc4; font-weight: 700;">{{.ResultSpeciesID}}</td>
+      <td style="color: #b2bec3;">{{.MinCollectionScore}}</td>
+      <td>{{if .IsActive}}<span style="color: #55efc4;">활성</span>{{else}}<span style="color: #ff6b6b;">비활성</span>{{end}}</td>
+      <td style="white-space: nowrap;">
+        <a href="/admin/gamedata/mutations?edit={{.ID}}" class="btn btn-sm btn-warning">수정</a>
+        <form method="POST" action="/admin/gamedata/mutations/{{.ID}}/delete" style="display:inline; margin-left: 4px;">
+          <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('돌연변이 #{{.ID}}을(를) 정말 삭제하시겠습니까?')">삭제</button>
+        </form>
+      </td>
+    </tr>
+    {{else}}
+    <tr><td colspan="8" style="text-align:center; color:#636e72; padding: 24px;">돌연변이 레시피 데이터 없음</td></tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}

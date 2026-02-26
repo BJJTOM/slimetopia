@@ -2,11 +2,9 @@ package game
 
 import (
 	"encoding/json"
-	"os"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog/log"
 )
 
 type SeasonShopItem struct {
@@ -32,73 +30,51 @@ type Season struct {
 	Description      string           `json:"description"`
 }
 
-var seasons []Season
-
-func init() {
-	loadSeasons()
-}
-
-func loadSeasons() {
-	paths := []string{
-		"../shared/seasons.json",
-		"shared/seasons.json",
-		"/app/shared/seasons.json",
-	}
-
-	for _, path := range paths {
-		data, err := os.ReadFile(path)
-		if err != nil {
-			continue
-		}
-		var wrapper struct {
-			Seasons []Season `json:"seasons"`
-		}
-		if err := json.Unmarshal(data, &wrapper); err != nil {
-			log.Error().Err(err).Msg("Failed to parse seasons.json")
-			continue
-		}
-		seasons = wrapper.Seasons
-		log.Info().Int("count", len(seasons)).Msg("Loaded seasons")
-		return
-	}
-	log.Warn().Msg("No seasons.json found, seasons empty")
-}
-
 // GET /api/seasons/active — returns the currently active season, if any
 func (h *Handler) GetActiveSeason(c *fiber.Ctx) error {
+	ctx := c.Context()
+
+	// Query active season from DB
+	gameSeason, err := h.gameDataRepo.GetActiveSeason(ctx)
+	if err != nil {
+		// No active season found
+		return c.JSON(fiber.Map{
+			"active": false,
+			"season": nil,
+		})
+	}
+
+	// Parse special_shop_items from JSON
+	var shopItems []SeasonShopItem
+	if len(gameSeason.SpecialShopItems) > 0 {
+		json.Unmarshal(gameSeason.SpecialShopItems, &shopItems)
+	}
+
+	// Calculate days left
 	now := time.Now()
-
-	for _, s := range seasons {
-		start, err1 := time.Parse("2006-01-02", s.Start)
-		end, err2 := time.Parse("2006-01-02", s.End)
-		if err1 != nil || err2 != nil {
-			continue
-		}
-		// Include the full end day
-		end = end.Add(24*time.Hour - time.Second)
-
-		if now.After(start) && now.Before(end) {
-			daysLeft := int(end.Sub(now).Hours()/24) + 1
-			return c.JSON(fiber.Map{
-				"active": true,
-				"season": fiber.Map{
-					"id":                 s.ID,
-					"name":               s.Name,
-					"name_en":            s.NameEn,
-					"start":              s.Start,
-					"end":                s.End,
-					"limited_species":    s.LimitedSpecies,
-					"special_shop_items": s.SpecialShopItems,
-					"banner_color":       s.BannerColor,
-					"description":        s.Description,
-					"days_left":          daysLeft,
-				},
-			})
-		}
+	end, err := time.Parse("2006-01-02", gameSeason.EndDate)
+	if err != nil {
+		end = now
+	}
+	end = end.Add(24*time.Hour - time.Second)
+	daysLeft := int(end.Sub(now).Hours()/24) + 1
+	if daysLeft < 0 {
+		daysLeft = 0
 	}
 
 	return c.JSON(fiber.Map{
-		"active": false,
-		"season": nil,
+		"active": true,
+		"season": fiber.Map{
+			"id":                 gameSeason.ID,
+			"name":               gameSeason.Name,
+			"name_en":            gameSeason.NameEN,
+			"start":              gameSeason.StartDate,
+			"end":                gameSeason.EndDate,
+			"limited_species":    gameSeason.LimitedSpecies,
+			"special_shop_items": shopItems,
+			"banner_color":       gameSeason.BannerColor,
+			"description":        gameSeason.Description,
+			"days_left":          daysLeft,
+		},
 	})
 }

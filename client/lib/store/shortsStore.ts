@@ -109,21 +109,13 @@ export const useShortsStore = create<ShortsState>((set, get) => ({
   },
 
   likeShort: async (token, shortId) => {
+    // State is updated optimistically by the component — don't double-update here
     await authApi(`/api/shorts/${shortId}/like`, token, { method: "POST" });
-    set({
-      shorts: get().shorts.map((s) =>
-        s.id === shortId ? { ...s, liked: true, likes: s.likes + 1 } : s,
-      ),
-    });
   },
 
   unlikeShort: async (token, shortId) => {
+    // State is updated optimistically by the component — don't double-update here
     await authApi(`/api/shorts/${shortId}/unlike`, token, { method: "POST" });
-    set({
-      shorts: get().shorts.map((s) =>
-        s.id === shortId ? { ...s, liked: false, likes: Math.max(0, s.likes - 1) } : s,
-      ),
-    });
   },
 
   viewShort: async (token, shortId) => {
@@ -156,7 +148,7 @@ export const useShortsStore = create<ShortsState>((set, get) => ({
         `/api/shorts/${shortId}/comments`,
         token,
       );
-      set({ comments: res.comments, commentsLoading: false });
+      set({ comments: res.comments || [], commentsLoading: false });
     } catch {
       set({ commentsLoading: false });
     }

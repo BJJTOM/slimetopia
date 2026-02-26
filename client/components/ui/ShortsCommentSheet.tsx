@@ -16,11 +16,11 @@ export default function ShortsCommentSheet({ shortId, onClose }: Props) {
 
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (token) fetchComments(token, shortId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, shortId]);
 
   const handleSend = async () => {
@@ -33,7 +33,6 @@ export default function ShortsCommentSheet({ shortId, onClose }: Props) {
     try {
       await createComment(token, shortId, text.trim());
       setText("");
-      // Scroll to top to see new comment
       listRef.current?.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
       toastError("댓글 작성에 실패했어요");
@@ -55,48 +54,60 @@ export default function ShortsCommentSheet({ shortId, onClose }: Props) {
     return d.toLocaleDateString("ko-KR", { month: "short", day: "numeric" });
   };
 
+  const safeComments = comments || [];
+
   return (
     <div className="fixed inset-0 z-50 flex items-end" onClick={onClose}>
       <div
-        className="w-full bg-[#1a1a2e] rounded-t-3xl max-h-[55vh] flex flex-col"
-        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        className="w-full rounded-t-3xl max-h-[55vh] flex flex-col"
+        style={{
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+          background: "linear-gradient(180deg, #2C1810, #1A0E08)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle bar + header */}
-        <div className="flex flex-col items-center pt-3 pb-2 px-5 border-b border-white/5">
-          <div className="w-10 h-1 rounded-full bg-white/20 mb-2" />
+        <div className="flex flex-col items-center pt-3 pb-2 px-5"
+          style={{ borderBottom: "3px double #8B6914" }}>
+          <div className="w-10 h-1 rounded-full mb-2" style={{ background: "rgba(201,168,76,0.3)" }} />
           <div className="flex items-center justify-between w-full">
-            <h3 className="text-white font-bold text-sm">댓글 {comments.length > 0 ? `(${comments.length})` : ""}</h3>
-            <button onClick={onClose} className="text-white/40 text-sm">닫기</button>
+            <h3 className="font-bold text-sm" style={{ color: "#F5E6C8", fontFamily: "Georgia, 'Times New Roman', serif" }}>
+              댓글 {safeComments.length > 0 ? `(${safeComments.length})` : ""}
+            </h3>
+            <button onClick={onClose} className="text-sm" style={{ color: "rgba(245,230,200,0.4)" }}>닫기</button>
           </div>
         </div>
 
         {/* Comment list */}
         <div ref={listRef} className="flex-1 overflow-y-auto px-5 py-3 space-y-3">
-          {commentsLoading && comments.length === 0 ? (
+          {commentsLoading && safeComments.length === 0 ? (
             <div className="flex justify-center py-8">
-              <div className="w-6 h-6 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+              <div className="w-6 h-6 rounded-full animate-spin"
+                style={{ border: "2px solid rgba(201,168,76,0.2)", borderTopColor: "rgba(201,168,76,0.6)" }} />
             </div>
-          ) : comments.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-white/30 text-sm">
-              <span className="text-3xl mb-2">💬</span>
+          ) : safeComments.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-sm"
+              style={{ color: "rgba(245,230,200,0.3)" }}>
+              <span className="text-3xl mb-2 opacity-50">💬</span>
               첫 댓글을 남겨보세요!
             </div>
           ) : (
-            comments.map((c) => (
+            safeComments.map((c) => (
               <div key={c.id} className="flex gap-2.5">
-                <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5">
-                  👤
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] flex-shrink-0 mt-0.5"
+                  style={{ background: "rgba(201,168,76,0.15)", color: "#C9A84C" }}>
+                  {c.nickname?.[0] || "?"}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-white/70 text-xs font-bold">{c.nickname}</span>
-                    <span className="text-white/20 text-[10px]">{formatTime(c.created_at)}</span>
+                    <span className="text-xs font-bold" style={{ color: "rgba(245,230,200,0.7)" }}>{c.nickname}</span>
+                    <span className="text-[10px]" style={{ color: "rgba(245,230,200,0.2)" }}>{formatTime(c.created_at)}</span>
                     {c.is_mine && (
-                      <span className="text-[10px] text-purple-400/60 bg-purple-500/10 px-1.5 py-0.5 rounded">나</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded"
+                        style={{ background: "rgba(201,168,76,0.1)", color: "#C9A84C" }}>나</span>
                     )}
                   </div>
-                  <p className="text-white/80 text-xs leading-relaxed mt-0.5">{c.content}</p>
+                  <p className="text-xs leading-relaxed mt-0.5" style={{ color: "rgba(245,230,200,0.8)" }}>{c.content}</p>
                 </div>
               </div>
             ))
@@ -104,19 +115,24 @@ export default function ShortsCommentSheet({ shortId, onClose }: Props) {
         </div>
 
         {/* Input */}
-        <div className="px-4 py-3 border-t border-white/5 flex gap-2">
+        <div className="px-4 py-3 flex gap-2" style={{ borderTop: "1px solid rgba(139,105,20,0.15)" }}>
           <input
-            ref={inputRef}
             value={text}
             onChange={(e) => setText(e.target.value.slice(0, 200))}
             onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
             placeholder="댓글을 입력하세요..."
-            className="flex-1 bg-white/5 text-white text-sm rounded-full px-4 py-2.5 outline-none border border-white/5 focus:border-purple-500/30 placeholder:text-white/20"
+            className="flex-1 text-sm rounded-full px-4 py-2.5 outline-none"
+            style={{
+              background: "rgba(245,230,200,0.05)",
+              color: "#F5E6C8",
+              border: "1px solid rgba(139,105,20,0.15)",
+            }}
           />
           <button
             onClick={handleSend}
             disabled={!text.trim() || sending}
-            className="px-4 py-2.5 rounded-full bg-purple-500/30 text-purple-300 text-sm font-bold disabled:opacity-30"
+            className="px-4 py-2.5 rounded-full text-sm font-bold disabled:opacity-30 transition"
+            style={{ background: "linear-gradient(135deg, #C9A84C, #8B6914)", color: "#fff" }}
           >
             {sending ? "..." : "전송"}
           </button>

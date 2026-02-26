@@ -1,12 +1,31 @@
 package game
 
 import (
+	"encoding/json"
+
 	"github.com/gofiber/fiber/v2"
 )
 
-// GET /api/materials — list all material definitions
+// GET /api/materials — list all material definitions from DB
 func (h *Handler) GetMaterials(c *fiber.Ctx) error {
-	return c.JSON(fiber.Map{"materials": allMaterials})
+	ctx := c.Context()
+	dbMaterials, err := h.gameDataRepo.GetAllMaterials(ctx)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to fetch materials"})
+	}
+
+	materials := make([]Material, 0, len(dbMaterials))
+	for _, m := range dbMaterials {
+		var effects MaterialEffect
+		json.Unmarshal(m.Effects, &effects)
+		materials = append(materials, Material{
+			ID: m.ID, Name: m.Name, NameEN: m.NameEN, Type: m.Type,
+			Rarity: m.Rarity, Icon: m.Icon, Description: m.Description,
+			Effects: effects,
+		})
+	}
+
+	return c.JSON(fiber.Map{"materials": materials})
 }
 
 // GET /api/materials/inventory — user's material inventory
@@ -47,13 +66,13 @@ func (h *Handler) GetCollectionScore(c *fiber.Ctx) error {
 	ctx := c.Context()
 	pool := h.slimeRepo.Pool()
 
-	speciesPoints, setBonus, firstDiscoveryBonus, total := CalculateCollectionScore(ctx, pool, userID)
+	speciesPoints, setBonus, firstDiscoveryBonus, total := h.CalculateCollectionScore(ctx, pool, userID)
 
 	return c.JSON(fiber.Map{
-		"species_points":       speciesPoints,
-		"set_bonus":            setBonus,
+		"species_points":        speciesPoints,
+		"set_bonus":             setBonus,
 		"first_discovery_bonus": firstDiscoveryBonus,
-		"total":                total,
+		"total":                 total,
 	})
 }
 
@@ -64,20 +83,25 @@ func (h *Handler) GetCodexSets(c *fiber.Ctx) error {
 	pool := h.slimeRepo.Pool()
 
 	type SetProgress struct {
-		ID          int    `json:"id"`
-		Name        string `json:"name"`
-		NameEN      string `json:"name_en"`
-		Description string `json:"description"`
-		SpeciesIDs  []int  `json:"species_ids"`
-		Completed   int    `json:"completed"`
-		Total       int    `json:"total"`
-		BonusScore  int    `json:"bonus_score"`
+		ID          int     `json:"id"`
+		Name        string  `json:"name"`
+		NameEN      string  `json:"name_en"`
+		Description string  `json:"description"`
+		SpeciesIDs  []int   `json:"species_ids"`
+		Completed   int     `json:"completed"`
+		Total       int     `json:"total"`
+		BonusScore  int     `json:"bonus_score"`
 		Buff        SetBuff `json:"buff"`
-		IsComplete  bool   `json:"is_complete"`
+		IsComplete  bool    `json:"is_complete"`
 	}
 
-	sets := make([]SetProgress, 0, len(allSets))
-	for _, s := range allSets {
+	dbSets, err := h.gameDataRepo.GetAllSets(ctx)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to fetch sets"})
+	}
+
+	sets := make([]SetProgress, 0, len(dbSets))
+	for _, s := range dbSets {
 		sp := SetProgress{
 			ID:          s.ID,
 			Name:        s.Name,
@@ -86,7 +110,11 @@ func (h *Handler) GetCodexSets(c *fiber.Ctx) error {
 			SpeciesIDs:  s.SpeciesIDs,
 			Total:       len(s.SpeciesIDs),
 			BonusScore:  s.BonusScore,
-			Buff:        s.Buff,
+			Buff: SetBuff{
+				Type:  s.BuffType,
+				Value: s.BuffValue,
+				Label: s.BuffLabel,
+			},
 		}
 		for _, sid := range s.SpeciesIDs {
 			var exists bool

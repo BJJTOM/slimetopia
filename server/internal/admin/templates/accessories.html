@@ -3,43 +3,159 @@
 {{end}}
 
 {{define "content"}}
-{{if .Error}}
-<div class="msg-error">{{.Error}}</div>
+{{if eq .Message "created"}}<div class="msg-success">생성 완료</div>{{else if eq .Message "updated"}}<div class="msg-success">수정 완료</div>{{else if eq .Message "deleted"}}<div class="msg-success">삭제 완료</div>{{else if eq .Message "error"}}<div class="msg-error">오류가 발생했습니다</div>{{end}}
+
+<!-- Create Form -->
+{{if .ShowCreate}}
+<div class="stat-card" style="margin-bottom: 24px;">
+  <div class="label" style="margin-bottom: 16px; font-size: 16px; color: #55efc4;">새 악세서리 생성</div>
+  <form method="POST" action="/admin/gamedata/accessories/create">
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">ID</label>
+      <input type="number" name="id" required style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">이름</label>
+      <input type="text" name="name" required style="width: 250px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">영문명</label>
+      <input type="text" name="name_en" required style="width: 250px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">슬롯</label>
+      <select name="slot" style="width: 140px;">
+        <option value="head">head</option>
+        <option value="face">face</option>
+        <option value="body">body</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">아이콘</label>
+      <input type="text" name="icon" style="width: 250px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">골드 비용</label>
+      <input type="number" name="cost_gold" value="0" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">젬 비용</label>
+      <input type="number" name="cost_gems" value="0" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">SVG 오버레이</label>
+      <input type="text" name="svg_overlay" style="width: 100%;" />
+    </div>
+    <div style="margin-top: 16px; display: flex; gap: 8px;">
+      <button type="submit" class="btn btn-primary">생성</button>
+      <a href="/admin/gamedata/accessories" class="btn btn-sm" style="background: rgba(255,255,255,0.06); color: #b2bec3;">취소</a>
+    </div>
+  </form>
+</div>
 {{end}}
 
-<p style="font-size: 12px; color: #636e72; margin-bottom: 12px;">총 {{.Total}}개 악세서리</p>
+<!-- Edit Form -->
+{{if .EditItem}}
+<div class="stat-card" style="margin-bottom: 24px;">
+  <div class="label" style="margin-bottom: 16px; font-size: 16px; color: #a29bfe;">악세서리 수정 — #{{.EditItem.ID}}</div>
+  <form method="POST" action="/admin/gamedata/accessories/{{.EditItem.ID}}/update">
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">ID</label>
+      <input type="number" name="id" value="{{.EditItem.ID}}" readonly style="width: 120px; opacity: 0.5;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">이름</label>
+      <input type="text" name="name" value="{{.EditItem.Name}}" required style="width: 250px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">영문명</label>
+      <input type="text" name="name_en" value="{{.EditItem.NameEN}}" required style="width: 250px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">슬롯</label>
+      <select name="slot" style="width: 140px;">
+        <option value="head" {{if eq .EditItem.Slot "head"}}selected{{end}}>head</option>
+        <option value="face" {{if eq .EditItem.Slot "face"}}selected{{end}}>face</option>
+        <option value="body" {{if eq .EditItem.Slot "body"}}selected{{end}}>body</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">아이콘</label>
+      <input type="text" name="icon" value="{{.EditItem.Icon}}" style="width: 250px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">골드 비용</label>
+      <input type="number" name="cost_gold" value="{{.EditItem.CostGold}}" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">젬 비용</label>
+      <input type="number" name="cost_gems" value="{{.EditItem.CostGems}}" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">SVG 오버레이</label>
+      <input type="text" name="svg_overlay" value="{{.EditItem.SvgOverlay}}" style="width: 100%;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">활성화</label>
+      <input type="checkbox" name="is_active" value="true" {{if .EditItem.IsActive}}checked{{end}} />
+    </div>
+    <div style="margin-top: 16px; display: flex; gap: 8px;">
+      <button type="submit" class="btn btn-primary">수정</button>
+      <a href="/admin/gamedata/accessories" class="btn btn-sm" style="background: rgba(255,255,255,0.06); color: #b2bec3;">취소</a>
+    </div>
+  </form>
+</div>
+{{end}}
 
+<!-- Header -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+  <h2 style="margin: 0; font-size: 18px; color: #dfe6e9;">악세서리 목록</h2>
+  <a href="/admin/gamedata/accessories?create=1" class="btn btn-primary">+ 새 악세서리</a>
+</div>
+
+<!-- Accessories Table -->
 <table>
   <thead>
     <tr>
-      <th>ID</th>
-      <th>아이콘</th>
+      <th style="width: 50px;">ID</th>
+      <th style="width: 50px;">아이콘</th>
       <th>이름</th>
       <th>영문명</th>
-      <th>슬롯</th>
-      <th>골드 비용</th>
-      <th>젬 비용</th>
+      <th style="width: 80px;">슬롯</th>
+      <th style="width: 80px;">골드</th>
+      <th style="width: 80px;">젬</th>
+      <th style="width: 120px;">SVG</th>
+      <th style="width: 60px;">활성</th>
+      <th style="width: 130px;">관리</th>
     </tr>
   </thead>
   <tbody>
     {{range .Accessories}}
-    <tr>
-      <td style="color: #636e72;">{{.ID}}</td>
-      <td style="font-size: 18px;">{{.Icon}}</td>
-      <td>{{.Name}}</td>
-      <td style="color: #b2bec3;">{{.NameEN}}</td>
+    <tr style="{{if not .IsActive}}opacity: 0.5;{{end}}">
+      <td style="font-size: 12px; color: #636e72;">{{.ID}}</td>
+      <td style="font-size: 18px; text-align: center;">{{.Icon}}</td>
+      <td style="font-weight: 600; color: #dfe6e9;">{{.Name}}</td>
+      <td style="font-size: 12px; color: #b2bec3;">{{.NameEN}}</td>
       <td>
-        {{if eq .Slot "head"}}<span class="badge" style="background: rgba(255,234,167,0.15); color: #ffeaa7;">head</span>
-        {{else if eq .Slot "face"}}<span class="badge" style="background: rgba(116,185,255,0.15); color: #74b9ff;">face</span>
-        {{else if eq .Slot "body"}}<span class="badge" style="background: rgba(85,239,196,0.15); color: #55efc4;">body</span>
-        {{else}}<span class="badge badge-common">{{.Slot}}</span>
-        {{end}}
+        <span style="font-size: 11px; padding: 2px 8px; border-radius: 4px; {{if eq .Slot "head"}}background: rgba(255,234,167,0.15); color: #ffeaa7;{{else if eq .Slot "face"}}background: rgba(116,185,255,0.15); color: #74b9ff;{{else if eq .Slot "body"}}background: rgba(85,239,196,0.15); color: #55efc4;{{end}}">{{.Slot}}</span>
       </td>
-      <td style="color: #ffeaa7;">{{if gt .CostGold 0}}{{.CostGold}}{{else}}-{{end}}</td>
-      <td style="color: #a29bfe;">{{if gt .CostGems 0}}{{.CostGems}}{{else}}-{{end}}</td>
+      <td style="color: #ffeaa7; font-size: 13px;">{{.CostGold}}</td>
+      <td style="color: #a29bfe; font-size: 13px;">{{.CostGems}}</td>
+      <td style="font-size: 11px; color: #636e72; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{.SvgOverlay}}</td>
+      <td style="text-align: center;">
+        {{if .IsActive}}<span style="color: #55efc4;">ON</span>{{else}}<span style="color: #ff6b6b;">OFF</span>{{end}}
+      </td>
+      <td>
+        <div style="display: flex; gap: 4px;">
+          <a href="/admin/gamedata/accessories?edit={{.ID}}" class="btn btn-warning btn-sm">수정</a>
+          <form method="POST" action="/admin/gamedata/accessories/{{.ID}}/delete" style="margin: 0;">
+            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('삭제하시겠습니까?')">삭제</button>
+          </form>
+        </div>
+      </td>
     </tr>
     {{else}}
-    <tr><td colspan="7" style="text-align:center; color:#636e72; padding: 24px;">악세서리 데이터 없음</td></tr>
+    <tr><td colspan="10" style="text-align: center; color: #636e72; padding: 24px;">악세서리 데이터 없음</td></tr>
     {{end}}
   </tbody>
 </table>

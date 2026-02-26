@@ -12,16 +12,18 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
+	"github.com/slimetopia/server/internal/repository"
 )
 
 type AdminHandler struct {
-	pool      *pgxpool.Pool
-	jwtSecret []byte
-	templates map[string]*template.Template
+	pool         *pgxpool.Pool
+	jwtSecret    []byte
+	templates    map[string]*template.Template
+	gameDataRepo *repository.GameDataRepository
 }
 
-func NewAdminHandler(pool *pgxpool.Pool, jwtSecret string) *AdminHandler {
-	h := &AdminHandler{pool: pool, jwtSecret: []byte(jwtSecret)}
+func NewAdminHandler(pool *pgxpool.Pool, jwtSecret string, gameDataRepo *repository.GameDataRepository) *AdminHandler {
+	h := &AdminHandler{pool: pool, jwtSecret: []byte(jwtSecret), gameDataRepo: gameDataRepo}
 	h.loadTemplates()
 	return h
 }
@@ -49,19 +51,65 @@ func adminFuncMap() template.FuncMap {
 		"abs": func(n int64) int64 {
 			return int64(math.Abs(float64(n)))
 		},
-		"jsonPretty": func(s string) string {
-			var v interface{}
-			if err := json.Unmarshal([]byte(s), &v); err != nil {
-				return s
+		"jsonPretty": func(v interface{}) string {
+			var data []byte
+			switch val := v.(type) {
+			case string:
+				data = []byte(val)
+			case json.RawMessage:
+				data = []byte(val)
+			case []byte:
+				data = val
+			default:
+				b, err := json.Marshal(val)
+				if err != nil {
+					return fmt.Sprintf("%v", val)
+				}
+				data = b
 			}
-			b, err := json.MarshalIndent(v, "", "  ")
+			var parsed interface{}
+			if err := json.Unmarshal(data, &parsed); err != nil {
+				return string(data)
+			}
+			b, err := json.MarshalIndent(parsed, "", "  ")
 			if err != nil {
-				return s
+				return string(data)
 			}
 			return string(b)
 		},
 		"formatDate": func(t time.Time) string {
 			return t.Format("01/02 15:04")
+		},
+		"jsonStr": func(v interface{}) string {
+			switch val := v.(type) {
+			case json.RawMessage:
+				if val == nil {
+					return "{}"
+				}
+				return string(val)
+			case []byte:
+				if val == nil {
+					return "{}"
+				}
+				return string(val)
+			case string:
+				return val
+			default:
+				return "{}"
+			}
+		},
+		"intSliceStr": func(ids []int) string {
+			if len(ids) == 0 {
+				return ""
+			}
+			s := ""
+			for i, id := range ids {
+				if i > 0 {
+					s += ","
+				}
+				s += fmt.Sprintf("%d", id)
+			}
+			return s
 		},
 	}
 }
@@ -158,18 +206,75 @@ func RegisterAdminRoutes(app *fiber.App, h *AdminHandler) {
 	protected.Post("/slime-instances/:id/edit", h.SlimeEdit)
 	protected.Post("/slime-instances/:id/delete", h.SlimeDelete)
 
-	// Game data viewers
+	// Game data viewers + CRUD
 	protected.Get("/gamedata/species", h.SpeciesViewer)
-	protected.Get("/gamedata/recipes", h.RecipeViewer)
-	protected.Get("/gamedata/explorations", h.ExplorationViewer)
-	protected.Get("/gamedata/materials", h.MaterialViewer)
-	protected.Get("/gamedata/achievements", h.AchievementViewer)
-	protected.Get("/gamedata/accessories", h.AccessoryViewer)
 	protected.Get("/gamedata/gacha", h.GachaRateViewer)
 
-	// Shop
+	// Recipes CRUD
+	protected.Get("/gamedata/recipes", h.RecipeViewer)
+	protected.Post("/gamedata/recipes/create", h.RecipeCreate)
+	protected.Post("/gamedata/recipes/:id/update", h.RecipeUpdate)
+	protected.Post("/gamedata/recipes/:id/delete", h.RecipeDelete)
+
+	// Materials CRUD
+	protected.Get("/gamedata/materials", h.MaterialViewer)
+	protected.Post("/gamedata/materials/create", h.MaterialCreate)
+	protected.Post("/gamedata/materials/:id/update", h.MaterialUpdate)
+	protected.Post("/gamedata/materials/:id/delete", h.MaterialDelete)
+
+	// Explorations CRUD
+	protected.Get("/gamedata/explorations", h.ExplorationViewer)
+	protected.Post("/gamedata/explorations/create", h.ExplorationCreate)
+	protected.Post("/gamedata/explorations/:id/update", h.ExplorationUpdate)
+	protected.Post("/gamedata/explorations/:id/delete", h.ExplorationDelete)
+
+	// Achievements CRUD
+	protected.Get("/gamedata/achievements", h.AchievementViewer)
+	protected.Post("/gamedata/achievements/create", h.AchievementCreate)
+	protected.Post("/gamedata/achievements/:id/update", h.AchievementUpdate)
+	protected.Post("/gamedata/achievements/:id/delete", h.AchievementDelete)
+
+	// Accessories CRUD
+	protected.Get("/gamedata/accessories", h.AccessoryViewer)
+	protected.Post("/gamedata/accessories/create", h.AccessoryCreate)
+	protected.Post("/gamedata/accessories/:id/update", h.AccessoryUpdate)
+	protected.Post("/gamedata/accessories/:id/delete", h.AccessoryDelete)
+
+	// Missions CRUD
+	protected.Get("/gamedata/missions", h.MissionViewer)
+	protected.Post("/gamedata/missions/create", h.MissionCreate)
+	protected.Post("/gamedata/missions/:id/update", h.MissionUpdate)
+	protected.Post("/gamedata/missions/:id/delete", h.MissionDelete)
+
+	// Seasons CRUD
+	protected.Get("/gamedata/seasons", h.SeasonViewer)
+	protected.Post("/gamedata/seasons/create", h.SeasonCreate)
+	protected.Post("/gamedata/seasons/:id/update", h.SeasonUpdate)
+	protected.Post("/gamedata/seasons/:id/delete", h.SeasonDelete)
+
+	// Sets CRUD
+	protected.Get("/gamedata/sets", h.SetViewer)
+	protected.Post("/gamedata/sets/create", h.SetCreate)
+	protected.Post("/gamedata/sets/:id/update", h.SetUpdate)
+	protected.Post("/gamedata/sets/:id/delete", h.SetDelete)
+
+	// Mutations CRUD
+	protected.Get("/gamedata/mutations", h.MutationViewer)
+	protected.Post("/gamedata/mutations/create", h.MutationCreate)
+	protected.Post("/gamedata/mutations/:id/update", h.MutationUpdate)
+	protected.Post("/gamedata/mutations/:id/delete", h.MutationDelete)
+
+	// Evolutions CRUD
+	protected.Get("/gamedata/evolutions", h.EvolutionViewer)
+	protected.Get("/gamedata/evolutions/:species_id", h.EvolutionDetail)
+	protected.Post("/gamedata/evolutions/:species_id/node", h.EvolutionNodeUpsert)
+	protected.Post("/gamedata/evolutions/:species_id/node/:node_id/delete", h.EvolutionNodeDelete)
+
+	// Shop CRUD
 	protected.Get("/shop", h.ShopList)
-	protected.Post("/shop/:id", h.ShopUpdate)
+	protected.Post("/shop/create", h.ShopCreate)
+	protected.Post("/shop/:id/update", h.ShopUpdate)
+	protected.Post("/shop/:id/delete", h.ShopDelete)
 
 	// Announcements
 	protected.Get("/announcements", h.AnnouncementList)

@@ -2,9 +2,7 @@ package game
 
 import (
 	"context"
-	"encoding/json"
 	"math/rand"
-	"os"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog/log"
@@ -30,45 +28,18 @@ type ShopItem struct {
 	EggType     string       `json:"egg_type,omitempty"`
 }
 
-var shopItems []ShopItem
-
-func init() {
-	loadShopItems()
-}
-
-func loadShopItems() {
-	paths := []string{
-		"../shared/shop.json",
-		"shared/shop.json",
-		"/app/shared/shop.json",
+func (h *Handler) findShopItem(id int) *ShopItem {
+	item, err := h.gameDataRepo.GetShopItemByID(context.Background(), id)
+	if err != nil {
+		return nil
 	}
-
-	for _, path := range paths {
-		data, err := os.ReadFile(path)
-		if err != nil {
-			continue
-		}
-		var wrapper struct {
-			Items []ShopItem `json:"items"`
-		}
-		if err := json.Unmarshal(data, &wrapper); err != nil {
-			log.Error().Err(err).Msg("Failed to parse shop.json")
-			continue
-		}
-		shopItems = wrapper.Items
-		log.Info().Int("count", len(shopItems)).Msg("Loaded shop items")
-		return
+	return &ShopItem{
+		ID: item.ID, Name: item.Name, NameEN: item.NameEN,
+		Type: item.Type, Category: item.Category,
+		Cost: ShopItemCost{Gold: item.CostGold, Gems: item.CostGems},
+		Icon: item.Icon, Description: item.Description,
+		Quantity: item.Quantity, EggType: item.EggType,
 	}
-	log.Warn().Msg("No shop.json found, shop items empty")
-}
-
-func findShopItem(id int) *ShopItem {
-	for _, item := range shopItems {
-		if item.ID == id {
-			return &item
-		}
-	}
-	return nil
 }
 
 // hatchEggFromDB: weighted random species selection using DB data
@@ -304,7 +275,22 @@ func filterByElement(species []models.SlimeSpecies, element string) []models.Sli
 
 // GetShopItems returns the shop item list
 func (h *Handler) GetShopItems(c *fiber.Ctx) error {
-	return c.JSON(fiber.Map{"items": shopItems})
+	items, err := h.gameDataRepo.GetAllShopItems(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to load shop items"})
+	}
+	// Convert to ShopItem format for API compatibility
+	result := make([]ShopItem, 0, len(items))
+	for _, item := range items {
+		result = append(result, ShopItem{
+			ID: item.ID, Name: item.Name, NameEN: item.NameEN,
+			Type: item.Type, Category: item.Category,
+			Cost: ShopItemCost{Gold: item.CostGold, Gems: item.CostGems},
+			Icon: item.Icon, Description: item.Description,
+			Quantity: item.Quantity, EggType: item.EggType,
+		})
+	}
+	return c.JSON(fiber.Map{"items": result})
 }
 
 // GetPityStatus returns pity counters for all egg types
@@ -352,7 +338,7 @@ func (h *Handler) BuyItem(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "item_id required"})
 	}
 
-	item := findShopItem(body.ItemID)
+	item := h.findShopItem(body.ItemID)
 	if item == nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "item not found"})
 	}
@@ -979,7 +965,7 @@ func (h *Handler) BuyFoodToInventory(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "quantity must be 1-100"})
 	}
 
-	item := findShopItem(body.ItemID)
+	item := h.findShopItem(body.ItemID)
 	if item == nil || item.Type != "food" {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "food item not found"})
 	}

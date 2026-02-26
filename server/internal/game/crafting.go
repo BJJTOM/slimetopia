@@ -170,7 +170,7 @@ func (h *Handler) CraftItem(c *fiber.Ctx) error {
 	switch recipe.ResultType {
 	case "material":
 		AddMaterial(ctx, pool, userID, recipe.ResultID, recipe.ResultQty)
-		mat := FindMaterial(recipe.ResultID)
+		mat := h.FindMaterial(recipe.ResultID)
 		name := fmt.Sprintf("재료 #%d", recipe.ResultID)
 		if mat != nil {
 			name = mat.Name

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store/authStore";
 import { useGameStore } from "@/lib/store/gameStore";
 import { useLocaleStore } from "@/lib/store/localeStore";
@@ -14,17 +13,8 @@ import ShortsUploadModal from "./ShortsUploadModal";
 
 const NICKNAME_COST = 500;
 
-// Homepage URL: derive host from API URL for LAN/Android compatibility
-const HOMEPAGE_URL = (() => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
-  if (apiUrl) {
-    try {
-      const u = new URL(apiUrl);
-      return `${u.protocol}//${u.hostname}:3003`;
-    } catch { /* fallback */ }
-  }
-  return "http://localhost:3003";
-})();
+// Homepage URL: use environment variable or same-origin root
+const HOMEPAGE_URL = process.env.NEXT_PUBLIC_HOMEPAGE_URL || (typeof window !== "undefined" ? window.location.origin : "/");
 
 // ─── Profile background presets ──────────────────────────────────────────────
 
@@ -61,7 +51,6 @@ interface Props {
 }
 
 export default function ProfilePage({ onClose }: Props) {
-  const router = useRouter();
   const { user, accessToken, fetchUser, logout } = useAuthStore();
   const { slimes, species, equippedAccessories } = useGameStore();
   const { locale, setLocale, t } = useLocaleStore();
@@ -171,7 +160,7 @@ export default function ProfilePage({ onClose }: Props) {
 
   const handleLogout = () => {
     logout();
-    router.push("/login");
+    window.location.replace("/login/");
   };
 
   const handleContactSubmit = () => {

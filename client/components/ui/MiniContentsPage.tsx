@@ -64,48 +64,46 @@ export default function MiniContentsPage({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-[#0a0a1a]">
+    <div className="h-full flex flex-col minigame-container">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 shrink-0"
+      <div className="flex items-center gap-3 px-4 py-3 shrink-0 minigame-header"
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)" }}>
-        <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/5">
-          <span className="text-white/60 text-sm">←</span>
+        <button onClick={onClose} className="minigame-back-btn">
+          <span>{"←"}</span>
         </button>
-        <h1 className="text-white font-bold text-lg">🎮 미니게임</h1>
+        <h1 className="text-gold font-bold text-lg font-serif-game" style={{ letterSpacing: "0.05em" }}>미니게임 광장</h1>
       </div>
 
       {/* Content grid */}
       <div className="flex-1 overflow-y-auto px-4 py-4">
-        <p className="text-white/40 text-xs mb-4">다양한 미니게임에 도전하고 보상을 획득하세요! 🎯</p>
+        <p className="text-[11px] mb-4" style={{ color: "#F5E6C8", opacity: 0.45 }}>다양한 미니게임에 도전하고 보상을 획득하세요!</p>
         <div className="grid grid-cols-2 gap-3">
           {CONTENTS.map((c, idx) => (
             <button
               key={c.id}
               onClick={() => setActive(c.id)}
-              className="rounded-2xl p-4 flex flex-col items-center gap-3 text-center transition-all active:scale-95 hover:scale-[1.02]"
+              className="minigame-hub-card transition-all active:scale-95 hover:scale-[1.02]"
               style={{
-                background: c.gradient,
-                border: `1px solid ${c.border}`,
-                animation: `stagger-slide-in 0.3s ease-out ${idx * 60}ms both`,
+                animation: `codex-stagger 0.4s ease-out ${idx * 80}ms both`,
               }}
             >
               <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl"
+                className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
                 style={{
-                  background: `${c.accent}15`,
-                  border: `1px solid ${c.accent}25`,
-                  boxShadow: `0 4px 16px ${c.accent}15`,
+                  background: "rgba(201,168,76,0.08)",
+                  border: "1px solid rgba(201,168,76,0.15)",
+                  boxShadow: "0 4px 16px rgba(201,168,76,0.08)",
                 }}
               >
                 {c.emoji}
               </div>
               <div>
-                <p className="text-white font-bold text-sm">{c.name}</p>
-                <p className="text-white/40 text-[10px] mt-1 leading-relaxed">{c.desc}</p>
+                <p className="font-bold text-sm font-serif-game text-parchment">{c.name}</p>
+                <p className="text-[10px] mt-1 leading-relaxed" style={{ color: "rgba(245,230,200,0.4)" }}>{c.desc}</p>
               </div>
               <div
-                className="px-4 py-1.5 rounded-full text-[10px] font-bold"
-                style={{ background: `${c.accent}15`, color: c.accent, border: `1px solid ${c.accent}25` }}
+                className="px-4 py-1.5 rounded-full text-[10px] font-bold font-serif-game"
+                style={{ background: "rgba(201,168,76,0.12)", color: "#C9A84C", border: "1px solid rgba(201,168,76,0.2)" }}
               >
                 도전하기
               </div>

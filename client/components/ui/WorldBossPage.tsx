@@ -106,11 +106,11 @@ const IMPACT_COLORS: Record<string, string[]> = {
 
 // Boss stage names and descriptions for the guide
 const BOSS_STAGES = [
-  { name: "Stage 1: \uBD88\uAF43 \uB4DC\uB798\uACE4", element: "fire", desc: "\uBD88\uAF43\uC744 \uD718\uB450\uB974\uB294 \uAC70\uB300\uD55C \uB4DC\uB798\uACE4. \uBB3C \uC18D\uC131 \uC2AC\uB77C\uC784\uC774 \uC720\uB9AC!" },
-  { name: "Stage 2: \uC2EC\uD574 \uD06C\uB77C\uCF04", element: "water", desc: "\uC2EC\uD574\uC5D0\uC11C \uC62C\uB77C\uC628 \uAC70\uB300\uD55C \uD06C\uB77C\uCF04. \uD480 \uC18D\uC131\uC774 \uC720\uB9AC!" },
-  { name: "Stage 3: \uC5BC\uC74C \uACE8\uB818", element: "ice", desc: "\uBE59\uD558 \uAE4A\uC740 \uACF3\uC758 \uC5BC\uC74C \uACE8\uB818. \uBD88 \uC18D\uC131\uC774 \uC720\uB9AC!" },
-  { name: "Stage 4: \uB3C5\uC548\uAC1C \uD788\uB4DC\uB77C", element: "poison", desc: "\uB3C5\uC548\uAC1C\uB97C \uBFFF\uB294 \uB2E4\uB450 \uB2EC\uB9B0 \uD788\uB4DC\uB77C. \uB300\uC9C0 \uC18D\uC131\uC774 \uC720\uB9AC!" },
-  { name: "Stage 5: \uD63C\uB3C8\uC758 \uC2AC\uB77C\uC784\uD0B9", element: "dark", desc: "\uD63C\uB3C8\uC758 \uD798\uC744 \uAC00\uC9C4 \uCD5C\uC885 \uBCF4\uC2A4. \uBE5B \uC18D\uC131\uC774 \uC720\uB9AC!" },
+  { name: "1단계: 불꽃 드래곤", element: "fire", desc: "불꽃을 휘두르는 거대한 드래곤. 물 속성 슬라임이 유리!" },
+  { name: "2단계: 심해 크라켄", element: "water", desc: "심해에서 올라온 거대한 크라켄. 풀 속성이 유리!" },
+  { name: "3단계: 얼음 골렘", element: "ice", desc: "빙하 깊은 곳의 얼음 골렘. 불 속성이 유리!" },
+  { name: "4단계: 독안개 히드라", element: "poison", desc: "독안개를 뿜는 다두 달린 히드라. 대지 속성이 유리!" },
+  { name: "5단계: 혼돈의 슬라임킹", element: "dark", desc: "혼돈의 힘을 가진 최종 보스. 빛 속성이 유리!" },
 ];
 
 // ===== Helpers =====
@@ -662,48 +662,54 @@ function drawPlayer(
 
 function GuideModal({ onClose, stage }: { onClose: () => void; stage: number }) {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-6"
+    <div className="fixed inset-0 z-[100] flex items-center justify-center px-6"
+      style={{ background: "rgba(26,14,8,0.8)" }}
       onClick={onClose}>
-      <div className="w-full max-w-sm bg-[#1a1a2e] rounded-2xl border border-white/10 p-5 space-y-4"
+      <div className="w-full max-w-sm rounded-2xl p-5 space-y-4"
+        style={{
+          background: "linear-gradient(180deg, #2C1810, #1A0E08)",
+          border: "1.5px solid rgba(201,168,76,0.3)",
+          boxShadow: "0 16px 48px rgba(0,0,0,0.6), 0 0 40px rgba(201,168,76,0.05)",
+        }}
         onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
-          <h3 className="text-white font-bold text-base">{"\u2694\uFE0F"} \uC6D4\uB4DC \uBCF4\uC2A4 \uAC00\uC774\uB4DC</h3>
-          <button onClick={onClose} className="text-white/40 hover:text-white text-lg">x</button>
+          <h3 className="text-gold font-bold text-base font-serif-game">{"\u2694\uFE0F"} 월드 보스 가이드</h3>
+          <button onClick={onClose} className="text-[10px] font-bold transition" style={{ color: "rgba(245,230,200,0.4)" }}>닫기</button>
         </div>
 
-        <div className="space-y-2 text-[11px] text-white/60 leading-relaxed">
-          <p className="text-white/80 font-bold">{"\uD83D\uDCA1"} \uAE30\uBCF8 \uADDC\uCE59</p>
+        <div className="space-y-2 text-[11px] leading-relaxed" style={{ color: "rgba(245,230,200,0.5)" }}>
+          <p className="font-bold font-serif-game" style={{ color: "#C9A84C" }}>{"\uD83D\uDCA1"} 기본 규칙</p>
           <ul className="space-y-1 list-disc list-inside">
-            <li>\uD558\uB8E8 <span className="text-white font-bold">10\uD68C</span> \uACF5\uACA9 \uAC00\uB2A5</li>
-            <li>\uCD5C\uB300 <span className="text-white font-bold">5\uB9C8\uB9AC</span> \uC2AC\uB77C\uC784\uC73C\uB85C \uD30C\uD2F0 \uAD6C\uC131</li>
-            <li>\uD30C\uD2F0 \uC778\uC6D0\uC774 \uB9CE\uC744\uC218\uB85D <span className="text-white font-bold">\uCF64\uBCF4 \uBCF4\uB108\uC2A4</span> \uB370\uBBF8\uC9C0</li>
-            <li>\uACF5\uACA9 \uC2DC \uC2AC\uB77C\uC784\uC5D0\uAC8C <span className="text-white font-bold">EXP</span> \uD68D\uB4DD</li>
-            <li>\uBCF4\uC2A4 \uACA9\uD30C \uC2DC \uCD94\uAC00 <span className="text-[#FFEAA7] font-bold">\uBCF4\uB108\uC2A4 \uBCF4\uC0C1</span></li>
+            <li>하루 <span className="text-parchment font-bold">10회</span> 공격 가능</li>
+            <li>최대 <span className="text-parchment font-bold">5마리</span> 슬라임으로 파티 구성</li>
+            <li>파티 인원이 많을수록 <span className="text-parchment font-bold">콤보 보너스</span> 데미지</li>
+            <li>공격 시 슬라임에게 <span className="text-parchment font-bold">EXP</span> 획득</li>
+            <li>보스 격파 시 추가 <span className="text-gold font-bold">보너스 보상</span></li>
           </ul>
 
-          <p className="text-white/80 font-bold pt-2">{"\uD83D\uDD25"} \uC18D\uC131 \uC0C1\uC131</p>
-          <p>\uBCF4\uC2A4 \uC18D\uC131\uC5D0 \uC720\uB9AC\uD55C \uC2AC\uB77C\uC784\uC73C\uB85C \uACF5\uACA9\uD558\uBA74 <span className="text-[#D4AF37] font-bold">1.5\uBC30</span> \uB370\uBBF8\uC9C0!</p>
-          <p>\uBD88\uB9AC\uD55C \uC18D\uC131\uC740 <span className="text-[#FF6B6B] font-bold">0.7\uBC30</span> \uB370\uBBF8\uC9C0.</p>
+          <p className="font-bold font-serif-game pt-2" style={{ color: "#C9A84C" }}>{"\uD83D\uDD25"} 속성 상성</p>
+          <p>보스 속성에 유리한 슬라임으로 공격하면 <span className="text-gold font-bold">1.5배</span> 데미지!</p>
+          <p>불리한 속성은 <span className="font-bold" style={{ color: "#FF6B6B" }}>0.7배</span> 데미지.</p>
 
-          <p className="text-white/80 font-bold pt-2">{"\uD83C\uDFC6"} \uC2A4\uD14C\uC774\uC9C0 \uC2DC\uC2A4\uD15C</p>
+          <p className="font-bold font-serif-game pt-2" style={{ color: "#C9A84C" }}>{"\uD83C\uDFC6"} 스테이지 시스템</p>
           <div className="space-y-1.5">
             {BOSS_STAGES.map((bs, i) => (
               <div key={i} className="flex items-center gap-2 rounded-lg px-2 py-1.5"
                 style={{
-                  background: i + 1 === stage ? rgba(ELEM_COL[bs.element] || "#A29BFE", 0.1) : "transparent",
-                  border: i + 1 === stage ? `1px solid ${rgba(ELEM_COL[bs.element] || "#A29BFE", 0.2)}` : "1px solid transparent",
+                  background: i + 1 === stage ? "rgba(201,168,76,0.1)" : "transparent",
+                  border: i + 1 === stage ? "1px solid rgba(201,168,76,0.2)" : "1px solid transparent",
                 }}>
-                <span className="text-[10px] font-bold w-4 shrink-0" style={{ color: i + 1 <= stage ? ELEM_COL[bs.element] || "#A29BFE" : "rgba(255,255,255,0.2)" }}>
+                <span className="text-[10px] font-bold w-4 shrink-0" style={{ color: i + 1 <= stage ? ELEM_COL[bs.element] || "#A29BFE" : "rgba(245,230,200,0.2)" }}>
                   {i + 1}
                 </span>
                 <div className="flex-1 min-w-0">
                   <div className="text-[10px] font-bold truncate" style={{ color: ELEM_COL[bs.element] || "#A29BFE" }}>
                     {bs.name}
                   </div>
-                  <div className="text-[9px] text-white/40 truncate">{bs.desc}</div>
+                  <div className="text-[9px] truncate" style={{ color: "rgba(245,230,200,0.35)" }}>{bs.desc}</div>
                 </div>
                 {i + 1 === stage && (
-                  <span className="text-[8px] text-[#D4AF37] font-bold shrink-0">NOW</span>
+                  <span className="text-[8px] text-gold font-bold shrink-0">현재</span>
                 )}
               </div>
             ))}
@@ -711,8 +717,8 @@ function GuideModal({ onClose, stage }: { onClose: () => void; stage: number }) 
         </div>
 
         <button onClick={onClose}
-          className="w-full py-2.5 rounded-xl text-[12px] font-bold text-white/70 bg-white/5 hover:bg-white/10 transition">
-          \uB2EB\uAE30
+          className="w-full py-2.5 rounded-xl text-[12px] font-bold transition minigame-btn-gold">
+          닫기
         </button>
       </div>
     </div>
@@ -747,17 +753,23 @@ function AttackResultModal({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-6"
       onClick={onClose}>
-      <div className="w-full max-w-sm bg-[#1a1a2e] rounded-2xl border border-white/10 overflow-hidden"
+      <div className="w-full max-w-sm rounded-2xl overflow-hidden"
+        style={{
+          background: "linear-gradient(180deg, #2C1810, #1A0E08)",
+          border: "1.5px solid rgba(201,168,76,0.3)",
+          boxShadow: "0 16px 48px rgba(0,0,0,0.6), 0 0 40px rgba(201,168,76,0.05)",
+        }}
         onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="p-4 text-center" style={{
           background: defeated
-            ? "linear-gradient(135deg, rgba(85,239,196,0.15), rgba(116,185,255,0.1))"
-            : "linear-gradient(135deg, rgba(255,107,107,0.15), rgba(255,159,67,0.1))",
+            ? "linear-gradient(135deg, rgba(201,168,76,0.15), rgba(212,175,55,0.1))"
+            : "linear-gradient(135deg, rgba(201,168,76,0.08), rgba(139,105,20,0.05))",
+          borderBottom: "1px solid rgba(201,168,76,0.15)",
         }}>
           <div className="text-2xl mb-1">{defeated ? "\uD83C\uDF89" : "\u2694\uFE0F"}</div>
-          <h3 className="text-white font-bold text-base">
-            {defeated ? "\uBCF4\uC2A4 \uACA9\uD30C!" : "\uACF5\uACA9 \uC131\uACF5!"}
+          <h3 className="text-parchment font-bold text-base font-serif-game">
+            {defeated ? "보스 격파!" : "공격 성공!"}
           </h3>
           <div className="text-[#FF6B6B] font-bold text-xl mt-1"
             style={{ textShadow: "0 0 12px rgba(255,107,107,0.4)" }}>
@@ -1070,7 +1082,7 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
         ctx.font = `bold ${Math.min(w * 0.08, 32)}px sans-serif`;
         ctx.textAlign = "center"; ctx.fillStyle = "#D4AF37";
         ctx.shadowColor = "#D4AF37"; ctx.shadowBlur = 20;
-        ctx.fillText("DEFEATED!", w / 2, h * 0.2);
+        ctx.fillText("격파 완료!", w / 2, h * 0.2);
         ctx.restore();
       }
 
@@ -1251,7 +1263,7 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const stageLabel = `Stage ${boss.stage || 1}/5`;
+  const stageLabel = `${boss.stage || 1} / 5 단계`;
   const hasParty = partySlimes.length > 0;
 
   return (

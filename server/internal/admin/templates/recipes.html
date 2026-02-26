@@ -3,41 +3,170 @@
 {{end}}
 
 {{define "content"}}
+{{if eq .Message "created"}}
+<div class="msg-success">레시피가 생성되었습니다.</div>
+{{else if eq .Message "updated"}}
+<div class="msg-success">레시피가 수정되었습니다.</div>
+{{else if eq .Message "deleted"}}
+<div class="msg-success">레시피가 삭제되었습니다.</div>
+{{else if eq .Message "error"}}
+<div class="msg-error">오류가 발생했습니다.</div>
+{{end}}
+
 {{if .Error}}
 <div class="msg-error">{{.Error}}</div>
 {{end}}
 
-<p style="font-size: 12px; color: #636e72; margin-bottom: 12px;">총 {{.Total}}개 레시피</p>
+<!-- Create / Edit Form -->
+{{if .ShowCreate}}
+<div class="stat-card" style="margin-bottom: 24px;">
+  <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #55efc4;">새 레시피 생성</div>
+  <form method="POST" action="/admin/gamedata/recipes/create">
+    <div class="form-row">
+      <label style="min-width: 100px;">ID</label>
+      <input type="number" name="id" placeholder="레시피 ID" required style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Input A</label>
+      <input type="number" name="input_a" placeholder="종족 ID A" required style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Input B</label>
+      <input type="number" name="input_b" placeholder="종족 ID B" required style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Output</label>
+      <input type="number" name="output" placeholder="결과 종족 ID" required style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Output Name</label>
+      <input type="text" name="output_name" placeholder="결과물 이름" style="width: 200px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Type</label>
+      <select name="type" style="width: 160px;">
+        <option value="combination">combination</option>
+        <option value="catalyzed">catalyzed</option>
+        <option value="mutation">mutation</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Hint</label>
+      <input type="text" name="hint" placeholder="힌트 텍스트" style="width: 300px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Hidden</label>
+      <input type="checkbox" name="hidden" style="width: auto;" />
+      <span style="font-size: 11px; color: #636e72;">체크 시 숨김 레시피</span>
+    </div>
+    <div style="display: flex; gap: 8px; margin-top: 8px;">
+      <button type="submit" class="btn btn-primary">생성</button>
+      <a href="/admin/gamedata/recipes" class="btn btn-danger btn-sm" style="display: inline-flex; align-items: center;">취소</a>
+    </div>
+  </form>
+</div>
+{{end}}
 
+{{if .EditItem}}
+{{with .EditItem}}
+<div class="stat-card" style="margin-bottom: 24px; border-color: rgba(162,155,254,0.3);">
+  <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #a29bfe;">레시피 #{{.ID}} 수정</div>
+  <form method="POST" action="/admin/gamedata/recipes/{{.ID}}/update">
+    <div class="form-row">
+      <label style="min-width: 100px;">ID</label>
+      <span style="font-size: 13px; color: #636e72;">#{{.ID}} (변경 불가)</span>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Input A</label>
+      <input type="number" name="input_a" value="{{.InputA}}" required style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Input B</label>
+      <input type="number" name="input_b" value="{{.InputB}}" required style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Output</label>
+      <input type="number" name="output" value="{{.Output}}" required style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Output Name</label>
+      <input type="text" name="output_name" value="{{.OutputName}}" style="width: 200px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Type</label>
+      <select name="type" style="width: 160px;">
+        <option value="combination" {{if eq .Type "combination"}}selected{{end}}>combination</option>
+        <option value="catalyzed" {{if eq .Type "catalyzed"}}selected{{end}}>catalyzed</option>
+        <option value="mutation" {{if eq .Type "mutation"}}selected{{end}}>mutation</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Hint</label>
+      <input type="text" name="hint" value="{{.Hint}}" style="width: 300px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Hidden</label>
+      <input type="checkbox" name="hidden" {{if .Hidden}}checked{{end}} style="width: auto;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Active</label>
+      <input type="checkbox" name="is_active" {{if .IsActive}}checked{{end}} style="width: auto;" />
+      <span style="font-size: 11px; color: #636e72;">비활성화 시 게임에서 사용 불가</span>
+    </div>
+    <div style="display: flex; gap: 8px; margin-top: 8px;">
+      <button type="submit" class="btn btn-primary">저장</button>
+      <a href="/admin/gamedata/recipes" class="btn btn-danger btn-sm" style="display: inline-flex; align-items: center;">취소</a>
+    </div>
+  </form>
+</div>
+{{end}}
+{{end}}
+
+<!-- Header -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+  <p style="font-size: 12px; color: #636e72;">총 {{.Total}}개 레시피</p>
+  {{if not .ShowCreate}}
+  <a href="/admin/gamedata/recipes?create=1" class="btn btn-primary btn-sm">+ 새 레시피</a>
+  {{end}}
+</div>
+
+<!-- Recipes Table -->
 <table>
   <thead>
     <tr>
       <th>ID</th>
-      <th>입력 A</th>
-      <th>입력 B</th>
-      <th>결과</th>
-      <th>결과명</th>
-      <th>유형</th>
-      <th>힌트</th>
-      <th>히든</th>
-      <th>촉매</th>
+      <th>Input A</th>
+      <th>Input B</th>
+      <th>Output</th>
+      <th>Output Name</th>
+      <th>Type</th>
+      <th>Hint</th>
+      <th>Hidden</th>
+      <th>Active</th>
+      <th>Actions</th>
     </tr>
   </thead>
   <tbody>
     {{range .Recipes}}
-    <tr{{if .Hidden}} style="background: rgba(255,107,107,0.05);"{{end}}>
+    <tr style="{{if not .IsActive}}opacity: 0.5;{{end}}{{if .Hidden}} background: rgba(255,107,107,0.05);{{end}}">
       <td style="color: #636e72;">{{.ID}}</td>
       <td style="color: #74b9ff;">{{.InputA}}</td>
       <td style="color: #74b9ff;">{{.InputB}}</td>
       <td style="color: #55efc4; font-weight: 700;">{{.Output}}</td>
       <td>{{.OutputName}}</td>
       <td><span class="badge" style="background: rgba(162,155,254,0.15); color: #a29bfe;">{{.Type}}</span></td>
-      <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #b2bec3;">{{.Hint}}</td>
+      <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #b2bec3;">{{.Hint}}</td>
       <td>{{if .Hidden}}<span style="color: #ff6b6b;">숨김</span>{{else}}<span style="color: #636e72;">공개</span>{{end}}</td>
-      <td>{{if .Catalyst}}Material #{{.Catalyst.MaterialID}}{{else}}-{{end}}</td>
+      <td>{{if .IsActive}}<span style="color: #55efc4;">활성</span>{{else}}<span style="color: #ff6b6b;">비활성</span>{{end}}</td>
+      <td style="white-space: nowrap;">
+        <a href="/admin/gamedata/recipes?edit={{.ID}}" class="btn btn-sm btn-warning">수정</a>
+        <form method="POST" action="/admin/gamedata/recipes/{{.ID}}/delete" style="display:inline; margin-left: 4px;">
+          <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('레시피 #{{.ID}}을(를) 정말 삭제하시겠습니까?')">삭제</button>
+        </form>
+      </td>
     </tr>
     {{else}}
-    <tr><td colspan="9" style="text-align:center; color:#636e72; padding: 24px;">레시피 데이터 없음</td></tr>
+    <tr><td colspan="10" style="text-align:center; color:#636e72; padding: 24px;">레시피 데이터 없음</td></tr>
     {{end}}
   </tbody>
 </table>

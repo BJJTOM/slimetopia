@@ -3,60 +3,187 @@
 {{end}}
 
 {{define "content"}}
-{{if .Error}}
-<div class="msg-error">{{.Error}}</div>
+{{if eq .Message "created"}}<div class="msg-success">생성 완료</div>{{else if eq .Message "updated"}}<div class="msg-success">수정 완료</div>{{else if eq .Message "deleted"}}<div class="msg-success">삭제 완료</div>{{else if eq .Message "error"}}<div class="msg-error">오류가 발생했습니다</div>{{end}}
+
+<!-- Create Form -->
+{{if .ShowCreate}}
+<div class="stat-card" style="margin-bottom: 24px;">
+  <div class="label" style="margin-bottom: 16px; font-size: 16px; color: #55efc4;">새 탐험 생성</div>
+  <form method="POST" action="/admin/gamedata/explorations/create">
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">ID</label>
+      <input type="number" name="id" required style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">이름</label>
+      <input type="text" name="name" required style="width: 300px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">소요 시간 (분)</label>
+      <input type="number" name="duration_minutes" required style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">추천 속성</label>
+      <select name="recommended_element" style="width: 160px;">
+        <option value="water">water</option>
+        <option value="fire">fire</option>
+        <option value="grass">grass</option>
+        <option value="light">light</option>
+        <option value="dark">dark</option>
+        <option value="ice">ice</option>
+        <option value="electric">electric</option>
+        <option value="poison">poison</option>
+        <option value="earth">earth</option>
+        <option value="wind">wind</option>
+        <option value="celestial">celestial</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">보상 (JSON)</label>
+      <textarea name="rewards" rows="4" style="width: 100%; font-family: monospace; font-size: 12px;" placeholder='{"gold": {"min": 50, "max": 100}, "items": []}'></textarea>
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">해금 조건</label>
+      <select name="unlock_type" style="width: 140px;">
+        <option value="default">default</option>
+        <option value="level">level</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">해금 값</label>
+      <input type="number" name="unlock_value" value="0" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">재료 드롭 (JSON)</label>
+      <textarea name="material_drops" rows="4" style="width: 100%; font-family: monospace; font-size: 12px;" placeholder='[{"material_id": 1, "chance": 0.5, "min_qty": 1, "max_qty": 3}]'></textarea>
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">정렬 순서</label>
+      <input type="number" name="sort_order" value="0" style="width: 120px;" />
+    </div>
+    <div style="margin-top: 16px; display: flex; gap: 8px;">
+      <button type="submit" class="btn btn-primary">생성</button>
+      <a href="/admin/gamedata/explorations" class="btn btn-sm" style="background: rgba(255,255,255,0.06); color: #b2bec3;">취소</a>
+    </div>
+  </form>
+</div>
 {{end}}
 
-<p style="font-size: 12px; color: #636e72; margin-bottom: 12px;">총 {{.Total}}개 탐험지</p>
-
-{{range .Explorations}}
-<div class="stat-card" style="margin-bottom: 16px;">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-    <div>
-      <span style="color: #55efc4; font-weight: 700; font-size: 16px;">{{.Name}}</span>
-      <span style="color: #636e72; font-size: 12px; margin-left: 8px;">#{{.ID}}</span>
+<!-- Edit Form -->
+{{if .EditItem}}
+<div class="stat-card" style="margin-bottom: 24px;">
+  <div class="label" style="margin-bottom: 16px; font-size: 16px; color: #a29bfe;">탐험 수정 — #{{.EditItem.ID}}</div>
+  <form method="POST" action="/admin/gamedata/explorations/{{.EditItem.ID}}/update">
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">ID</label>
+      <input type="number" name="id" value="{{.EditItem.ID}}" readonly style="width: 120px; opacity: 0.5;" />
     </div>
-    <div>
-      <span class="badge" style="background: rgba(116,185,255,0.15); color: #74b9ff;">{{.RecommendedElement}}</span>
-      <span style="color: #b2bec3; font-size: 12px; margin-left: 8px;">{{.DurationMinutes}}분</span>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">이름</label>
+      <input type="text" name="name" value="{{.EditItem.Name}}" required style="width: 300px;" />
     </div>
-  </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">소요 시간 (분)</label>
+      <input type="number" name="duration_minutes" value="{{.EditItem.DurationMinutes}}" required style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">추천 속성</label>
+      <select name="recommended_element" style="width: 160px;">
+        <option value="water" {{if eq .EditItem.RecommendedElement "water"}}selected{{end}}>water</option>
+        <option value="fire" {{if eq .EditItem.RecommendedElement "fire"}}selected{{end}}>fire</option>
+        <option value="grass" {{if eq .EditItem.RecommendedElement "grass"}}selected{{end}}>grass</option>
+        <option value="light" {{if eq .EditItem.RecommendedElement "light"}}selected{{end}}>light</option>
+        <option value="dark" {{if eq .EditItem.RecommendedElement "dark"}}selected{{end}}>dark</option>
+        <option value="ice" {{if eq .EditItem.RecommendedElement "ice"}}selected{{end}}>ice</option>
+        <option value="electric" {{if eq .EditItem.RecommendedElement "electric"}}selected{{end}}>electric</option>
+        <option value="poison" {{if eq .EditItem.RecommendedElement "poison"}}selected{{end}}>poison</option>
+        <option value="earth" {{if eq .EditItem.RecommendedElement "earth"}}selected{{end}}>earth</option>
+        <option value="wind" {{if eq .EditItem.RecommendedElement "wind"}}selected{{end}}>wind</option>
+        <option value="celestial" {{if eq .EditItem.RecommendedElement "celestial"}}selected{{end}}>celestial</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">보상 (JSON)</label>
+      <textarea name="rewards" rows="4" style="width: 100%; font-family: monospace; font-size: 12px;">{{jsonStr .EditItem.Rewards}}</textarea>
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">해금 조건</label>
+      <select name="unlock_type" style="width: 140px;">
+        <option value="default" {{if eq .EditItem.UnlockType "default"}}selected{{end}}>default</option>
+        <option value="level" {{if eq .EditItem.UnlockType "level"}}selected{{end}}>level</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">해금 값</label>
+      <input type="number" name="unlock_value" value="{{.EditItem.UnlockValue}}" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">재료 드롭 (JSON)</label>
+      <textarea name="material_drops" rows="4" style="width: 100%; font-family: monospace; font-size: 12px;">{{jsonStr .EditItem.MaterialDrops}}</textarea>
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">정렬 순서</label>
+      <input type="number" name="sort_order" value="{{.EditItem.SortOrder}}" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">활성화</label>
+      <input type="checkbox" name="is_active" value="true" {{if .EditItem.IsActive}}checked{{end}} />
+    </div>
+    <div style="margin-top: 16px; display: flex; gap: 8px;">
+      <button type="submit" class="btn btn-primary">수정</button>
+      <a href="/admin/gamedata/explorations" class="btn btn-sm" style="background: rgba(255,255,255,0.06); color: #b2bec3;">취소</a>
+    </div>
+  </form>
+</div>
+{{end}}
 
-  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-    <div>
-      <div style="font-size: 11px; color: #636e72; margin-bottom: 4px;">보상</div>
-      <div style="font-size: 13px;">
-        <span style="color: #ffeaa7;">골드 {{.Rewards.Gold.Min}}~{{.Rewards.Gold.Max}}</span>
-        {{range .Rewards.Items}}
-        <span class="badge" style="background: rgba(255,255,255,0.06); color: #b2bec3; margin-left: 4px;">{{.}}</span>
-        {{end}}
+<!-- Header -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+  <h2 style="margin: 0; font-size: 18px; color: #dfe6e9;">탐험 목록</h2>
+  <a href="/admin/gamedata/explorations?create=1" class="btn btn-primary">+ 새 탐험</a>
+</div>
+
+<!-- Exploration Cards -->
+<div style="display: grid; gap: 16px;">
+  {{range .Explorations}}
+  <div class="stat-card" style="{{if not .IsActive}}opacity: 0.5;{{end}}">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+      <div style="flex: 1;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+          <span style="font-size: 20px; font-weight: 700; color: #dfe6e9;">{{.Name}}</span>
+          <span style="font-size: 12px; color: #636e72;">#{{.ID}}</span>
+          <span style="font-size: 11px; padding: 2px 8px; border-radius: 4px; background: rgba(116,185,255,0.15); color: #74b9ff;">
+            {{if eq .RecommendedElement "water"}}💧{{else if eq .RecommendedElement "fire"}}🔥{{else if eq .RecommendedElement "grass"}}🌿{{else if eq .RecommendedElement "light"}}✨{{else if eq .RecommendedElement "dark"}}🌑{{else if eq .RecommendedElement "ice"}}❄️{{else if eq .RecommendedElement "electric"}}⚡{{else if eq .RecommendedElement "poison"}}☠️{{else if eq .RecommendedElement "earth"}}🪨{{else if eq .RecommendedElement "wind"}}🌪️{{else if eq .RecommendedElement "celestial"}}🌟{{end}}
+            {{.RecommendedElement}}
+          </span>
+          {{if not .IsActive}}<span style="font-size: 11px; padding: 2px 8px; border-radius: 4px; background: rgba(255,107,107,0.15); color: #ff6b6b;">비활성</span>{{end}}
+        </div>
+        <div style="display: flex; gap: 24px; margin-bottom: 12px; font-size: 13px;">
+          <div><span style="color: #636e72;">소요 시간:</span> <span style="color: #ffeaa7;">{{.DurationMinutes}}분</span></div>
+          <div><span style="color: #636e72;">해금:</span> <span style="color: #b2bec3;">{{.UnlockType}}</span>{{if .UnlockValue}} <span style="color: #74b9ff;">({{.UnlockValue}})</span>{{end}}</div>
+          <div><span style="color: #636e72;">정렬:</span> <span style="color: #b2bec3;">{{.SortOrder}}</span></div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <div style="font-size: 11px; color: #55efc4; margin-bottom: 4px; font-weight: 600;">보상 (Rewards)</div>
+            <pre style="background: rgba(0,0,0,0.3); border-radius: 6px; padding: 8px; font-size: 11px; color: #dfe6e9; margin: 0; white-space: pre-wrap; word-break: break-all; max-height: 120px; overflow-y: auto;">{{jsonPretty .Rewards}}</pre>
+          </div>
+          <div>
+            <div style="font-size: 11px; color: #fdcb6e; margin-bottom: 4px; font-weight: 600;">재료 드롭 (MaterialDrops)</div>
+            <pre style="background: rgba(0,0,0,0.3); border-radius: 6px; padding: 8px; font-size: 11px; color: #dfe6e9; margin: 0; white-space: pre-wrap; word-break: break-all; max-height: 120px; overflow-y: auto;">{{jsonPretty .MaterialDrops}}</pre>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 6px; margin-left: 16px; flex-shrink: 0;">
+        <a href="/admin/gamedata/explorations?edit={{.ID}}" class="btn btn-warning btn-sm">수정</a>
+        <form method="POST" action="/admin/gamedata/explorations/{{.ID}}/delete" style="margin: 0;">
+          <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('삭제하시겠습니까?')">삭제</button>
+        </form>
       </div>
     </div>
-    <div>
-      <div style="font-size: 11px; color: #636e72; margin-bottom: 4px;">해금 조건</div>
-      <div style="font-size: 13px;">
-        {{if eq .Unlock.Type "default"}}<span style="color: #55efc4;">기본</span>
-        {{else if eq .Unlock.Type "level"}}<span style="color: #a29bfe;">레벨 {{.Unlock.Value}}</span>
-        {{else}}<span style="color: #b2bec3;">{{.Unlock.Type}} {{.Unlock.Value}}</span>
-        {{end}}
-      </div>
-    </div>
   </div>
-
-  {{if .MaterialDrops}}
-  <div style="margin-top: 12px;">
-    <div style="font-size: 11px; color: #636e72; margin-bottom: 4px;">소재 드롭</div>
-    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-      {{range .MaterialDrops}}
-      <span style="background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 6px; font-size: 12px;">
-        #{{.MaterialID}} <span style="color: #ffeaa7;">{{mul100 .Chance}}%</span> ({{.MinQty}}~{{.MaxQty}})
-      </span>
-      {{end}}
-    </div>
-  </div>
+  {{else}}
+  <div style="text-align: center; color: #636e72; padding: 40px;">탐험 데이터 없음</div>
   {{end}}
 </div>
-{{else}}
-<div class="stat-card"><p style="text-align:center; color:#636e72;">탐험지 데이터 없음</p></div>
-{{end}}
 {{end}}

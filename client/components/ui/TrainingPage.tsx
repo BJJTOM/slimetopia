@@ -249,6 +249,7 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
   const [starting, setStarting] = useState(false);
   const [sortMode, setSortMode] = useState<SortMode>("grade");
   const [lastCollectedSlot, setLastCollectedSlot] = useState<string | null>(null);
+  const [showGuide, setShowGuide] = useState(false);
 
   // Canvas refs
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -440,6 +441,11 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
             <span className="text-[9px]" style={{ color: "rgba(245,230,200,0.4)" }}>{filledSlots}/{maxSlots} 사용 중</span>
           </div>
         </div>
+        <div className="flex items-center gap-2">
+        {/* Guide toggle */}
+        <button onClick={() => setShowGuide(!showGuide)} className="minigame-guide-toggle">
+          {"📖"} 가이드
+        </button>
         {/* Collect All button */}
         {hasCollectable && filledSlots > 1 && (
           <button
@@ -456,7 +462,21 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
             {collectingAll ? "수령 중..." : `전체 수령 (+${totalPendingExp})`}
           </button>
         )}
+        </div>
       </div>
+
+      {/* Guide panel */}
+      {showGuide && (
+        <div className="px-4 py-2 shrink-0" style={{ borderBottom: "1px solid rgba(201,168,76,0.1)" }}>
+          <div className="minigame-guide-content">
+            <p><strong>기본 EXP:</strong> 시간당 120 EXP (분당 2 EXP)</p>
+            <p><strong>최대 시간:</strong> 8시간 (최대 960 EXP)</p>
+            <p><strong>등급 보너스:</strong> 고급 x1.1 / 희귀 x1.3 / 영웅 x1.6 / 전설 x2.0 / 신화 x2.5</p>
+            <p><strong>슬롯:</strong> 최대 3마리 동시 훈련 가능</p>
+            <p><strong>팁:</strong> 수령 후 계속 버튼으로 바로 재훈련!</p>
+          </div>
+        </div>
+      )}
 
       {/* Animated Banner Canvas */}
       <div ref={ctrRef} className="shrink-0" style={{ height: 100, borderBottom: "1px solid rgba(201,168,76,0.15)" }}>
@@ -499,7 +519,7 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
                     <div className="absolute inset-[3px] rounded-full flex items-center justify-center" style={{
                       background: "rgba(245,230,200,0.06)", border: "1px solid rgba(201,168,76,0.15)",
                     }}>
-                      <div dangerouslySetInnerHTML={{ __html: generateSlimeIconSvg(slot.element, 36, undefined, undefined, slot.species_id) }} />
+                      <img src={generateSlimeIconSvg(slot.element, 36, undefined, undefined, slot.species_id)} alt="" className="w-9 h-9" />
                     </div>
                     {isCapped && (
                       <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center" style={{
@@ -740,7 +760,7 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
                         background: "rgba(245,230,200,0.06)",
                         border: "1px solid rgba(201,168,76,0.1)",
                       }}>
-                        <div dangerouslySetInnerHTML={{ __html: generateSlimeIconSvg(s.element, 32, undefined, undefined, s.species_id) }} />
+                        <img src={generateSlimeIconSvg(s.element, 32, undefined, undefined, s.species_id)} alt="" className="w-8 h-8" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">

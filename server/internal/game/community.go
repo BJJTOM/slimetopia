@@ -52,7 +52,8 @@ func (h *Handler) GetCommunityPosts(c *fiber.Ctx) error {
 		r, e := pool.Query(ctx,
 			`SELECT p.id, p.user_id, u.nickname, p.content, p.post_type, p.likes, p.reply_count, p.created_at,
 			        p.image_urls, p.view_count,
-			        EXISTS(SELECT 1 FROM community_post_likes l WHERE l.post_id = p.id AND l.user_id = $1) as liked
+			        EXISTS(SELECT 1 FROM community_post_likes l WHERE l.post_id = p.id AND l.user_id = $1) as liked,
+			        COALESCE(u.profile_image_url, '')
 			 FROM community_posts p
 			 JOIN users u ON u.id = p.user_id
 			 WHERE p.post_type = $2
@@ -69,7 +70,8 @@ func (h *Handler) GetCommunityPosts(c *fiber.Ctx) error {
 		r, e := pool.Query(ctx,
 			`SELECT p.id, p.user_id, u.nickname, p.content, p.post_type, p.likes, p.reply_count, p.created_at,
 			        p.image_urls, p.view_count,
-			        EXISTS(SELECT 1 FROM community_post_likes l WHERE l.post_id = p.id AND l.user_id = $1) as liked
+			        EXISTS(SELECT 1 FROM community_post_likes l WHERE l.post_id = p.id AND l.user_id = $1) as liked,
+			        COALESCE(u.profile_image_url, '')
 			 FROM community_posts p
 			 JOIN users u ON u.id = p.user_id
 			 WHERE p.user_id NOT IN (SELECT blocked_id FROM community_blocks WHERE blocker_id = $1::uuid)
@@ -94,25 +96,27 @@ func (h *Handler) GetCommunityPosts(c *fiber.Ctx) error {
 		var createdAt time.Time
 		var liked bool
 		var imageURLs []string
-		if err := rows.Scan(&id, &uid, &nickname, &content, &ptype, &likes, &replyCount, &createdAt, &imageURLs, &viewCount, &liked); err != nil {
+		var profileImageURL string
+		if err := rows.Scan(&id, &uid, &nickname, &content, &ptype, &likes, &replyCount, &createdAt, &imageURLs, &viewCount, &liked, &profileImageURL); err != nil {
 			continue
 		}
 		if imageURLs == nil {
 			imageURLs = []string{}
 		}
 		posts = append(posts, fiber.Map{
-			"id":          id,
-			"user_id":     uid,
-			"nickname":    nickname,
-			"content":     content,
-			"post_type":   ptype,
-			"likes":       likes,
-			"reply_count": replyCount,
-			"view_count":  viewCount,
-			"image_urls":  imageURLs,
-			"created_at":  createdAt,
-			"liked":       liked,
-			"is_mine":     uid == userID,
+			"id":                id,
+			"user_id":           uid,
+			"nickname":          nickname,
+			"content":           content,
+			"post_type":         ptype,
+			"likes":             likes,
+			"reply_count":       replyCount,
+			"view_count":        viewCount,
+			"image_urls":        imageURLs,
+			"created_at":        createdAt,
+			"liked":             liked,
+			"is_mine":           uid == userID,
+			"profile_image_url": profileImageURL,
 		})
 	}
 
@@ -281,7 +285,8 @@ func (h *Handler) GetCommunityReplies(c *fiber.Ctx) error {
 	pool := h.slimeRepo.Pool()
 	rows, err := pool.Query(c.UserContext(),
 		`SELECT r.id, r.user_id, u.nickname, r.content, r.likes, r.created_at, r.parent_id, r.reply_count,
-		        EXISTS(SELECT 1 FROM community_reply_likes l WHERE l.reply_id = r.id AND l.user_id = $1) as liked
+		        EXISTS(SELECT 1 FROM community_reply_likes l WHERE l.reply_id = r.id AND l.user_id = $1) as liked,
+		        COALESCE(u.profile_image_url, '')
 		 FROM community_replies r
 		 JOIN users u ON u.id = r.user_id
 		 WHERE r.post_id = $2
@@ -302,19 +307,21 @@ func (h *Handler) GetCommunityReplies(c *fiber.Ctx) error {
 		var createdAt time.Time
 		var liked bool
 		var parentID *string
-		if err := rows.Scan(&id, &uid, &nickname, &content, &likes, &createdAt, &parentID, &replyCount, &liked); err != nil {
+		var profileImageURL string
+		if err := rows.Scan(&id, &uid, &nickname, &content, &likes, &createdAt, &parentID, &replyCount, &liked, &profileImageURL); err != nil {
 			continue
 		}
 		reply := fiber.Map{
-			"id":          id,
-			"user_id":     uid,
-			"nickname":    nickname,
-			"content":     content,
-			"likes":       likes,
-			"reply_count": replyCount,
-			"created_at":  createdAt,
-			"liked":       liked,
-			"is_mine":     uid == userID,
+			"id":                id,
+			"user_id":           uid,
+			"nickname":          nickname,
+			"content":           content,
+			"likes":             likes,
+			"reply_count":       replyCount,
+			"created_at":        createdAt,
+			"liked":             liked,
+			"is_mine":           uid == userID,
+			"profile_image_url": profileImageURL,
 		}
 		if parentID != nil {
 			reply["parent_id"] = *parentID

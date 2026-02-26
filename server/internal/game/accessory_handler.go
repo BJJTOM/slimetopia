@@ -1,11 +1,8 @@
 package game
 
 import (
-	"encoding/json"
-	"os"
-
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog/log"
+	"github.com/slimetopia/server/internal/repository"
 )
 
 // AccessoryDef from shared/accessories.json
@@ -20,41 +17,35 @@ type AccessoryDef struct {
 	SvgOvl   string `json:"svg_overlay"`
 }
 
-var accessoryDefs []AccessoryDef
-
-func init() {
-	loadAccessoryDefs()
-}
-
-func loadAccessoryDefs() {
-	paths := []string{
-		"../shared/accessories.json",
-		"shared/accessories.json",
-		"/app/shared/accessories.json",
+// convertAccessories converts GameAccessory slice to AccessoryDef slice
+func convertAccessories(gameAccs []repository.GameAccessory) []AccessoryDef {
+	defs := make([]AccessoryDef, len(gameAccs))
+	for i, ga := range gameAccs {
+		defs[i] = AccessoryDef{
+			ID:       ga.ID,
+			Name:     ga.Name,
+			NameEn:   ga.NameEN,
+			Slot:     ga.Slot,
+			Icon:     ga.Icon,
+			CostGold: ga.CostGold,
+			CostGems: ga.CostGems,
+			SvgOvl:   ga.SvgOverlay,
+		}
 	}
-	for _, path := range paths {
-		data, err := os.ReadFile(path)
-		if err != nil {
-			continue
-		}
-		var wrapper struct {
-			Accessories []AccessoryDef `json:"accessories"`
-		}
-		if err := json.Unmarshal(data, &wrapper); err != nil {
-			log.Error().Err(err).Msg("Failed to parse accessories.json")
-			continue
-		}
-		accessoryDefs = wrapper.Accessories
-		log.Info().Int("count", len(accessoryDefs)).Msg("Loaded accessory definitions")
-		return
-	}
-	log.Warn().Msg("No accessories.json found")
+	return defs
 }
 
 // GET /api/accessories — list all accessories with owned status
 func (h *Handler) GetAccessories(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(string)
 	ctx := c.Context()
+
+	// Load accessory definitions from DB
+	gameAccs, err := h.gameDataRepo.GetAllAccessories(ctx)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to load accessories"})
+	}
+	accessoryDefs := convertAccessories(gameAccs)
 
 	// Get owned accessories
 	rows, err := h.slimeRepo.Pool().Query(ctx,
@@ -103,21 +94,25 @@ func (h *Handler) BuyAccessory(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid body"})
 	}
 
-	// Find accessory definition
-	var def *AccessoryDef
-	for i := range accessoryDefs {
-		if accessoryDefs[i].ID == body.AccessoryID {
-			def = &accessoryDefs[i]
-			break
-		}
-	}
-	if def == nil {
+	// Find accessory definition from DB
+	gameAcc, err := h.gameDataRepo.GetAccessoryByID(ctx, body.AccessoryID)
+	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "accessory not found"})
+	}
+	def := &AccessoryDef{
+		ID:       gameAcc.ID,
+		Name:     gameAcc.Name,
+		NameEn:   gameAcc.NameEN,
+		Slot:     gameAcc.Slot,
+		Icon:     gameAcc.Icon,
+		CostGold: gameAcc.CostGold,
+		CostGems: gameAcc.CostGems,
+		SvgOvl:   gameAcc.SvgOverlay,
 	}
 
 	// Get user UUID
 	var userUUID string
-	err := h.slimeRepo.Pool().QueryRow(ctx,
+	err = h.slimeRepo.Pool().QueryRow(ctx,
 		`SELECT id::text FROM users WHERE id::text = $1 OR provider_id = $1 LIMIT 1`, userID).Scan(&userUUID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "user not found"})
@@ -194,33 +189,29 @@ func (h *Handler) EquipAccessory(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "user not found"})
 	}
 
-	if body.Unequip {
-		// Find the slot for this accessory
-		var slot string
-		for _, def := range accessoryDefs {
-			if def.ID == body.AccessoryID {
-				slot = def.Slot
-				break
-			}
-		}
-		if slot != "" {
-			h.slimeRepo.Pool().Exec(ctx,
-				`DELETE FROM equipped_accessories WHERE slime_id = $1::uuid AND slot = $2`,
-				body.SlimeID, slot)
-		}
-		return c.JSON(fiber.Map{"success": true})
+	// Load accessory def from DB
+	gameAcc, err := h.gameDataRepo.GetAccessoryByID(ctx, body.AccessoryID)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "accessory not found"})
+	}
+	def := &AccessoryDef{
+		ID:       gameAcc.ID,
+		Name:     gameAcc.Name,
+		NameEn:   gameAcc.NameEN,
+		Slot:     gameAcc.Slot,
+		Icon:     gameAcc.Icon,
+		CostGold: gameAcc.CostGold,
+		CostGems: gameAcc.CostGems,
+		SvgOvl:   gameAcc.SvgOverlay,
 	}
 
-	// Find accessory def
-	var def *AccessoryDef
-	for i := range accessoryDefs {
-		if accessoryDefs[i].ID == body.AccessoryID {
-			def = &accessoryDefs[i]
-			break
+	if body.Unequip {
+		if def.Slot != "" {
+			h.slimeRepo.Pool().Exec(ctx,
+				`DELETE FROM equipped_accessories WHERE slime_id = $1::uuid AND slot = $2`,
+				body.SlimeID, def.Slot)
 		}
-	}
-	if def == nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "accessory not found"})
+		return c.JSON(fiber.Map{"success": true})
 	}
 
 	// Verify ownership
@@ -262,6 +253,19 @@ func (h *Handler) GetAllEquippedAccessories(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(string)
 	ctx := c.Context()
 
+	// Load accessory definitions from DB
+	gameAccs, err := h.gameDataRepo.GetAllAccessories(ctx)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to load accessories"})
+	}
+	accessoryDefs := convertAccessories(gameAccs)
+
+	// Build lookup map
+	accMap := make(map[int]AccessoryDef, len(accessoryDefs))
+	for _, def := range accessoryDefs {
+		accMap[def.ID] = def
+	}
+
 	rows, err := h.slimeRepo.Pool().Query(ctx,
 		`SELECT ea.slime_id::text, ea.slot, ea.accessory_id
 		 FROM equipped_accessories ea
@@ -278,17 +282,14 @@ func (h *Handler) GetAllEquippedAccessories(c *fiber.Ctx) error {
 		var slimeID, slot string
 		var accID int
 		if rows.Scan(&slimeID, &slot, &accID) == nil {
-			for _, def := range accessoryDefs {
-				if def.ID == accID {
-					result[slimeID] = append(result[slimeID], fiber.Map{
-						"slot":         slot,
-						"accessory_id": accID,
-						"name":         def.Name,
-						"icon":         def.Icon,
-						"svg_overlay":  def.SvgOvl,
-					})
-					break
-				}
+			if def, ok := accMap[accID]; ok {
+				result[slimeID] = append(result[slimeID], fiber.Map{
+					"slot":         slot,
+					"accessory_id": accID,
+					"name":         def.Name,
+					"icon":         def.Icon,
+					"svg_overlay":  def.SvgOvl,
+				})
 			}
 		}
 	}
@@ -300,6 +301,19 @@ func (h *Handler) GetAllEquippedAccessories(c *fiber.Ctx) error {
 func (h *Handler) GetSlimeAccessories(c *fiber.Ctx) error {
 	slimeID := c.Params("id")
 	ctx := c.Context()
+
+	// Load accessory definitions from DB
+	gameAccs, err := h.gameDataRepo.GetAllAccessories(ctx)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to load accessories"})
+	}
+	accessoryDefs := convertAccessories(gameAccs)
+
+	// Build lookup map
+	accMap := make(map[int]AccessoryDef, len(accessoryDefs))
+	for _, def := range accessoryDefs {
+		accMap[def.ID] = def
+	}
 
 	rows, err := h.slimeRepo.Pool().Query(ctx,
 		`SELECT slot, accessory_id FROM equipped_accessories WHERE slime_id = $1::uuid`, slimeID)
@@ -313,18 +327,14 @@ func (h *Handler) GetSlimeAccessories(c *fiber.Ctx) error {
 		var slot string
 		var accID int
 		if rows.Scan(&slot, &accID) == nil {
-			// Find the def
-			for _, def := range accessoryDefs {
-				if def.ID == accID {
-					equipped = append(equipped, fiber.Map{
-						"slot":        slot,
-						"accessory_id": accID,
-						"name":        def.Name,
-						"icon":        def.Icon,
-						"svg_overlay": def.SvgOvl,
-					})
-					break
-				}
+			if def, ok := accMap[accID]; ok {
+				equipped = append(equipped, fiber.Map{
+					"slot":        slot,
+					"accessory_id": accID,
+					"name":        def.Name,
+					"icon":        def.Icon,
+					"svg_overlay": def.SvgOvl,
+				})
 			}
 		}
 	}

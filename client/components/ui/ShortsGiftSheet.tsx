@@ -62,16 +62,20 @@ export default function ShortsGiftSheet({ shortId, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-end" onClick={onClose}>
       <div
-        className="w-full bg-[#1a1a2e] rounded-t-3xl"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)" }}
+        className="w-full rounded-t-3xl"
+        style={{
+          paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)",
+          background: "linear-gradient(180deg, #2C1810, #1A0E08)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle bar + header */}
-        <div className="flex flex-col items-center pt-3 pb-2 px-5 border-b border-white/5">
-          <div className="w-10 h-1 rounded-full bg-white/20 mb-2" />
+        <div className="flex flex-col items-center pt-3 pb-2 px-5"
+          style={{ borderBottom: "3px double #8B6914" }}>
+          <div className="w-10 h-1 rounded-full mb-2" style={{ background: "rgba(201,168,76,0.3)" }} />
           <div className="flex items-center justify-between w-full">
-            <h3 className="text-white font-bold text-sm">선물하기 🎁</h3>
-            <button onClick={onClose} className="text-white/40 text-sm">닫기</button>
+            <h3 className="font-bold text-sm" style={{ color: "#F5E6C8", fontFamily: "Georgia, 'Times New Roman', serif" }}>선물하기 🎁</h3>
+            <button onClick={onClose} className="text-sm" style={{ color: "rgba(245,230,200,0.4)" }}>닫기</button>
           </div>
         </div>
 
@@ -79,13 +83,13 @@ export default function ShortsGiftSheet({ shortId, onClose }: Props) {
           {/* Balance display */}
           <div className="flex items-center justify-center gap-4 py-2">
             <div className="text-center">
-              <p className="text-yellow-400 text-lg font-bold">{gold.toLocaleString()}</p>
-              <p className="text-white/30 text-[10px]">골드</p>
+              <p className="text-lg font-bold" style={{ color: "#D4AF37" }}>{gold.toLocaleString()}</p>
+              <p className="text-[10px]" style={{ color: "rgba(245,230,200,0.3)" }}>골드</p>
             </div>
-            <div className="w-px h-8 bg-white/10" />
+            <div className="w-px h-8" style={{ background: "rgba(139,105,20,0.2)" }} />
             <div className="text-center">
-              <p className="text-purple-400 text-lg font-bold">{gems.toLocaleString()}</p>
-              <p className="text-white/30 text-[10px]">젬</p>
+              <p className="text-lg font-bold" style={{ color: "#A29BFE" }}>{gems.toLocaleString()}</p>
+              <p className="text-[10px]" style={{ color: "rgba(245,230,200,0.3)" }}>젬</p>
             </div>
           </div>
 
@@ -93,21 +97,23 @@ export default function ShortsGiftSheet({ shortId, onClose }: Props) {
           <div className="flex gap-2">
             <button
               onClick={() => { setTipType("gold"); setAmount(100); }}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                tipType === "gold"
-                  ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
-                  : "bg-white/5 text-white/30 border border-white/5"
-              }`}
+              className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
+              style={{
+                background: tipType === "gold" ? "rgba(212,175,55,0.15)" : "rgba(245,230,200,0.04)",
+                color: tipType === "gold" ? "#D4AF37" : "rgba(245,230,200,0.3)",
+                border: tipType === "gold" ? "1px solid rgba(212,175,55,0.3)" : "1px solid rgba(139,105,20,0.1)",
+              }}
             >
               골드
             </button>
             <button
               onClick={() => { setTipType("gems"); setAmount(1); }}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                tipType === "gems"
-                  ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
-                  : "bg-white/5 text-white/30 border border-white/5"
-              }`}
+              className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
+              style={{
+                background: tipType === "gems" ? "rgba(162,155,254,0.15)" : "rgba(245,230,200,0.04)",
+                color: tipType === "gems" ? "#A29BFE" : "rgba(245,230,200,0.3)",
+                border: tipType === "gems" ? "1px solid rgba(162,155,254,0.3)" : "1px solid rgba(139,105,20,0.1)",
+              }}
             >
               젬
             </button>
@@ -115,26 +121,29 @@ export default function ShortsGiftSheet({ shortId, onClose }: Props) {
 
           {/* Amount buttons */}
           <div className="flex gap-2">
-            {amounts.map((a) => (
-              <button
-                key={a}
-                onClick={() => setAmount(a)}
-                className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${
-                  amount === a
-                    ? tipType === "gold"
-                      ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
-                      : "bg-purple-500/20 text-purple-300 border border-purple-500/30"
-                    : "bg-white/5 text-white/40 border border-white/5"
-                }`}
-              >
-                {a.toLocaleString()}{unit}
-              </button>
-            ))}
+            {amounts.map((a) => {
+              const isActive = amount === a;
+              const activeColor = tipType === "gold" ? "#D4AF37" : "#A29BFE";
+              return (
+                <button
+                  key={a}
+                  onClick={() => setAmount(a)}
+                  className="flex-1 py-3 rounded-xl text-sm font-bold transition-all"
+                  style={{
+                    background: isActive ? `${activeColor}18` : "rgba(245,230,200,0.04)",
+                    color: isActive ? activeColor : "rgba(245,230,200,0.4)",
+                    border: isActive ? `1px solid ${activeColor}40` : "1px solid rgba(139,105,20,0.1)",
+                  }}
+                >
+                  {a.toLocaleString()}{unit}
+                </button>
+              );
+            })}
           </div>
 
           {/* Insufficient balance warning */}
           {amount > balance && (
-            <p className="text-red-400/80 text-xs text-center">잔액이 부족해요</p>
+            <p className="text-xs text-center" style={{ color: "#FF6B6B" }}>잔액이 부족해요</p>
           )}
 
           {/* Message */}
@@ -142,14 +151,20 @@ export default function ShortsGiftSheet({ shortId, onClose }: Props) {
             value={message}
             onChange={(e) => setMessage(e.target.value.slice(0, 200))}
             placeholder="메시지 (선택)"
-            className="w-full bg-white/5 text-white text-sm rounded-xl px-4 py-2.5 outline-none border border-white/5 focus:border-purple-500/30 placeholder:text-white/20"
+            className="w-full text-sm rounded-xl px-4 py-2.5 outline-none"
+            style={{
+              background: "rgba(245,230,200,0.05)",
+              color: "#F5E6C8",
+              border: "1px solid rgba(139,105,20,0.15)",
+            }}
           />
 
           {/* Send button */}
           <button
             onClick={handleSend}
             disabled={sending || amount > balance}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold text-sm disabled:opacity-30"
+            className="w-full py-3 rounded-xl font-bold text-sm disabled:opacity-30 transition active:scale-[0.98]"
+            style={{ background: "linear-gradient(135deg, #C9A84C, #8B6914)", color: "#fff" }}
           >
             {sending ? "전송 중..." : `${amount.toLocaleString()}${unit} 선물하기`}
           </button>

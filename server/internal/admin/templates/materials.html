@@ -3,31 +3,169 @@
 {{end}}
 
 {{define "content"}}
+{{if eq .Message "created"}}
+<div class="msg-success">소재가 생성되었습니다.</div>
+{{else if eq .Message "updated"}}
+<div class="msg-success">소재가 수정되었습니다.</div>
+{{else if eq .Message "deleted"}}
+<div class="msg-success">소재가 삭제되었습니다.</div>
+{{else if eq .Message "error"}}
+<div class="msg-error">오류가 발생했습니다.</div>
+{{end}}
+
 {{if .Error}}
 <div class="msg-error">{{.Error}}</div>
 {{end}}
 
-<p style="font-size: 12px; color: #636e72; margin-bottom: 12px;">총 {{.Total}}개 소재</p>
+<!-- Create Form -->
+{{if .ShowCreate}}
+<div class="stat-card" style="margin-bottom: 24px;">
+  <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #55efc4;">새 소재 생성</div>
+  <form method="POST" action="/admin/gamedata/materials/create">
+    <div class="form-row">
+      <label style="min-width: 100px;">ID</label>
+      <input type="number" name="id" placeholder="소재 ID" required style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">이름</label>
+      <input type="text" name="name" placeholder="소재 이름" required style="width: 200px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">영문명</label>
+      <input type="text" name="name_en" placeholder="English name" style="width: 200px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Type</label>
+      <select name="type" style="width: 160px;">
+        <option value="element">element</option>
+        <option value="craft">craft</option>
+        <option value="special">special</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Rarity</label>
+      <select name="rarity" style="width: 160px;">
+        <option value="common">common</option>
+        <option value="uncommon">uncommon</option>
+        <option value="rare">rare</option>
+        <option value="epic">epic</option>
+        <option value="legendary">legendary</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Icon</label>
+      <input type="text" name="icon" placeholder="아이콘 (이모지 등)" style="width: 120px;" />
+    </div>
+    <div class="form-row" style="align-items: start;">
+      <label style="min-width: 100px; padding-top: 8px;">Description</label>
+      <textarea name="description" rows="3" placeholder="소재 설명..." style="flex: 1; max-width: 400px;"></textarea>
+    </div>
+    <div class="form-row" style="align-items: start;">
+      <label style="min-width: 100px; padding-top: 8px;">Effects</label>
+      <textarea name="effects" rows="4" placeholder='{"key": "value"}' style="flex: 1; max-width: 400px; font-family: monospace; font-size: 12px;">{}</textarea>
+      <span style="font-size: 10px; color: #636e72; margin-left: 8px;">JSON 형식</span>
+    </div>
+    <div style="display: flex; gap: 8px; margin-top: 8px;">
+      <button type="submit" class="btn btn-primary">생성</button>
+      <a href="/admin/gamedata/materials" class="btn btn-danger btn-sm" style="display: inline-flex; align-items: center;">취소</a>
+    </div>
+  </form>
+</div>
+{{end}}
 
+<!-- Edit Form -->
+{{if .EditItem}}
+{{with .EditItem}}
+<div class="stat-card" style="margin-bottom: 24px; border-color: rgba(162,155,254,0.3);">
+  <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #a29bfe;">소재 #{{.ID}} 수정</div>
+  <form method="POST" action="/admin/gamedata/materials/{{.ID}}/update">
+    <div class="form-row">
+      <label style="min-width: 100px;">ID</label>
+      <span style="font-size: 13px; color: #636e72;">#{{.ID}} (변경 불가)</span>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">이름</label>
+      <input type="text" name="name" value="{{.Name}}" required style="width: 200px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">영문명</label>
+      <input type="text" name="name_en" value="{{.NameEN}}" style="width: 200px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Type</label>
+      <select name="type" style="width: 160px;">
+        <option value="element" {{if eq .Type "element"}}selected{{end}}>element</option>
+        <option value="craft" {{if eq .Type "craft"}}selected{{end}}>craft</option>
+        <option value="special" {{if eq .Type "special"}}selected{{end}}>special</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Rarity</label>
+      <select name="rarity" style="width: 160px;">
+        <option value="common" {{if eq .Rarity "common"}}selected{{end}}>common</option>
+        <option value="uncommon" {{if eq .Rarity "uncommon"}}selected{{end}}>uncommon</option>
+        <option value="rare" {{if eq .Rarity "rare"}}selected{{end}}>rare</option>
+        <option value="epic" {{if eq .Rarity "epic"}}selected{{end}}>epic</option>
+        <option value="legendary" {{if eq .Rarity "legendary"}}selected{{end}}>legendary</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Icon</label>
+      <input type="text" name="icon" value="{{.Icon}}" style="width: 120px;" />
+    </div>
+    <div class="form-row" style="align-items: start;">
+      <label style="min-width: 100px; padding-top: 8px;">Description</label>
+      <textarea name="description" rows="3" style="flex: 1; max-width: 400px;">{{.Description}}</textarea>
+    </div>
+    <div class="form-row" style="align-items: start;">
+      <label style="min-width: 100px; padding-top: 8px;">Effects</label>
+      <textarea name="effects" rows="4" style="flex: 1; max-width: 400px; font-family: monospace; font-size: 12px;">{{jsonStr .Effects}}</textarea>
+      <span style="font-size: 10px; color: #636e72; margin-left: 8px;">JSON 형식</span>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Active</label>
+      <input type="checkbox" name="is_active" {{if .IsActive}}checked{{end}} style="width: auto;" />
+      <span style="font-size: 11px; color: #636e72;">비활성화 시 게임에서 사용 불가</span>
+    </div>
+    <div style="display: flex; gap: 8px; margin-top: 8px;">
+      <button type="submit" class="btn btn-primary">저장</button>
+      <a href="/admin/gamedata/materials" class="btn btn-danger btn-sm" style="display: inline-flex; align-items: center;">취소</a>
+    </div>
+  </form>
+</div>
+{{end}}
+{{end}}
+
+<!-- Header -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+  <p style="font-size: 12px; color: #636e72;">총 {{.Total}}개 소재</p>
+  {{if not .ShowCreate}}
+  <a href="/admin/gamedata/materials?create=1" class="btn btn-primary btn-sm">+ 새 소재</a>
+  {{end}}
+</div>
+
+<!-- Materials Table -->
 <table>
   <thead>
     <tr>
       <th>ID</th>
-      <th>아이콘</th>
-      <th>이름</th>
-      <th>영문명</th>
-      <th>유형</th>
-      <th>희귀도</th>
-      <th>설명</th>
+      <th>Icon</th>
+      <th>Name</th>
+      <th>Name EN</th>
+      <th>Type</th>
+      <th>Rarity</th>
+      <th>Effects</th>
+      <th>Active</th>
+      <th>Actions</th>
     </tr>
   </thead>
   <tbody>
     {{range .Materials}}
-    <tr>
+    <tr style="{{if not .IsActive}}opacity: 0.5;{{end}}">
       <td style="color: #636e72;">{{.ID}}</td>
       <td style="font-size: 18px;">{{.Icon}}</td>
-      <td>{{.Name}}</td>
-      <td style="color: #b2bec3;">{{.NameEN}}</td>
+      <td style="font-weight: 600;">{{.Name}}</td>
+      <td style="color: #b2bec3; font-size: 12px;">{{.NameEN}}</td>
       <td><span class="badge" style="background: rgba(116,185,255,0.15); color: #74b9ff;">{{.Type}}</span></td>
       <td>
         {{if eq .Rarity "common"}}<span class="badge badge-common">common</span>
@@ -38,10 +176,19 @@
         {{else}}<span class="badge badge-common">{{.Rarity}}</span>
         {{end}}
       </td>
-      <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #b2bec3;">{{.Description}}</td>
+      <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <code style="font-size: 11px; color: #b2bec3; background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px;">{{jsonStr .Effects}}</code>
+      </td>
+      <td>{{if .IsActive}}<span style="color: #55efc4;">활성</span>{{else}}<span style="color: #ff6b6b;">비활성</span>{{end}}</td>
+      <td style="white-space: nowrap;">
+        <a href="/admin/gamedata/materials?edit={{.ID}}" class="btn btn-sm btn-warning">수정</a>
+        <form method="POST" action="/admin/gamedata/materials/{{.ID}}/delete" style="display:inline; margin-left: 4px;">
+          <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('소재 #{{.ID}} {{.Name}}을(를) 정말 삭제하시겠습니까?')">삭제</button>
+        </form>
+      </td>
     </tr>
     {{else}}
-    <tr><td colspan="7" style="text-align:center; color:#636e72; padding: 24px;">소재 데이터 없음</td></tr>
+    <tr><td colspan="9" style="text-align:center; color:#636e72; padding: 24px;">소재 데이터 없음</td></tr>
     {{end}}
   </tbody>
 </table>

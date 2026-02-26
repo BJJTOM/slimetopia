@@ -1,0 +1,181 @@
+{{define "seasons.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+{{if eq .Message "created"}}<div class="msg-success">생성 완료</div>
+{{else if eq .Message "updated"}}<div class="msg-success">수정 완료</div>
+{{else if eq .Message "saved"}}<div class="msg-success">저장 완료</div>
+{{else if eq .Message "deleted"}}<div class="msg-success">삭제 완료</div>
+{{else if eq .Message "error"}}<div class="msg-error">오류가 발생했습니다</div>
+{{end}}
+
+{{if .Error}}
+<div class="msg-error">{{.Error}}</div>
+{{end}}
+
+<!-- Create Form -->
+{{if .ShowCreate}}
+<div class="stat-card" style="margin-bottom: 24px;">
+  <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #55efc4;">새 시즌 생성</div>
+  <form method="POST" action="/admin/gamedata/seasons/create">
+    <div class="form-row">
+      <label style="min-width: 140px;">ID</label>
+      <input type="number" name="id" placeholder="시즌 ID" required style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 140px;">Name</label>
+      <input type="text" name="name" placeholder="시즌 이름" required style="width: 250px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 140px;">Name EN</label>
+      <input type="text" name="name_en" placeholder="영문 이름" style="width: 250px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 140px;">Start Date</label>
+      <input type="date" name="start_date" required style="width: 180px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 140px;">End Date</label>
+      <input type="date" name="end_date" required style="width: 180px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 140px;">Limited Species</label>
+      <input type="text" name="limited_species" placeholder="종족 ID (쉼표 구분: 1,2,3)" style="width: 300px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 140px;">Special Shop Items</label>
+      <textarea name="special_shop_items" placeholder="JSON 배열" rows="3" style="width: 400px;">[]</textarea>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 140px;">Banner Color</label>
+      <input type="color" name="banner_color" value="#a29bfe" style="width: 60px; height: 32px; padding: 2px; cursor: pointer;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 140px;">Description</label>
+      <textarea name="description" placeholder="시즌 설명" rows="2" style="width: 400px;"></textarea>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 140px;">Buffs</label>
+      <textarea name="buffs" placeholder="JSON 객체" rows="3" style="width: 400px;">{}</textarea>
+    </div>
+    <div style="display: flex; gap: 8px; margin-top: 8px;">
+      <button type="submit" class="btn btn-primary">생성</button>
+      <a href="/admin/gamedata/seasons" class="btn btn-danger btn-sm" style="display: inline-flex; align-items: center;">취소</a>
+    </div>
+  </form>
+</div>
+{{end}}
+
+<!-- Edit Form -->
+{{if .EditItem}}
+{{with .EditItem}}
+<div class="stat-card" style="margin-bottom: 24px; border-color: rgba(162,155,254,0.3);">
+  <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #a29bfe;">시즌 #{{.ID}} 수정</div>
+  <form method="POST" action="/admin/gamedata/seasons/{{.ID}}/update">
+    <div class="form-row">
+      <label style="min-width: 140px;">ID</label>
+      <span style="font-size: 13px; color: #636e72;">#{{.ID}} (변경 불가)</span>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 140px;">Name</label>
+      <input type="text" name="name" value="{{.Name}}" required style="width: 250px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 140px;">Name EN</label>
+      <input type="text" name="name_en" value="{{.NameEN}}" style="width: 250px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 140px;">Start Date</label>
+      <input type="date" name="start_date" value="{{.StartDate}}" required style="width: 180px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 140px;">End Date</label>
+      <input type="date" name="end_date" value="{{.EndDate}}" required style="width: 180px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 140px;">Limited Species</label>
+      <input type="text" name="limited_species" value="{{intSliceStr .LimitedSpecies}}" placeholder="종족 ID (쉼표 구분)" style="width: 300px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 140px;">Special Shop Items</label>
+      <textarea name="special_shop_items" rows="3" style="width: 400px;">{{jsonStr .SpecialShopItems}}</textarea>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 140px;">Banner Color</label>
+      <input type="color" name="banner_color" value="{{.BannerColor}}" style="width: 60px; height: 32px; padding: 2px; cursor: pointer;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 140px;">Description</label>
+      <textarea name="description" rows="2" style="width: 400px;">{{.Description}}</textarea>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 140px;">Buffs</label>
+      <textarea name="buffs" rows="3" style="width: 400px;">{{jsonStr .Buffs}}</textarea>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 140px;">Active</label>
+      <input type="checkbox" name="is_active" {{if .IsActive}}checked{{end}} style="width: auto;" />
+      <span style="font-size: 11px; color: #636e72;">비활성화 시 게임에서 사용 불가</span>
+    </div>
+    <div style="display: flex; gap: 8px; margin-top: 8px;">
+      <button type="submit" class="btn btn-primary">저장</button>
+      <a href="/admin/gamedata/seasons" class="btn btn-danger btn-sm" style="display: inline-flex; align-items: center;">취소</a>
+    </div>
+  </form>
+</div>
+{{end}}
+{{end}}
+
+<!-- Header -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+  <p style="font-size: 12px; color: #636e72;">총 {{.Total}}개 시즌</p>
+  {{if not .ShowCreate}}
+  <a href="/admin/gamedata/seasons?create=1" class="btn btn-primary btn-sm">+ 새 시즌</a>
+  {{end}}
+</div>
+
+<!-- Seasons Table -->
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Name EN</th>
+      <th>Start Date</th>
+      <th>End Date</th>
+      <th>Banner</th>
+      <th>Limited Species</th>
+      <th>Active</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Seasons}}
+    <tr style="{{if not .IsActive}}opacity: 0.5;{{end}}">
+      <td style="color: #636e72;">{{.ID}}</td>
+      <td style="font-weight: 600;">{{.Name}}</td>
+      <td style="color: #b2bec3;">{{.NameEN}}</td>
+      <td style="color: #74b9ff; font-size: 12px;">{{.StartDate}}</td>
+      <td style="color: #74b9ff; font-size: 12px;">{{.EndDate}}</td>
+      <td>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="display: inline-block; width: 20px; height: 20px; border-radius: 4px; background: {{.BannerColor}}; border: 1px solid rgba(255,255,255,0.1);"></span>
+          <span style="font-size: 11px; color: #636e72;">{{.BannerColor}}</span>
+        </div>
+      </td>
+      <td style="font-size: 11px; color: #b2bec3; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{intSliceStr .LimitedSpecies}}</td>
+      <td>{{if .IsActive}}<span style="color: #55efc4;">활성</span>{{else}}<span style="color: #ff6b6b;">비활성</span>{{end}}</td>
+      <td style="white-space: nowrap;">
+        <a href="/admin/gamedata/seasons?edit={{.ID}}" class="btn btn-sm btn-warning">수정</a>
+        <form method="POST" action="/admin/gamedata/seasons/{{.ID}}/delete" style="display:inline; margin-left: 4px;">
+          <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('시즌 #{{.ID}}을(를) 정말 삭제하시겠습니까?')">삭제</button>
+        </form>
+      </td>
+    </tr>
+    {{else}}
+    <tr><td colspan="9" style="text-align:center; color:#636e72; padding: 24px;">시즌 데이터 없음</td></tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}

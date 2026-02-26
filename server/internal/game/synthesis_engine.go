@@ -4,10 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"math/rand"
-	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/rs/zerolog/log"
 	"github.com/slimetopia/server/internal/models"
 )
 
@@ -46,12 +44,12 @@ type SetBuff struct {
 }
 
 type SlimeSet struct {
-	ID          int    `json:"id"`
-	Name        string `json:"name"`
-	NameEN      string `json:"name_en"`
-	Description string `json:"description"`
-	SpeciesIDs  []int  `json:"species_ids"`
-	BonusScore  int    `json:"bonus_score"`
+	ID          int     `json:"id"`
+	Name        string  `json:"name"`
+	NameEN      string  `json:"name_en"`
+	Description string  `json:"description"`
+	SpeciesIDs  []int   `json:"species_ids"`
+	BonusScore  int     `json:"bonus_score"`
 	Buff        SetBuff `json:"buff"`
 }
 
@@ -63,20 +61,6 @@ type MutationRecipe struct {
 	RequiredMaterial   int
 	ResultSpeciesID    int
 	MinCollectionScore int // 0 = no minimum
-}
-
-// Hidden #1: 조이보이 슬라임 / Joy Boy Slime (ID 777)
-// Fire slime + Water slime + Rainbow Gel → Joy Boy Slime
-//
-// Hidden #2: 이무 슬라임 / Im Slime (ID 888)
-// Dark slime (any) + Poison slime (any) + Deep Sea Pearl → Im Slime
-//
-// Hidden #3: 원피스 슬라임 / One Piece Slime (ID 999)
-// Celestial slime (any) + Light slime (any) + Void Fragment + 500+ collection score
-var mutationRecipes = []MutationRecipe{
-	{RequiredElementA: "fire", RequiredElementB: "water", RequiredMaterial: 18, ResultSpeciesID: 777, MinCollectionScore: 0},
-	{RequiredElementA: "dark", RequiredElementB: "poison", RequiredMaterial: 6, ResultSpeciesID: 888, MinCollectionScore: 0},
-	{RequiredElementA: "celestial", RequiredElementB: "light", RequiredMaterial: 20, ResultSpeciesID: 999, MinCollectionScore: 500},
 }
 
 // ===== Synthesis Result =====
@@ -109,73 +93,19 @@ var gradeRank = map[string]int{
 
 var gradeByRank = []string{"common", "uncommon", "rare", "epic", "legendary", "mythic"}
 
-// ===== Loaded Data =====
-
-var allMaterials []Material
-var allSets []SlimeSet
-
-func init() {
-	loadMaterialsData()
-	loadSetsData()
-}
-
-func loadMaterialsData() {
-	paths := []string{
-		"../shared/materials.json",
-		"shared/materials.json",
-		"/app/shared/materials.json",
+// FindMaterial looks up a material by ID from the database.
+func (h *Handler) FindMaterial(id int) *Material {
+	m, err := h.gameDataRepo.GetMaterialByID(context.Background(), id)
+	if err != nil {
+		return nil
 	}
-	for _, path := range paths {
-		data, err := os.ReadFile(path)
-		if err != nil {
-			continue
-		}
-		var wrapper struct {
-			Materials []Material `json:"materials"`
-		}
-		if err := json.Unmarshal(data, &wrapper); err != nil {
-			log.Error().Err(err).Msg("Failed to parse materials.json")
-			continue
-		}
-		allMaterials = wrapper.Materials
-		log.Info().Int("count", len(allMaterials)).Msg("Loaded materials")
-		return
+	var effects MaterialEffect
+	json.Unmarshal(m.Effects, &effects)
+	return &Material{
+		ID: m.ID, Name: m.Name, NameEN: m.NameEN, Type: m.Type,
+		Rarity: m.Rarity, Icon: m.Icon, Description: m.Description,
+		Effects: effects,
 	}
-	log.Warn().Msg("No materials.json found")
-}
-
-func loadSetsData() {
-	paths := []string{
-		"../shared/slime_sets.json",
-		"shared/slime_sets.json",
-		"/app/shared/slime_sets.json",
-	}
-	for _, path := range paths {
-		data, err := os.ReadFile(path)
-		if err != nil {
-			continue
-		}
-		var wrapper struct {
-			Sets []SlimeSet `json:"sets"`
-		}
-		if err := json.Unmarshal(data, &wrapper); err != nil {
-			log.Error().Err(err).Msg("Failed to parse slime_sets.json")
-			continue
-		}
-		allSets = wrapper.Sets
-		log.Info().Int("count", len(allSets)).Msg("Loaded slime sets")
-		return
-	}
-	log.Warn().Msg("No slime_sets.json found")
-}
-
-func FindMaterial(id int) *Material {
-	for _, m := range allMaterials {
-		if m.ID == id {
-			return &m
-		}
-	}
-	return nil
 }
 
 // ===== Core Synthesis Engine =====
@@ -204,9 +134,17 @@ func Synthesize(
 	}
 	personality := personalities[rand.Intn(len(personalities))]
 
-	// 1. Check mutation recipes (only if material provided)
+	// 1. Check mutation recipes from DB (only if material provided)
 	if material != nil {
-		for _, mr := range mutationRecipes {
+		dbMutations, _ := h.gameDataRepo.GetAllMutationRecipes(ctx)
+		for _, dbMR := range dbMutations {
+			mr := MutationRecipe{
+				RequiredElementA:   dbMR.RequiredElementA,
+				RequiredElementB:   dbMR.RequiredElementB,
+				RequiredMaterial:   dbMR.RequiredMaterial,
+				ResultSpeciesID:    dbMR.ResultSpeciesID,
+				MinCollectionScore: dbMR.MinCollectionScore,
+			}
 			if !matchesMutation(slimeA, slimeB, material.ID, mr) {
 				continue
 			}
@@ -231,7 +169,7 @@ func Synthesize(
 	}
 
 	// 2. Check regular recipes
-	recipe := findRecipe(slimeA.SpeciesID, slimeB.SpeciesID)
+	recipe := h.findRecipe(slimeA.SpeciesID, slimeB.SpeciesID)
 	if recipe != nil {
 		result := SynthesisResult{
 			SpeciesID:   recipe.Output,
@@ -417,7 +355,7 @@ func filterSpecies(all []models.SlimeSpecies, element, grade string) []models.Sl
 
 // ===== Collection Score Calculation =====
 
-func CalculateCollectionScore(ctx context.Context, pool *pgxpool.Pool, userID string) (speciesPoints int, setBonus int, firstDiscoveryBonus int, total int) {
+func (h *Handler) CalculateCollectionScore(ctx context.Context, pool *pgxpool.Pool, userID string) (speciesPoints int, setBonus int, firstDiscoveryBonus int, total int) {
 	// 1. Species grade points
 	rows, err := pool.Query(ctx, `
 		SELECT ss.grade FROM codex_entries ce
@@ -434,8 +372,9 @@ func CalculateCollectionScore(ctx context.Context, pool *pgxpool.Pool, userID st
 		}
 	}
 
-	// 2. Set bonuses
-	for _, set := range allSets {
+	// 2. Set bonuses (loaded from DB)
+	dbSets, _ := h.gameDataRepo.GetAllSets(ctx)
+	for _, set := range dbSets {
 		completed := 0
 		for _, sid := range set.SpeciesIDs {
 			var exists bool

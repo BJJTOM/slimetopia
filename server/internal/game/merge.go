@@ -1,11 +1,9 @@
 package game
 
 import (
-	"encoding/json"
-	"os"
+	"context"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog/log"
 	"github.com/slimetopia/server/internal/models"
 )
 
@@ -30,48 +28,17 @@ type Recipe struct {
 	Hidden     bool   `json:"hidden"`
 }
 
-var recipes []Recipe
-
-func init() {
-	loadRecipes()
-}
-
-func loadRecipes() {
-	// Try multiple paths (running from server/ or from project root)
-	paths := []string{
-		"../shared/recipes.json",
-		"shared/recipes.json",
-		"/app/shared/recipes.json",
+// findRecipe checks if two species have a combination recipe via DB
+func (h *Handler) findRecipe(speciesA, speciesB int) *Recipe {
+	rec, err := h.gameDataRepo.FindRecipe(context.Background(), speciesA, speciesB)
+	if err != nil {
+		return nil
 	}
-
-	for _, path := range paths {
-		data, err := os.ReadFile(path)
-		if err != nil {
-			continue
-		}
-		var wrapper struct {
-			Recipes []Recipe `json:"recipes"`
-		}
-		if err := json.Unmarshal(data, &wrapper); err != nil {
-			log.Error().Err(err).Msg("Failed to parse recipes.json")
-			continue
-		}
-		recipes = wrapper.Recipes
-		log.Info().Int("count", len(recipes)).Msg("Loaded merge recipes")
-		return
+	return &Recipe{
+		ID: rec.ID, InputA: rec.InputA, InputB: rec.InputB,
+		Output: rec.Output, OutputName: rec.OutputName,
+		Type: rec.Type, Hint: rec.Hint, Hidden: rec.Hidden,
 	}
-	log.Warn().Msg("No recipes.json found, merge recipes empty")
-}
-
-// findRecipe checks if two species have a combination recipe
-func findRecipe(speciesA, speciesB int) *Recipe {
-	for _, r := range recipes {
-		if (r.InputA == speciesA && r.InputB == speciesB) ||
-			(r.InputA == speciesB && r.InputB == speciesA) {
-			return &r
-		}
-	}
-	return nil
 }
 
 // nextGrade returns the next grade in the hierarchy
@@ -146,7 +113,7 @@ func (h *Handler) MergeSlimes(c *fiber.Ctx) error {
 	// Material handling
 	var material *Material
 	if body.MaterialID > 0 {
-		mat := FindMaterial(body.MaterialID)
+		mat := h.FindMaterial(body.MaterialID)
 		if mat == nil {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "material not found"})
 		}
@@ -157,7 +124,7 @@ func (h *Handler) MergeSlimes(c *fiber.Ctx) error {
 	}
 
 	// Calculate user's collection score for mutation requirements
-	_, _, _, collectionScore := CalculateCollectionScore(ctx, pool, userID)
+	_, _, _, collectionScore := h.CalculateCollectionScore(ctx, pool, userID)
 
 	// Run synthesis engine
 	result := Synthesize(ctx, h, *slimeA, *slimeB, material, collectionScore)
@@ -200,7 +167,7 @@ func (h *Handler) MergeSlimes(c *fiber.Ctx) error {
 	// Track recipe discovery for combination merges
 	newDiscovery := false
 	if result.MergeType == "combination" {
-		recipe := findRecipe(slimeA.SpeciesID, slimeB.SpeciesID)
+		recipe := h.findRecipe(slimeA.SpeciesID, slimeB.SpeciesID)
 		if recipe != nil {
 			h.slimeRepo.AddRecipeDiscovery(ctx, userID, recipe.ID)
 			newDiscovery = true

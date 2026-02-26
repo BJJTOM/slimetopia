@@ -72,6 +72,7 @@ func main() {
 	explorationRepo := repository.NewExplorationRepository(pool)
 	missionRepo := repository.NewMissionRepository(pool)
 	villageRepo := repository.NewVillageRepository(pool)
+	gameDataRepo := repository.NewGameDataRepository(pool)
 
 	// Auth
 	jwtManager := auth.NewJWTManager(cfg.JWTSecret)
@@ -92,8 +93,8 @@ func main() {
 	}
 
 	userHandler := auth.NewUserHandler(userRepo)
-	gameHandler := game.NewHandler(slimeRepo, userRepo, explorationRepo, missionRepo, villageRepo, rdb)
-	adminHandler := admin.NewAdminHandler(pool, cfg.JWTSecret)
+	gameHandler := game.NewHandler(slimeRepo, userRepo, explorationRepo, missionRepo, villageRepo, gameDataRepo, rdb)
+	adminHandler := admin.NewAdminHandler(pool, cfg.JWTSecret, gameDataRepo)
 
 	// Fiber app
 	app := fiber.New(fiber.Config{

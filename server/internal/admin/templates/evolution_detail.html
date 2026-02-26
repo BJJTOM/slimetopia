@@ -1,0 +1,158 @@
+{{define "evolution_detail.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+<a href="/admin/gamedata/evolutions" style="font-size: 13px; color: #74b9ff; text-decoration: none; display: inline-block; margin-bottom: 16px;">&larr; 진화트리 목록</a>
+
+<h2 style="font-size: 20px; font-weight: 700; color: #e8e4f0; margin-bottom: 4px;">{{.SpeciesName}} 진화트리</h2>
+<p style="font-size: 12px; color: #636e72; margin-bottom: 20px;">Species #{{.SpeciesID}}</p>
+
+{{if eq .Message "saved"}}
+<div class="msg-success">노드가 저장되었습니다.</div>
+{{else if eq .Message "created"}}
+<div class="msg-success">노드가 생성되었습니다.</div>
+{{else if eq .Message "updated"}}
+<div class="msg-success">노드가 수정되었습니다.</div>
+{{else if eq .Message "deleted"}}
+<div class="msg-success">노드가 삭제되었습니다.</div>
+{{else if eq .Message "error"}}
+<div class="msg-error">오류가 발생했습니다.</div>
+{{end}}
+
+<!-- Create Form -->
+{{if .ShowCreate}}
+<div class="stat-card" style="margin-bottom: 24px;">
+  <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #55efc4;">새 노드 추가</div>
+  <form method="POST" action="/admin/gamedata/evolutions/{{.SpeciesID}}/node">
+    <div class="form-row">
+      <label style="min-width: 100px;">Node ID</label>
+      <input type="number" name="node_id" placeholder="노드 ID" required style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Name</label>
+      <input type="text" name="name" placeholder="노드 이름" required style="width: 200px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Type</label>
+      <select name="type" style="width: 160px;">
+        <option value="stat">stat</option>
+        <option value="skill">skill</option>
+        <option value="passive">passive</option>
+        <option value="special">special</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Buff (JSON)</label>
+      <textarea name="buff" placeholder='{"hp": 10, "atk": 5}' rows="3" style="width: 400px; font-family: monospace; font-size: 12px;"></textarea>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Cost</label>
+      <input type="number" name="cost" placeholder="비용" value="0" required style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Requires</label>
+      <input type="text" name="requires" placeholder="선행 노드 ID (콤마 구분, 예: 1,2,3)" style="width: 300px;" />
+    </div>
+    <div style="display: flex; gap: 8px; margin-top: 8px;">
+      <button type="submit" class="btn btn-primary">생성</button>
+      <a href="/admin/gamedata/evolutions/{{.SpeciesID}}" class="btn btn-danger btn-sm" style="display: inline-flex; align-items: center;">취소</a>
+    </div>
+  </form>
+</div>
+{{end}}
+
+<!-- Edit Form -->
+{{if .EditItem}}
+{{with .EditItem}}
+<div class="stat-card" style="margin-bottom: 24px; border-color: rgba(162,155,254,0.3);">
+  <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #a29bfe;">노드 #{{.NodeID}} 수정</div>
+  <form method="POST" action="/admin/gamedata/evolutions/{{$.SpeciesID}}/node">
+    <div class="form-row">
+      <label style="min-width: 100px;">Node ID</label>
+      <input type="number" name="node_id" value="{{.NodeID}}" required style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Name</label>
+      <input type="text" name="name" value="{{.Name}}" required style="width: 200px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Type</label>
+      <select name="type" style="width: 160px;">
+        <option value="stat" {{if eq .Type "stat"}}selected{{end}}>stat</option>
+        <option value="skill" {{if eq .Type "skill"}}selected{{end}}>skill</option>
+        <option value="passive" {{if eq .Type "passive"}}selected{{end}}>passive</option>
+        <option value="special" {{if eq .Type "special"}}selected{{end}}>special</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Buff (JSON)</label>
+      <textarea name="buff" rows="3" style="width: 400px; font-family: monospace; font-size: 12px;">{{jsonStr .Buff}}</textarea>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Cost</label>
+      <input type="number" name="cost" value="{{.Cost}}" required style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Requires</label>
+      <input type="text" name="requires" value="{{intSliceStr .Requires}}" placeholder="선행 노드 ID (콤마 구분, 예: 1,2,3)" style="width: 300px;" />
+    </div>
+    <div style="display: flex; gap: 8px; margin-top: 8px;">
+      <button type="submit" class="btn btn-primary">저장</button>
+      <a href="/admin/gamedata/evolutions/{{$.SpeciesID}}" class="btn btn-danger btn-sm" style="display: inline-flex; align-items: center;">취소</a>
+    </div>
+  </form>
+</div>
+{{end}}
+{{end}}
+
+<!-- Action Bar -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+  <p style="font-size: 12px; color: #636e72;">총 {{.Total}}개 노드</p>
+  {{if and (not .ShowCreate) (not .EditItem)}}
+  <a href="/admin/gamedata/evolutions/{{.SpeciesID}}?create=1" class="btn btn-primary btn-sm">+ 노드 추가</a>
+  {{end}}
+</div>
+
+<!-- Nodes Table -->
+<table>
+  <thead>
+    <tr>
+      <th style="width: 70px;">NodeID</th>
+      <th>Name</th>
+      <th style="width: 90px;">Type</th>
+      <th>Buff</th>
+      <th style="width: 80px;">Cost</th>
+      <th style="width: 140px;">Requires</th>
+      <th style="width: 120px;">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Nodes}}
+    <tr>
+      <td style="color: #636e72;">{{.NodeID}}</td>
+      <td style="font-weight: 600;">{{.Name}}</td>
+      <td>
+        {{if eq .Type "stat"}}<span class="badge" style="background: rgba(116,185,255,0.15); color: #74b9ff;">stat</span>
+        {{else if eq .Type "skill"}}<span class="badge" style="background: rgba(162,155,254,0.15); color: #a29bfe;">skill</span>
+        {{else if eq .Type "passive"}}<span class="badge" style="background: rgba(85,239,196,0.15); color: #55efc4;">passive</span>
+        {{else if eq .Type "special"}}<span class="badge" style="background: rgba(255,234,167,0.15); color: #ffeaa7;">special</span>
+        {{else}}<span class="badge">{{.Type}}</span>
+        {{end}}
+      </td>
+      <td><pre style="margin: 0; font-size: 11px; color: #b2bec3; white-space: pre-wrap; max-width: 300px;">{{jsonPretty .Buff}}</pre></td>
+      <td style="color: #fdcb6e; font-weight: 600;">{{.Cost}}</td>
+      <td style="color: #b2bec3; font-size: 12px;">{{intSliceStr .Requires}}</td>
+      <td style="white-space: nowrap;">
+        <a href="/admin/gamedata/evolutions/{{$.SpeciesID}}?edit={{.NodeID}}" class="btn btn-sm btn-warning">수정</a>
+        <form method="POST" action="/admin/gamedata/evolutions/{{$.SpeciesID}}/node/{{.NodeID}}/delete" style="display:inline; margin-left: 4px;">
+          <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('노드 #{{.NodeID}}을(를) 정말 삭제하시겠습니까?')">삭제</button>
+        </form>
+      </td>
+    </tr>
+    {{else}}
+    <tr><td colspan="7" style="text-align:center; color:#636e72; padding: 24px;">노드 데이터 없음</td></tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}

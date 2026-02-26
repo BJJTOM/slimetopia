@@ -51,13 +51,14 @@ func (h *UserHandler) GetMe(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"id":       uuidToString(user.ID),
-		"nickname": user.Nickname,
-		"gold":     user.Gold,
-		"gems":     user.Gems,
-		"stardust": user.Stardust,
-		"level":    user.Level,
-		"email":    maskedEmail,
+		"id":                uuidToString(user.ID),
+		"nickname":          user.Nickname,
+		"gold":              user.Gold,
+		"gems":              user.Gems,
+		"stardust":          user.Stardust,
+		"level":             user.Level,
+		"email":             maskedEmail,
+		"profile_image_url": user.ProfileImageURL,
 	})
 }
 

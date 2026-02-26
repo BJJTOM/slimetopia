@@ -26,12 +26,12 @@ func (r *UserRepository) Pool() *pgxpool.Pool {
 func (r *UserRepository) FindByProviderID(ctx context.Context, provider, providerID string) (*models.User, error) {
 	user := &models.User{}
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, nickname, provider, provider_id, gold, gems, stardust, level, created_at, updated_at
+		`SELECT id, nickname, provider, provider_id, gold, gems, stardust, level, COALESCE(profile_image_url, ''), created_at, updated_at
 		 FROM users WHERE provider = $1 AND provider_id = $2`,
 		provider, providerID,
 	).Scan(
 		&user.ID, &user.Nickname, &user.Provider, &user.ProviderID,
-		&user.Gold, &user.Gems, &user.Stardust, &user.Level,
+		&user.Gold, &user.Gems, &user.Stardust, &user.Level, &user.ProfileImageURL,
 		&user.CreatedAt, &user.UpdatedAt,
 	)
 	if err != nil {
@@ -46,12 +46,12 @@ func (r *UserRepository) FindByProviderID(ctx context.Context, provider, provide
 func (r *UserRepository) FindByID(ctx context.Context, id string) (*models.User, error) {
 	user := &models.User{}
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, nickname, provider, provider_id, gold, gems, stardust, level, created_at, updated_at
+		`SELECT id, nickname, provider, provider_id, gold, gems, stardust, level, COALESCE(profile_image_url, ''), created_at, updated_at
 		 FROM users WHERE id = $1`,
 		id,
 	).Scan(
 		&user.ID, &user.Nickname, &user.Provider, &user.ProviderID,
-		&user.Gold, &user.Gems, &user.Stardust, &user.Level,
+		&user.Gold, &user.Gems, &user.Stardust, &user.Level, &user.ProfileImageURL,
 		&user.CreatedAt, &user.UpdatedAt,
 	)
 	if err != nil {

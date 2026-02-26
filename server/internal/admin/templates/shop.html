@@ -3,49 +3,216 @@
 {{end}}
 
 {{define "content"}}
-{{if eq .Message "updated"}}
-<div class="msg-success">Price updated successfully!</div>
+{{if eq .Message "created"}}
+<div class="msg-success">상점 아이템이 생성되었습니다.</div>
+{{else if eq .Message "updated"}}
+<div class="msg-success">상점 아이템이 수정되었습니다.</div>
+{{else if eq .Message "deleted"}}
+<div class="msg-success">상점 아이템이 삭제되었습니다.</div>
 {{else if eq .Message "error"}}
-<div class="msg-error">Failed to update price</div>
-{{else if .Message}}
-<div class="msg-error">{{.Message}}</div>
+<div class="msg-error">오류가 발생했습니다.</div>
 {{end}}
 
-<p style="font-size: 12px; color: #636e72; margin-bottom: 16px;">
-  Shop items are loaded from shared/shop.json. DB-based price overrides shown below (if shop_items table exists).
-</p>
+{{if .Error}}
+<div class="msg-error">{{.Error}}</div>
+{{end}}
 
+<!-- Create Form -->
+{{if .ShowCreate}}
+<div class="stat-card" style="margin-bottom: 24px;">
+  <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #55efc4;">새 상점 아이템 생성</div>
+  <form method="POST" action="/admin/shop/create">
+    <div class="form-row">
+      <label style="min-width: 100px;">ID</label>
+      <input type="number" name="id" placeholder="아이템 ID" required style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">이름</label>
+      <input type="text" name="name" placeholder="아이템 이름" required style="width: 200px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">영문명</label>
+      <input type="text" name="name_en" placeholder="English name" style="width: 200px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Type</label>
+      <select name="type" style="width: 160px;">
+        <option value="egg">egg</option>
+        <option value="food">food</option>
+        <option value="decoration">decoration</option>
+        <option value="booster">booster</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Category</label>
+      <input type="text" name="category" placeholder="카테고리" style="width: 160px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Gold</label>
+      <input type="number" name="cost_gold" value="0" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Gems</label>
+      <input type="number" name="cost_gems" value="0" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Icon</label>
+      <input type="text" name="icon" placeholder="아이콘 (이모지 등)" style="width: 120px;" />
+    </div>
+    <div class="form-row" style="align-items: start;">
+      <label style="min-width: 100px; padding-top: 8px;">Description</label>
+      <textarea name="description" rows="3" placeholder="아이템 설명..." style="flex: 1; max-width: 400px;"></textarea>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Quantity</label>
+      <input type="number" name="quantity" value="1" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Egg Type</label>
+      <input type="text" name="egg_type" placeholder="에그 타입 (egg인 경우)" style="width: 160px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Sort Order</label>
+      <input type="number" name="sort_order" value="0" style="width: 120px;" />
+    </div>
+    <div style="display: flex; gap: 8px; margin-top: 8px;">
+      <button type="submit" class="btn btn-primary">생성</button>
+      <a href="/admin/shop" class="btn btn-danger btn-sm" style="display: inline-flex; align-items: center;">취소</a>
+    </div>
+  </form>
+</div>
+{{end}}
+
+<!-- Edit Form -->
+{{if .EditItem}}
+{{with .EditItem}}
+<div class="stat-card" style="margin-bottom: 24px; border-color: rgba(162,155,254,0.3);">
+  <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #a29bfe;">상점 아이템 #{{.ID}} 수정</div>
+  <form method="POST" action="/admin/shop/{{.ID}}/update">
+    <div class="form-row">
+      <label style="min-width: 100px;">ID</label>
+      <span style="font-size: 13px; color: #636e72;">#{{.ID}} (변경 불가)</span>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">이름</label>
+      <input type="text" name="name" value="{{.Name}}" required style="width: 200px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">영문명</label>
+      <input type="text" name="name_en" value="{{.NameEN}}" style="width: 200px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Type</label>
+      <select name="type" style="width: 160px;">
+        <option value="egg" {{if eq .Type "egg"}}selected{{end}}>egg</option>
+        <option value="food" {{if eq .Type "food"}}selected{{end}}>food</option>
+        <option value="decoration" {{if eq .Type "decoration"}}selected{{end}}>decoration</option>
+        <option value="booster" {{if eq .Type "booster"}}selected{{end}}>booster</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Category</label>
+      <input type="text" name="category" value="{{.Category}}" style="width: 160px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Gold</label>
+      <input type="number" name="cost_gold" value="{{.CostGold}}" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Gems</label>
+      <input type="number" name="cost_gems" value="{{.CostGems}}" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Icon</label>
+      <input type="text" name="icon" value="{{.Icon}}" style="width: 120px;" />
+    </div>
+    <div class="form-row" style="align-items: start;">
+      <label style="min-width: 100px; padding-top: 8px;">Description</label>
+      <textarea name="description" rows="3" style="flex: 1; max-width: 400px;">{{.Description}}</textarea>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Quantity</label>
+      <input type="number" name="quantity" value="{{.Quantity}}" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Egg Type</label>
+      <input type="text" name="egg_type" value="{{.EggType}}" style="width: 160px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Sort Order</label>
+      <input type="number" name="sort_order" value="{{.SortOrder}}" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">Active</label>
+      <input type="checkbox" name="is_active" {{if .IsActive}}checked{{end}} style="width: auto;" />
+      <span style="font-size: 11px; color: #636e72;">비활성화 시 상점에서 숨김</span>
+    </div>
+    <div style="display: flex; gap: 8px; margin-top: 8px;">
+      <button type="submit" class="btn btn-primary">저장</button>
+      <a href="/admin/shop" class="btn btn-danger btn-sm" style="display: inline-flex; align-items: center;">취소</a>
+    </div>
+  </form>
+</div>
+{{end}}
+{{end}}
+
+<!-- Header -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+  <p style="font-size: 12px; color: #636e72;">총 {{len .Items}}개 상점 아이템</p>
+  {{if not .ShowCreate}}
+  <a href="/admin/shop?create=1" class="btn btn-primary btn-sm">+ 새 아이템</a>
+  {{end}}
+</div>
+
+<!-- Shop Items Table -->
 <table>
   <thead>
     <tr>
       <th>ID</th>
+      <th>Icon</th>
       <th>Name</th>
       <th>Type</th>
+      <th>Category</th>
       <th>Gold</th>
       <th>Gems</th>
-      <th>Action</th>
+      <th>Qty</th>
+      <th>Egg Type</th>
+      <th>Active</th>
+      <th>Actions</th>
     </tr>
   </thead>
   <tbody>
     {{range .Items}}
-    <tr>
-      <td>{{.ID}}</td>
-      <td>{{.Name}}</td>
-      <td>{{.Type}}</td>
+    <tr style="{{if not .IsActive}}opacity: 0.5;{{end}}">
+      <td style="color: #636e72;">{{.ID}}</td>
+      <td style="font-size: 18px;">{{.Icon}}</td>
       <td>
-        <form method="POST" action="/admin/shop/{{.ID}}" style="display:inline-flex; gap: 4px; align-items: center;">
-          <input type="number" name="cost_gold" value="{{.CostGold}}" style="width: 80px; padding: 4px 8px; font-size: 12px;" />
+        <div style="font-weight: 600;">{{.Name}}</div>
+        {{if .NameEN}}<div style="font-size: 11px; color: #636e72;">{{.NameEN}}</div>{{end}}
       </td>
       <td>
-          <input type="number" name="cost_gems" value="{{.CostGems}}" style="width: 80px; padding: 4px 8px; font-size: 12px;" />
+        {{if eq .Type "egg"}}<span class="badge" style="background: rgba(255,234,167,0.15); color: #ffeaa7;">egg</span>
+        {{else if eq .Type "food"}}<span class="badge" style="background: rgba(85,239,196,0.15); color: #55efc4;">food</span>
+        {{else if eq .Type "decoration"}}<span class="badge" style="background: rgba(162,155,254,0.15); color: #a29bfe;">decoration</span>
+        {{else if eq .Type "booster"}}<span class="badge" style="background: rgba(116,185,255,0.15); color: #74b9ff;">booster</span>
+        {{else}}<span class="badge badge-common">{{.Type}}</span>
+        {{end}}
       </td>
-      <td>
-          <button type="submit" class="btn btn-primary btn-sm">Update</button>
+      <td style="color: #b2bec3; font-size: 12px;">{{.Category}}</td>
+      <td style="color: #ffeaa7;">{{if gt .CostGold 0}}{{.CostGold}}{{else}}<span style="color: #636e72;">0</span>{{end}}</td>
+      <td style="color: #a29bfe;">{{if gt .CostGems 0}}{{.CostGems}}{{else}}<span style="color: #636e72;">0</span>{{end}}</td>
+      <td style="color: #b2bec3;">{{.Quantity}}</td>
+      <td style="color: #74b9ff; font-size: 12px;">{{if .EggType}}{{.EggType}}{{else}}<span style="color: #636e72;">-</span>{{end}}</td>
+      <td>{{if .IsActive}}<span style="color: #55efc4;">활성</span>{{else}}<span style="color: #ff6b6b;">비활성</span>{{end}}</td>
+      <td style="white-space: nowrap;">
+        <a href="/admin/shop?edit={{.ID}}" class="btn btn-sm btn-warning">수정</a>
+        <form method="POST" action="/admin/shop/{{.ID}}/delete" style="display:inline; margin-left: 4px;">
+          <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('아이템 #{{.ID}} {{.Name}}을(를) 정말 삭제하시겠습니까?')">삭제</button>
         </form>
       </td>
     </tr>
     {{else}}
-    <tr><td colspan="6" style="text-align:center; color:#636e72; padding: 24px;">No items (shop uses JSON config)</td></tr>
+    <tr><td colspan="11" style="text-align:center; color:#636e72; padding: 24px;">상점 아이템 없음</td></tr>
     {{end}}
   </tbody>
 </table>

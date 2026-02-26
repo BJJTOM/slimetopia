@@ -1,11 +1,7 @@
 package game
 
 import (
-	"encoding/json"
-	"os"
-
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog/log"
 )
 
 // AchievementDef from shared/achievements.json
@@ -18,41 +14,29 @@ type AchievementDef struct {
 	RewardGems  int    `json:"reward_gems"`
 }
 
-var achievementDefs []AchievementDef
-
-func init() {
-	loadAchievementDefs()
-}
-
-func loadAchievementDefs() {
-	paths := []string{
-		"../shared/achievements.json",
-		"shared/achievements.json",
-		"/app/shared/achievements.json",
-	}
-	for _, path := range paths {
-		data, err := os.ReadFile(path)
-		if err != nil {
-			continue
-		}
-		var wrapper struct {
-			Achievements []AchievementDef `json:"achievements"`
-		}
-		if err := json.Unmarshal(data, &wrapper); err != nil {
-			log.Error().Err(err).Msg("Failed to parse achievements.json")
-			continue
-		}
-		achievementDefs = wrapper.Achievements
-		log.Info().Int("count", len(achievementDefs)).Msg("Loaded achievement definitions")
-		return
-	}
-	log.Warn().Msg("No achievements.json found")
-}
-
 // GET /api/achievements — list all achievements with unlock state
 func (h *Handler) GetAchievements(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(string)
 	ctx := c.Context()
+
+	// Load achievement definitions from DB
+	gameDefs, err := h.gameDataRepo.GetAllAchievements(ctx)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to load achievements"})
+	}
+
+	// Convert to AchievementDef
+	defs := make([]AchievementDef, len(gameDefs))
+	for i, gd := range gameDefs {
+		defs[i] = AchievementDef{
+			Key:         gd.Key,
+			Name:        gd.Name,
+			Description: gd.Description,
+			Icon:        gd.Icon,
+			RewardGold:  gd.RewardGold,
+			RewardGems:  gd.RewardGems,
+		}
+	}
 
 	// Get unlocked achievements from DB
 	rows, err := h.slimeRepo.Pool().Query(ctx,
@@ -72,8 +56,8 @@ func (h *Handler) GetAchievements(c *fiber.Ctx) error {
 		}
 	}
 
-	result := make([]fiber.Map, 0, len(achievementDefs))
-	for _, def := range achievementDefs {
+	result := make([]fiber.Map, 0, len(defs))
+	for _, def := range defs {
 		entry := fiber.Map{
 			"key":         def.Key,
 			"name":        def.Name,
@@ -97,9 +81,28 @@ func (h *Handler) CheckAchievements(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(string)
 	ctx := c.Context()
 
+	// Load achievement definitions from DB
+	gameDefs, err := h.gameDataRepo.GetAllAchievements(ctx)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to load achievements"})
+	}
+
+	// Convert to AchievementDef
+	achievementDefs := make([]AchievementDef, len(gameDefs))
+	for i, gd := range gameDefs {
+		achievementDefs[i] = AchievementDef{
+			Key:         gd.Key,
+			Name:        gd.Name,
+			Description: gd.Description,
+			Icon:        gd.Icon,
+			RewardGold:  gd.RewardGold,
+			RewardGems:  gd.RewardGems,
+		}
+	}
+
 	// Get user's UUID
 	var userUUID string
-	err := h.slimeRepo.Pool().QueryRow(ctx,
+	err = h.slimeRepo.Pool().QueryRow(ctx,
 		`SELECT id::text FROM users WHERE id::text = $1 OR provider_id = $1 LIMIT 1`, userID).Scan(&userUUID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "user not found"})

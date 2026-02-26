@@ -3,11 +3,9 @@ package game
 import (
 	"context"
 	"encoding/json"
-	"os"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog/log"
 )
 
 type EvolutionNode struct {
@@ -24,48 +22,36 @@ type EvolutionTree struct {
 	Nodes       []EvolutionNode `json:"nodes"`
 }
 
-var evolutionTrees map[string]EvolutionTree
-
-func init() {
-	loadEvolutionTrees()
-}
-
-func loadEvolutionTrees() {
-	paths := []string{
-		"../shared/evolution-tree.json",
-		"shared/evolution-tree.json",
-		"/app/shared/evolution-tree.json",
-	}
-	for _, path := range paths {
-		data, err := os.ReadFile(path)
-		if err != nil {
-			continue
-		}
-		var wrapper struct {
-			Trees map[string]EvolutionTree `json:"trees"`
-		}
-		if err := json.Unmarshal(data, &wrapper); err != nil {
-			log.Error().Err(err).Msg("Failed to parse evolution-tree.json")
-			continue
-		}
-		evolutionTrees = wrapper.Trees
-		log.Info().Int("count", len(evolutionTrees)).Msg("Loaded evolution trees")
-		return
-	}
-	log.Warn().Msg("No evolution-tree.json found")
-}
-
 // GET /api/evolution/:species_id
 func (h *Handler) GetEvolutionTree(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(string)
 	speciesID := c.Params("species_id")
 
-	tree, ok := evolutionTrees[speciesID]
-	if !ok {
+	sid, _ := strconv.Atoi(speciesID)
+
+	// Load evolution tree from DB
+	gameNodes, err := h.gameDataRepo.GetEvolutionTree(c.Context(), sid)
+	if err != nil || len(gameNodes) == 0 {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "no evolution tree for this species"})
 	}
 
-	sid, _ := strconv.Atoi(speciesID)
+	// Convert GameEvolutionNode to EvolutionNode
+	nodes := make([]EvolutionNode, len(gameNodes))
+	for i, gn := range gameNodes {
+		var buff map[string]interface{}
+		if len(gn.Buff) > 0 {
+			json.Unmarshal(gn.Buff, &buff)
+		}
+		nodes[i] = EvolutionNode{
+			ID:       gn.NodeID,
+			Name:     gn.Name,
+			Type:     gn.Type,
+			Buff:     buff,
+			Cost:     gn.Cost,
+			Requires: gn.Requires,
+		}
+	}
+
 	unlockedNodes, err := h.getUnlockedEvolutionNodes(c.UserContext(), userID, sid)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to fetch unlocks"})
@@ -76,8 +62,8 @@ func (h *Handler) GetEvolutionTree(c *fiber.Ctx) error {
 		unlockedSet[nid] = true
 	}
 
-	nodes := make([]fiber.Map, 0, len(tree.Nodes))
-	for _, node := range tree.Nodes {
+	result := make([]fiber.Map, 0, len(nodes))
+	for _, node := range nodes {
 		canUnlock := true
 		for _, req := range node.Requires {
 			if !unlockedSet[req] {
@@ -85,7 +71,7 @@ func (h *Handler) GetEvolutionTree(c *fiber.Ctx) error {
 				break
 			}
 		}
-		nodes = append(nodes, fiber.Map{
+		result = append(result, fiber.Map{
 			"id":         node.ID,
 			"name":       node.Name,
 			"type":       node.Type,
@@ -98,8 +84,8 @@ func (h *Handler) GetEvolutionTree(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{
-		"species_name": tree.SpeciesName,
-		"nodes":        nodes,
+		"species_name": "", // species name not stored in evolution tree DB table
+		"nodes":        result,
 	})
 }
 
@@ -116,16 +102,29 @@ func (h *Handler) UnlockEvolutionNode(c *fiber.Ctx) error {
 	}
 
 	sid, _ := strconv.Atoi(speciesID)
-	tree, ok := evolutionTrees[speciesID]
-	if !ok {
+
+	// Load evolution tree from DB
+	gameNodes, err := h.gameDataRepo.GetEvolutionTree(c.Context(), sid)
+	if err != nil || len(gameNodes) == 0 {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "no evolution tree"})
 	}
 
+	// Find target node
 	var targetNode *EvolutionNode
-	for _, n := range tree.Nodes {
-		if n.ID == body.NodeID {
-			nn := n
-			targetNode = &nn
+	for _, gn := range gameNodes {
+		if gn.NodeID == body.NodeID {
+			var buff map[string]interface{}
+			if len(gn.Buff) > 0 {
+				json.Unmarshal(gn.Buff, &buff)
+			}
+			targetNode = &EvolutionNode{
+				ID:       gn.NodeID,
+				Name:     gn.Name,
+				Type:     gn.Type,
+				Buff:     buff,
+				Cost:     gn.Cost,
+				Requires: gn.Requires,
+			}
 			break
 		}
 	}
@@ -152,7 +151,7 @@ func (h *Handler) UnlockEvolutionNode(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "insufficient stardust"})
 	}
 
-	_, err := h.slimeRepo.Pool().Exec(ctx,
+	_, err = h.slimeRepo.Pool().Exec(ctx,
 		`INSERT INTO evolution_unlocks (user_id, species_id, node_id) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
 		userID, sid, body.NodeID,
 	)

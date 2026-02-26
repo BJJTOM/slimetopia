@@ -3,35 +3,137 @@
 {{end}}
 
 {{define "content"}}
-{{if .Error}}
-<div class="msg-error">{{.Error}}</div>
+{{if eq .Message "created"}}<div class="msg-success">생성 완료</div>{{else if eq .Message "updated"}}<div class="msg-success">수정 완료</div>{{else if eq .Message "deleted"}}<div class="msg-success">삭제 완료</div>{{else if eq .Message "error"}}<div class="msg-error">오류가 발생했습니다</div>{{end}}
+
+<!-- Create Form -->
+{{if .ShowCreate}}
+<div class="stat-card" style="margin-bottom: 24px;">
+  <div class="label" style="margin-bottom: 16px; font-size: 16px; color: #55efc4;">새 업적 생성</div>
+  <form method="POST" action="/admin/gamedata/achievements/create">
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">키 (Key)</label>
+      <input type="text" name="key" required placeholder="e.g. first_merge" style="width: 250px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">이름</label>
+      <input type="text" name="name" required style="width: 300px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">설명</label>
+      <textarea name="description" rows="2" style="width: 100%;"></textarea>
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">아이콘</label>
+      <input type="text" name="icon" placeholder="e.g. trophy" style="width: 200px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">보상 골드</label>
+      <input type="number" name="reward_gold" value="0" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">보상 젬</label>
+      <input type="number" name="reward_gems" value="0" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">정렬 순서</label>
+      <input type="number" name="sort_order" value="0" style="width: 120px;" />
+    </div>
+    <div style="margin-top: 16px; display: flex; gap: 8px;">
+      <button type="submit" class="btn btn-primary">생성</button>
+      <a href="/admin/gamedata/achievements" class="btn btn-sm" style="background: rgba(255,255,255,0.06); color: #b2bec3;">취소</a>
+    </div>
+  </form>
+</div>
 {{end}}
 
-<p style="font-size: 12px; color: #636e72; margin-bottom: 12px;">총 {{.Total}}개 업적</p>
+<!-- Edit Form -->
+{{if .EditItem}}
+<div class="stat-card" style="margin-bottom: 24px;">
+  <div class="label" style="margin-bottom: 16px; font-size: 16px; color: #a29bfe;">업적 수정 — {{.EditItem.Key}}</div>
+  <form method="POST" action="/admin/gamedata/achievements/{{.EditItem.Key}}/update">
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">키 (Key)</label>
+      <input type="text" name="key" value="{{.EditItem.Key}}" readonly style="width: 250px; opacity: 0.5;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">이름</label>
+      <input type="text" name="name" value="{{.EditItem.Name}}" required style="width: 300px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">설명</label>
+      <textarea name="description" rows="2" style="width: 100%;">{{.EditItem.Description}}</textarea>
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">아이콘</label>
+      <input type="text" name="icon" value="{{.EditItem.Icon}}" style="width: 200px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">보상 골드</label>
+      <input type="number" name="reward_gold" value="{{.EditItem.RewardGold}}" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">보상 젬</label>
+      <input type="number" name="reward_gems" value="{{.EditItem.RewardGems}}" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">정렬 순서</label>
+      <input type="number" name="sort_order" value="{{.EditItem.SortOrder}}" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="color: #b2bec3; font-size: 13px;">활성화</label>
+      <input type="checkbox" name="is_active" value="true" {{if .EditItem.IsActive}}checked{{end}} />
+    </div>
+    <div style="margin-top: 16px; display: flex; gap: 8px;">
+      <button type="submit" class="btn btn-primary">수정</button>
+      <a href="/admin/gamedata/achievements" class="btn btn-sm" style="background: rgba(255,255,255,0.06); color: #b2bec3;">취소</a>
+    </div>
+  </form>
+</div>
+{{end}}
 
+<!-- Header -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+  <h2 style="margin: 0; font-size: 18px; color: #dfe6e9;">업적 목록</h2>
+  <a href="/admin/gamedata/achievements?create=1" class="btn btn-primary">+ 새 업적</a>
+</div>
+
+<!-- Achievements Table -->
 <table>
   <thead>
     <tr>
-      <th>아이콘</th>
-      <th>키</th>
+      <th style="width: 50px;">아이콘</th>
+      <th style="width: 150px;">Key</th>
       <th>이름</th>
       <th>설명</th>
-      <th>골드 보상</th>
-      <th>젬 보상</th>
+      <th style="width: 80px;">골드</th>
+      <th style="width: 80px;">젬</th>
+      <th style="width: 60px;">활성</th>
+      <th style="width: 130px;">관리</th>
     </tr>
   </thead>
   <tbody>
     {{range .Achievements}}
-    <tr>
-      <td style="font-size: 18px;">{{.Icon}}</td>
-      <td style="color: #636e72; font-family: monospace; font-size: 11px;">{{.Key}}</td>
-      <td style="color: #55efc4;">{{.Name}}</td>
-      <td style="color: #b2bec3;">{{.Description}}</td>
-      <td style="color: #ffeaa7;">{{if gt .RewardGold 0}}{{.RewardGold}}{{else}}-{{end}}</td>
-      <td style="color: #a29bfe;">{{if gt .RewardGems 0}}{{.RewardGems}}{{else}}-{{end}}</td>
+    <tr style="{{if not .IsActive}}opacity: 0.5;{{end}}">
+      <td style="font-size: 18px; text-align: center;">{{.Icon}}</td>
+      <td style="font-size: 12px; color: #74b9ff; font-family: monospace;">{{.Key}}</td>
+      <td style="font-weight: 600; color: #dfe6e9;">{{.Name}}</td>
+      <td style="font-size: 12px; color: #b2bec3; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{.Description}}</td>
+      <td style="color: #ffeaa7; font-size: 13px;">{{.RewardGold}}</td>
+      <td style="color: #a29bfe; font-size: 13px;">{{.RewardGems}}</td>
+      <td style="text-align: center;">
+        {{if .IsActive}}<span style="color: #55efc4;">ON</span>{{else}}<span style="color: #ff6b6b;">OFF</span>{{end}}
+      </td>
+      <td>
+        <div style="display: flex; gap: 4px;">
+          <a href="/admin/gamedata/achievements?edit={{.Key}}" class="btn btn-warning btn-sm">수정</a>
+          <form method="POST" action="/admin/gamedata/achievements/{{.Key}}/delete" style="margin: 0;">
+            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('삭제하시겠습니까?')">삭제</button>
+          </form>
+        </div>
+      </td>
     </tr>
     {{else}}
-    <tr><td colspan="6" style="text-align:center; color:#636e72; padding: 24px;">업적 데이터 없음</td></tr>
+    <tr><td colspan="8" style="text-align: center; color: #636e72; padding: 24px;">업적 데이터 없음</td></tr>
     {{end}}
   </tbody>
 </table>

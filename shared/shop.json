@@ -6,7 +6,7 @@
       "name_en": "Slime Egg",
       "type": "egg",
       "category": "egg",
-      "cost": { "gold": 800, "gems": 0 },
+      "cost": { "gold": 500, "gems": 0 },
       "icon": "egg.png",
       "description": "랜덤 슬라임이 부화합니다"
     },
@@ -16,7 +16,7 @@
       "name_en": "Premium Egg",
       "type": "egg",
       "category": "egg",
-      "cost": { "gold": 0, "gems": 4 },
+      "cost": { "gold": 0, "gems": 5 },
       "icon": "slime_egg.png",
       "description": "레어 이상 확정"
     },
@@ -26,7 +26,7 @@
       "name_en": "Fire Egg",
       "type": "egg",
       "category": "egg",
-      "cost": { "gold": 1000, "gems": 0 },
+      "cost": { "gold": 800, "gems": 0 },
       "icon": "egg.png",
       "description": "불 원소 슬라임이 부화합니다"
     },
@@ -36,7 +36,7 @@
       "name_en": "Water Egg",
       "type": "egg",
       "category": "egg",
-      "cost": { "gold": 1000, "gems": 0 },
+      "cost": { "gold": 800, "gems": 0 },
       "icon": "egg.png",
       "description": "물 원소 슬라임이 부화합니다"
     },
@@ -46,7 +46,7 @@
       "name_en": "Grass Egg",
       "type": "egg",
       "category": "egg",
-      "cost": { "gold": 1000, "gems": 0 },
+      "cost": { "gold": 800, "gems": 0 },
       "icon": "egg.png",
       "description": "풀 원소 슬라임이 부화합니다"
     },
@@ -56,7 +56,7 @@
       "name_en": "Legendary Egg",
       "type": "egg",
       "category": "egg",
-      "cost": { "gold": 0, "gems": 12 },
+      "cost": { "gold": 0, "gems": 15 },
       "icon": "slime_egg.png",
       "description": "에픽 이상 확정!"
     },
@@ -66,7 +66,7 @@
       "name_en": "Dark Egg",
       "type": "egg",
       "category": "egg",
-      "cost": { "gold": 1000, "gems": 0 },
+      "cost": { "gold": 1200, "gems": 0 },
       "icon": "egg.png",
       "description": "어둠 원소 슬라임이 부화합니다"
     },
@@ -76,7 +76,7 @@
       "name_en": "Ice Egg",
       "type": "egg",
       "category": "egg",
-      "cost": { "gold": 1000, "gems": 0 },
+      "cost": { "gold": 1200, "gems": 0 },
       "icon": "egg.png",
       "description": "얼음 원소 슬라임이 부화합니다"
     },
@@ -86,7 +86,7 @@
       "name_en": "Electric Egg",
       "type": "egg",
       "category": "egg",
-      "cost": { "gold": 1000, "gems": 0 },
+      "cost": { "gold": 1200, "gems": 0 },
       "icon": "egg.png",
       "description": "전기 원소 슬라임이 부화합니다"
     },
@@ -96,7 +96,7 @@
       "name_en": "Earth Egg",
       "type": "egg",
       "category": "egg",
-      "cost": { "gold": 1000, "gems": 0 },
+      "cost": { "gold": 1200, "gems": 0 },
       "icon": "egg.png",
       "description": "대지 원소 슬라임이 부화합니다"
     },
@@ -116,7 +116,7 @@
       "name_en": "Premium Food",
       "type": "food",
       "category": "food",
-      "cost": { "gold": 200, "gems": 0 },
+      "cost": { "gold": 300, "gems": 0 },
       "icon": "food_2.png",
       "description": "만복도 MAX, 친밀도 +10"
     },
@@ -126,7 +126,7 @@
       "name_en": "Super Food",
       "type": "food",
       "category": "food",
-      "cost": { "gold": 400, "gems": 0 },
+      "cost": { "gold": 800, "gems": 0 },
       "icon": "food_2.png",
       "description": "만복도 MAX, 친밀도 +20, 컨디션 +30"
     },
@@ -136,7 +136,7 @@
       "name_en": "Elemental Food",
       "type": "food",
       "category": "food",
-      "cost": { "gold": 0, "gems": 1 },
+      "cost": { "gold": 0, "gems": 2 },
       "icon": "food_1.png",
       "description": "만복도 +80, 친밀도 +15, 원소 친화력 UP"
     },
@@ -146,7 +146,7 @@
       "name_en": "Ribbon",
       "type": "decoration",
       "category": "special",
-      "cost": { "gold": 300, "gems": 0 },
+      "cost": { "gold": 500, "gems": 0 },
       "icon": "bow.png",
       "description": "귀여운 리본 장식"
     },
@@ -156,7 +156,7 @@
       "name_en": "Glasses",
       "type": "decoration",
       "category": "special",
-      "cost": { "gold": 400, "gems": 0 },
+      "cost": { "gold": 800, "gems": 0 },
       "icon": "glasses.png",
       "description": "지적인 안경 장식"
     },
@@ -166,7 +166,7 @@
       "name_en": "Hat",
       "type": "decoration",
       "category": "special",
-      "cost": { "gold": 500, "gems": 0 },
+      "cost": { "gold": 1000, "gems": 0 },
       "icon": "hat.png",
       "description": "멋진 모자 장식"
     },
@@ -176,7 +176,7 @@
       "name_en": "EXP Booster",
       "type": "booster",
       "category": "special",
-      "cost": { "gold": 0, "gems": 2 },
+      "cost": { "gold": 0, "gems": 3 },
       "icon": "stardust.png",
       "description": "2시간 동안 EXP 2배"
     },
@@ -186,7 +186,7 @@
       "name_en": "Gold Booster",
       "type": "booster",
       "category": "special",
-      "cost": { "gold": 0, "gems": 2 },
+      "cost": { "gold": 0, "gems": 3 },
       "icon": "gold.png",
       "description": "2시간 동안 골드 획득 2배"
     },
@@ -196,7 +196,7 @@
       "name_en": "Lucky Charm",
       "type": "booster",
       "category": "special",
-      "cost": { "gold": 0, "gems": 3 },
+      "cost": { "gold": 0, "gems": 5 },
       "icon": "gems.png",
       "description": "2시간 동안 레어+ 확률 UP"
     },
@@ -206,7 +206,7 @@
       "name_en": "10-Pull Normal",
       "type": "multi_egg",
       "category": "egg",
-      "cost": { "gold": 7200, "gems": 0 },
+      "cost": { "gold": 4500, "gems": 0 },
       "icon": "egg.png",
       "description": "슬라임 알 10개를 한번에! (10% 할인)",
       "quantity": 10,
@@ -218,7 +218,7 @@
       "name_en": "10-Pull Premium",
       "type": "multi_egg",
       "category": "egg",
-      "cost": { "gold": 0, "gems": 36 },
+      "cost": { "gold": 0, "gems": 45 },
       "icon": "slime_egg.png",
       "description": "프리미엄 알 10개! 레어 이상 확정 (10% 할인)",
       "quantity": 10,
@@ -230,7 +230,7 @@
       "name_en": "10-Pull Legendary",
       "type": "multi_egg",
       "category": "egg",
-      "cost": { "gold": 0, "gems": 108 },
+      "cost": { "gold": 0, "gems": 135 },
       "icon": "slime_egg.png",
       "description": "전설의 알 10개! 에픽 이상 확정 (10% 할인)",
       "quantity": 10,

@@ -66,6 +66,40 @@ func (h *Handler) UploadProfileImage(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"profile_image_url": imageURL})
 }
 
+// DELETE /api/profile/image
+func (h *Handler) DeleteProfileImage(c *fiber.Ctx) error {
+	userID := c.Locals("user_id").(string)
+
+	pool := h.slimeRepo.Pool()
+
+	// Get current image URL to delete the file
+	var imageURL string
+	err := pool.QueryRow(c.UserContext(),
+		`SELECT COALESCE(profile_image_url, '') FROM users WHERE id = $1`,
+		userID,
+	).Scan(&imageURL)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "user not found"})
+	}
+
+	// Clear profile_image_url in DB
+	_, err = pool.Exec(c.UserContext(),
+		`UPDATE users SET profile_image_url = '' WHERE id = $1`,
+		userID,
+	)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to delete profile image"})
+	}
+
+	// Delete file from filesystem if it exists
+	if imageURL != "" {
+		filePath := "." + imageURL // e.g. "./uploads/profiles/xxx.jpg"
+		os.Remove(filePath)
+	}
+
+	return c.JSON(fiber.Map{"ok": true})
+}
+
 // GET /api/profile/image
 func (h *Handler) GetProfileImage(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(string)

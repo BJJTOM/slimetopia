@@ -1,10 +1,10 @@
 package game
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"os"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -40,46 +40,52 @@ type Handler struct {
 	explorationRepo *repository.ExplorationRepository
 	missionRepo     *repository.MissionRepository
 	villageRepo     *repository.VillageRepository
+	gameDataRepo    *repository.GameDataRepository
 	rdb             *redis.Client
 	destinations    []ExplorationDestination
 }
 
-func NewHandler(slimeRepo *repository.SlimeRepository, userRepo *repository.UserRepository, explorationRepo *repository.ExplorationRepository, missionRepo *repository.MissionRepository, villageRepo *repository.VillageRepository, rdb *redis.Client) *Handler {
+func NewHandler(slimeRepo *repository.SlimeRepository, userRepo *repository.UserRepository, explorationRepo *repository.ExplorationRepository, missionRepo *repository.MissionRepository, villageRepo *repository.VillageRepository, gameDataRepo *repository.GameDataRepository, rdb *redis.Client) *Handler {
 	h := &Handler{
 		slimeRepo:       slimeRepo,
 		userRepo:        userRepo,
 		explorationRepo: explorationRepo,
 		missionRepo:     missionRepo,
 		villageRepo:     villageRepo,
+		gameDataRepo:    gameDataRepo,
 		rdb:             rdb,
 	}
-	h.loadDestinations()
+	h.loadDestinationsFromDB()
 	return h
 }
 
-func (h *Handler) loadDestinations() {
-	paths := []string{
-		"../shared/explorations.json",
-		"shared/explorations.json",
-		"/app/shared/explorations.json",
-	}
-	for _, path := range paths {
-		data, err := os.ReadFile(path)
-		if err != nil {
-			continue
-		}
-		var wrapper struct {
-			Explorations []ExplorationDestination `json:"explorations"`
-		}
-		if err := json.Unmarshal(data, &wrapper); err != nil {
-			log.Error().Err(err).Msg("Failed to parse explorations.json")
-			continue
-		}
-		h.destinations = wrapper.Explorations
-		log.Info().Int("count", len(h.destinations)).Msg("Loaded exploration destinations")
+func (h *Handler) loadDestinationsFromDB() {
+	ctx := context.Background()
+	dbDests, err := h.gameDataRepo.GetAllDestinations(ctx)
+	if err != nil {
+		log.Warn().Err(err).Msg("Failed to load explorations from DB, destinations empty")
 		return
 	}
-	log.Warn().Msg("No explorations.json found, destinations empty")
+	for _, d := range dbDests {
+		var rewards map[string]interface{}
+		json.Unmarshal(d.Rewards, &rewards)
+		unlock := map[string]interface{}{"type": d.UnlockType}
+		if d.UnlockValue > 0 {
+			unlock["value"] = float64(d.UnlockValue)
+		}
+		var drops []MaterialDrop
+		json.Unmarshal(d.MaterialDrops, &drops)
+		h.destinations = append(h.destinations, ExplorationDestination{
+			ID:                 d.ID,
+			Name:               d.Name,
+			DurationMinutes:    d.DurationMinutes,
+			RecommendedElement: d.RecommendedElement,
+			Rewards:            rewards,
+			Unlock:             unlock,
+			MaterialDrops:      drops,
+		})
+	}
+	log.Info().Int("count", len(h.destinations)).Msg("Loaded exploration destinations from DB")
 }
 
 func RegisterRoutes(router fiber.Router, h *Handler) {
@@ -275,6 +281,7 @@ func RegisterRoutes(router fiber.Router, h *Handler) {
 	profile := router.Group("/profile")
 	profile.Post("/image", h.UploadProfileImage)
 	profile.Get("/image", h.GetProfileImage)
+	profile.Delete("/image", h.DeleteProfileImage)
 
 	// Support tickets (user-facing)
 	support := router.Group("/support")
@@ -736,7 +743,7 @@ func (h *Handler) ClaimExploration(c *fiber.Ctx) error {
 					qty += rand.Intn(md.MaxQty - md.MinQty + 1)
 				}
 				AddMaterial(ctx, pool, userID, md.MaterialID, qty)
-				mat := FindMaterial(md.MaterialID)
+				mat := h.FindMaterial(md.MaterialID)
 				name := ""
 				icon := ""
 				if mat != nil {
@@ -795,8 +802,13 @@ func (h *Handler) GetRecipes(c *fiber.Ctx) error {
 		discoveredSet[id] = true
 	}
 
-	result := make([]fiber.Map, 0, len(recipes))
-	for _, r := range recipes {
+	dbRecipes, err := h.gameDataRepo.GetAllRecipes(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to fetch recipes"})
+	}
+
+	result := make([]fiber.Map, 0, len(dbRecipes))
+	for _, r := range dbRecipes {
 		entry := fiber.Map{
 			"id":         r.ID,
 			"hidden":     r.Hidden,

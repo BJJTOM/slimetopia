@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuthStore } from "@/lib/store/authStore";
-import { authApi, uploadApi } from "@/lib/api/client";
+import { authApi, uploadApi, resolveMediaUrl } from "@/lib/api/client";
 import { toastError, toastSuccess } from "@/components/ui/Toast";
 import ShortsPage from "@/components/ui/ShortsPage";
 
@@ -62,6 +62,7 @@ interface Post {
   id: string;
   user_id: string;
   nickname: string;
+  profile_image_url?: string;
   content: string;
   post_type: string;
   likes: number;
@@ -77,6 +78,7 @@ interface Reply {
   id: string;
   user_id: string;
   nickname: string;
+  profile_image_url?: string;
   content: string;
   likes: number;
   reply_count: number;
@@ -146,26 +148,50 @@ function PostTypeTag({ type }: { type: string }) {
   );
 }
 
+/* ===== Avatar with profile image support ===== */
+function Avatar({ nickname, profileImageUrl, size = "md", gradient }: {
+  nickname: string;
+  profileImageUrl?: string;
+  size?: "sm" | "md" | "lg";
+  gradient: string;
+}) {
+  const sizeMap = { sm: "w-5 h-5 text-[8px]", md: "w-8 h-8 text-[11px]", lg: "w-10 h-10 text-sm" };
+  if (profileImageUrl) {
+    return (
+      <img
+        src={resolveMediaUrl(profileImageUrl)}
+        alt={nickname}
+        className={`${sizeMap[size].split(" ").slice(0, 2).join(" ")} rounded-full object-cover flex-shrink-0`}
+      />
+    );
+  }
+  return (
+    <div className={`${sizeMap[size]} rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center font-bold text-white flex-shrink-0`}>
+      {nickname.charAt(0)}
+    </div>
+  );
+}
+
 function PostSkeleton() {
   return (
     <div className="rounded-xl overflow-hidden mb-2.5" style={{
-      background: "linear-gradient(160deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)",
-      border: "1px solid rgba(255,255,255,0.06)",
+      background: "linear-gradient(160deg, rgba(245,230,200,0.04) 0%, rgba(245,230,200,0.02) 100%)",
+      border: "1px solid rgba(139,105,20,0.1)",
     }}>
       <div className="px-3 pt-3 flex items-center gap-2">
-        <div className="w-8 h-8 rounded-full skeleton" />
+        <div className="w-8 h-8 rounded-full" style={{ background: "rgba(201,168,76,0.1)", animation: "skeleton-gold 1.5s ease-in-out infinite" }} />
         <div className="flex-1 space-y-1.5">
-          <div className="w-20 h-3 skeleton rounded" />
-          <div className="w-14 h-2 skeleton rounded" />
+          <div className="w-20 h-3 rounded" style={{ background: "rgba(201,168,76,0.08)", animation: "skeleton-gold 1.5s ease-in-out infinite 0.1s" }} />
+          <div className="w-14 h-2 rounded" style={{ background: "rgba(201,168,76,0.06)", animation: "skeleton-gold 1.5s ease-in-out infinite 0.2s" }} />
         </div>
       </div>
       <div className="px-3 py-2 space-y-1.5">
-        <div className="w-full h-3 skeleton rounded" />
-        <div className="w-3/4 h-3 skeleton rounded" />
+        <div className="w-full h-3 rounded" style={{ background: "rgba(201,168,76,0.08)", animation: "skeleton-gold 1.5s ease-in-out infinite 0.15s" }} />
+        <div className="w-3/4 h-3 rounded" style={{ background: "rgba(201,168,76,0.06)", animation: "skeleton-gold 1.5s ease-in-out infinite 0.25s" }} />
       </div>
       <div className="px-3 pb-2.5 flex gap-4">
-        <div className="w-10 h-3 skeleton rounded" />
-        <div className="w-10 h-3 skeleton rounded" />
+        <div className="w-10 h-3 rounded" style={{ background: "rgba(201,168,76,0.06)", animation: "skeleton-gold 1.5s ease-in-out infinite 0.3s" }} />
+        <div className="w-10 h-3 rounded" style={{ background: "rgba(201,168,76,0.06)", animation: "skeleton-gold 1.5s ease-in-out infinite 0.35s" }} />
       </div>
     </div>
   );
@@ -182,12 +208,12 @@ function ImageCarousel({ images, size = "large" }: { images: string[]; size?: "l
     return (
       <div className="flex gap-1.5 mt-2">
         {images.slice(0, 3).map((url, i) => (
-          <div key={i} className="w-16 h-16 rounded-lg overflow-hidden bg-white/5 flex-shrink-0">
-            <img src={url} alt="" className="w-full h-full object-cover" loading="lazy" />
+          <div key={i} className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0" style={{ background: "rgba(245,230,200,0.05)", border: "1px solid rgba(139,105,20,0.1)" }}>
+            <img src={resolveMediaUrl(url)} alt="" className="w-full h-full object-cover" loading="lazy" />
           </div>
         ))}
         {images.length > 3 && (
-          <div className="w-16 h-16 rounded-lg bg-white/5 flex items-center justify-center text-white/30 text-[10px]">
+          <div className="w-16 h-16 rounded-lg flex items-center justify-center text-[10px]" style={{ background: "rgba(245,230,200,0.05)", color: "rgba(201,168,76,0.4)", border: "1px solid rgba(139,105,20,0.1)" }}>
             +{images.length - 3}
           </div>
         )}
@@ -196,7 +222,7 @@ function ImageCarousel({ images, size = "large" }: { images: string[]; size?: "l
   }
 
   return (
-    <div className="relative mt-3 rounded-xl overflow-hidden">
+    <div className="relative mt-3 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(139,105,20,0.15)" }}>
       <div
         ref={containerRef}
         className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none"
@@ -209,7 +235,7 @@ function ImageCarousel({ images, size = "large" }: { images: string[]; size?: "l
       >
         {images.map((url, i) => (
           <div key={i} className="w-full flex-shrink-0 snap-center">
-            <img src={url} alt="" className="w-full max-h-[300px] object-contain bg-black/20 rounded-xl" loading="lazy" />
+            <img src={resolveMediaUrl(url)} alt="" className="w-full max-h-[300px] object-contain rounded-xl" style={{ background: "rgba(0,0,0,0.2)" }} loading="lazy" />
           </div>
         ))}
       </div>
@@ -218,7 +244,7 @@ function ImageCarousel({ images, size = "large" }: { images: string[]; size?: "l
           {images.map((_, i) => (
             <div key={i} className="w-1.5 h-1.5 rounded-full transition-all"
               style={{
-                background: i === current ? "#fff" : "rgba(255,255,255,0.3)",
+                background: i === current ? "#C9A84C" : "rgba(201,168,76,0.3)",
                 transform: i === current ? "scale(1.3)" : "scale(1)",
               }} />
           ))}
@@ -243,19 +269,23 @@ function ReportModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (re
 
   return (
     <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-[#1a1a2e] rounded-2xl p-5 w-full max-w-[340px] border border-white/10"
+      <div className="rounded-2xl p-5 w-full max-w-[340px]"
         onClick={(e) => e.stopPropagation()}
-        style={{ animation: "report-pop 0.2s ease-out" }}>
-        <h3 className="text-white font-bold text-sm mb-3">신고하기</h3>
+        style={{
+          animation: "report-pop 0.2s ease-out",
+          background: "linear-gradient(180deg, #2C1810, #1A0E08)",
+          border: "1px solid rgba(139,105,20,0.25)",
+        }}>
+        <h3 className="font-bold text-sm mb-3" style={{ color: "#F5E6C8", fontFamily: "Georgia, 'Times New Roman', serif" }}>신고하기</h3>
 
         <div className="space-y-2 mb-3">
           {REPORT_REASONS.map((r) => (
             <button key={r.value} onClick={() => setReason(r.value)}
               className="w-full text-left px-3 py-2 rounded-lg text-[12px] transition"
               style={{
-                background: reason === r.value ? "rgba(255,107,107,0.1)" : "rgba(255,255,255,0.04)",
-                color: reason === r.value ? "#FF6B6B" : "rgba(255,255,255,0.6)",
-                border: reason === r.value ? "1px solid rgba(255,107,107,0.2)" : "1px solid transparent",
+                background: reason === r.value ? "rgba(255,107,107,0.1)" : "rgba(245,230,200,0.04)",
+                color: reason === r.value ? "#FF6B6B" : "rgba(245,230,200,0.6)",
+                border: reason === r.value ? "1px solid rgba(255,107,107,0.2)" : "1px solid rgba(139,105,20,0.1)",
               }}>
               {r.label}
             </button>
@@ -268,13 +298,18 @@ function ReportModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (re
           placeholder="상세 내용 (선택)"
           maxLength={500}
           rows={2}
-          className="w-full bg-white/5 text-white text-[12px] rounded-lg px-3 py-2 border border-white/10 focus:border-red-400/40 focus:outline-none placeholder-white/20 resize-none mb-3"
+          className="w-full text-[12px] rounded-lg px-3 py-2 focus:outline-none resize-none mb-3"
+          style={{
+            background: "rgba(245,230,200,0.05)",
+            color: "#F5E6C8",
+            border: "1px solid rgba(139,105,20,0.15)",
+          }}
         />
 
         <div className="flex gap-2">
           <button onClick={onClose}
-            className="flex-1 py-2 rounded-lg text-[12px] font-bold text-white/40 hover:text-white/60 transition"
-            style={{ background: "rgba(255,255,255,0.04)" }}>
+            className="flex-1 py-2 rounded-lg text-[12px] font-bold transition"
+            style={{ background: "rgba(245,230,200,0.04)", color: "rgba(245,230,200,0.4)", border: "1px solid rgba(139,105,20,0.1)" }}>
             취소
           </button>
           <button onClick={handleSubmit} disabled={!reason || submitting}
@@ -310,12 +345,13 @@ function MoreMenu({ isMine, onDelete, onReport, onBlock }: {
   return (
     <div className="relative" ref={ref}>
       <button onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
-        className="w-7 h-7 rounded-full flex items-center justify-center text-white/20 hover:text-white/50 hover:bg-white/5 transition text-sm">
+        className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/5 transition text-sm"
+        style={{ color: "rgba(201,168,76,0.3)" }}>
         ...
       </button>
       {open && (
         <div className="absolute right-0 top-8 z-20 rounded-xl overflow-hidden shadow-lg"
-          style={{ background: "#1e1e36", border: "1px solid rgba(255,255,255,0.08)", minWidth: 120 }}>
+          style={{ background: "#2C1810", border: "1px solid rgba(139,105,20,0.2)", minWidth: 120 }}>
           {isMine && onDelete && (
             <button onClick={(e) => { e.stopPropagation(); onDelete(); setOpen(false); }}
               className="w-full text-left px-3 py-2 text-[11px] text-red-400/80 hover:bg-red-500/10 transition">
@@ -325,7 +361,8 @@ function MoreMenu({ isMine, onDelete, onReport, onBlock }: {
           {!isMine && (
             <>
               <button onClick={(e) => { e.stopPropagation(); onReport(); setOpen(false); }}
-                className="w-full text-left px-3 py-2 text-[11px] text-yellow-400/80 hover:bg-yellow-500/10 transition">
+                className="w-full text-left px-3 py-2 text-[11px] hover:bg-yellow-500/10 transition"
+                style={{ color: "#C9A84C" }}>
                 신고
               </button>
               <button onClick={(e) => { e.stopPropagation(); onBlock(); setOpen(false); }}
@@ -655,30 +692,32 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
     const isHot = selectedPost.likes >= 3;
 
     return (
-      <div className="h-full flex flex-col bg-[#0a0a1a]">
+      <div className="h-full flex flex-col" style={{ background: "#1A0E08" }}>
         {/* Detail header */}
-        <div className="flex items-center gap-3 px-4 py-3 shrink-0 border-b border-white/[0.06] overlay-header" style={{ background: "rgba(255,255,255,0.02)" }}>
+        <div className="flex items-center gap-3 px-4 py-3 shrink-0 overlay-header" style={{
+          background: "linear-gradient(180deg, #3D2017, #2C1810)",
+          borderBottom: "3px double #8B6914",
+        }}>
           <button onClick={() => setSelectedPost(null)}
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/15 flex items-center justify-center text-white/60 text-sm transition">
+            className="w-8 h-8 rounded-full flex items-center justify-center text-sm transition"
+            style={{ background: "rgba(201,168,76,0.15)", color: "#C9A84C" }}>
             &larr;
           </button>
-          <span className="text-white font-bold text-sm flex-1">게시글</span>
+          <span className="font-bold text-sm flex-1" style={{ color: "#F5E6C8", fontFamily: "Georgia, 'Times New Roman', serif" }}>게시글</span>
           <div className="flex items-center gap-1.5">
             <PostTypeTag type={selectedPost.post_type} />
-            {isHot && <span className="text-[9px] px-1.5 py-0.5 rounded-md font-bold" style={{ background: "rgba(255,107,107,0.12)", color: "#FF6B6B" }}>🔥 Hot</span>}
+            {isHot && <span className="text-[9px] px-1.5 py-0.5 rounded-md font-bold" style={{ background: "rgba(201,168,76,0.15)", color: "#C9A84C" }}>🔥 Hot</span>}
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {/* Post content */}
-          <div className="px-4 py-4 border-b border-white/[0.06]">
+          <div className="px-4 py-4" style={{ borderBottom: "1px solid rgba(139,105,20,0.15)" }}>
             <div className="flex items-center gap-3 mb-3">
-              <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avatarGrad} flex items-center justify-center text-sm font-bold text-white`}>
-                {selectedPost.nickname.charAt(0)}
-              </div>
+              <Avatar nickname={selectedPost.nickname} profileImageUrl={selectedPost.profile_image_url} size="lg" gradient={avatarGrad} />
               <div className="flex-1">
-                <span className="text-white font-bold text-[13px]">{selectedPost.nickname}</span>
-                <div className="text-white/30 text-[10px] mt-0.5">{timeAgo(selectedPost.created_at)}</div>
+                <span className="font-bold text-[13px]" style={{ color: "#F5E6C8" }}>{selectedPost.nickname}</span>
+                <div className="text-[10px] mt-0.5" style={{ color: "rgba(201,168,76,0.4)" }}>{timeAgo(selectedPost.created_at)}</div>
               </div>
               <MoreMenu
                 isMine={selectedPost.is_mine}
@@ -688,7 +727,7 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
               />
             </div>
 
-            <p className="text-white/90 text-[14px] leading-relaxed whitespace-pre-wrap break-words">
+            <p className="text-[14px] leading-relaxed whitespace-pre-wrap break-words" style={{ color: "rgba(245,230,200,0.9)" }}>
               {selectedPost.content}
             </p>
 
@@ -698,30 +737,31 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
             )}
 
             {/* Stats + Actions */}
-            <div className="flex items-center gap-4 pt-3 mt-3 border-t border-white/[0.04]">
+            <div className="flex items-center gap-4 pt-3 mt-3" style={{ borderTop: "1px solid rgba(139,105,20,0.08)" }}>
               <button onClick={() => toggleLike(selectedPost.id, selectedPost.liked)}
                 className={`flex items-center gap-1.5 text-[12px] font-bold transition ${
-                  selectedPost.liked ? "text-pink-400" : "text-white/30 hover:text-pink-300"
-                }`}>
+                  selectedPost.liked ? "text-pink-400" : ""
+                }`}
+                style={selectedPost.liked ? {} : { color: "rgba(245,230,200,0.3)" }}>
                 {selectedPost.liked ? "❤️" : "🤍"} <span className="tabular-nums">{selectedPost.likes > 0 ? selectedPost.likes : ""}</span>
                 {selectedPost.likes > 0 ? "명이 좋아합니다" : "좋아요"}
               </button>
-              <span className="text-white/20 text-[12px]">💬 <span className="tabular-nums">{selectedPost.reply_count}</span>개 답글</span>
-              <span className="text-white/15 text-[11px] ml-auto">👁 <span className="tabular-nums">{selectedPost.view_count}</span></span>
+              <span className="text-[12px]" style={{ color: "rgba(245,230,200,0.25)" }}>💬 <span className="tabular-nums">{selectedPost.reply_count}</span>개 답글</span>
+              <span className="text-[11px] ml-auto" style={{ color: "rgba(245,230,200,0.4)" }}>👁 <span className="tabular-nums">{selectedPost.view_count}</span></span>
             </div>
           </div>
 
           {/* Replies */}
           <div className="px-4 py-2">
-            <p className="text-white/50 text-[11px] font-bold mb-2">답글 {topReplies.length}개</p>
+            <p className="text-[11px] font-bold mb-2" style={{ color: "rgba(201,168,76,0.5)" }}>답글 {topReplies.length}개</p>
             {loadingReplies && postReplies.length === 0 ? (
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
                   <div key={i} className="flex items-start gap-2.5 py-3">
-                    <div className="w-7 h-7 rounded-full skeleton flex-shrink-0" />
+                    <div className="w-7 h-7 rounded-full flex-shrink-0" style={{ background: "rgba(201,168,76,0.1)", animation: "skeleton-gold 1.5s ease-in-out infinite" }} />
                     <div className="flex-1 space-y-1.5">
-                      <div className="w-16 h-2.5 skeleton rounded" />
-                      <div className="w-full h-3 skeleton rounded" />
+                      <div className="w-16 h-2.5 rounded" style={{ background: "rgba(201,168,76,0.08)", animation: "skeleton-gold 1.5s ease-in-out infinite 0.1s" }} />
+                      <div className="w-full h-3 rounded" style={{ background: "rgba(201,168,76,0.06)", animation: "skeleton-gold 1.5s ease-in-out infinite 0.2s" }} />
                     </div>
                   </div>
                 ))}
@@ -729,8 +769,8 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
             ) : topReplies.length === 0 ? (
               <div className="text-center py-8">
                 <span className="text-2xl block mb-2 opacity-30">💬</span>
-                <p className="text-white/20 text-[12px]">아직 답글이 없습니다</p>
-                <p className="text-white/15 text-[10px] mt-0.5">첫 번째 답글을 남겨보세요!</p>
+                <p className="text-[12px]" style={{ color: "rgba(245,230,200,0.2)" }}>아직 답글이 없습니다</p>
+                <p className="text-[10px] mt-0.5" style={{ color: "rgba(245,230,200,0.15)" }}>첫 번째 답글을 남겨보세요!</p>
               </div>
             ) : (
               topReplies.map((r, idx) => {
@@ -738,16 +778,19 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
                 const subReplies = subRepliesMap[r.id] || [];
                 const isExpanded = expandedReplies.has(r.id);
                 return (
-                  <div key={r.id} className="py-3 border-b border-white/[0.04] last:border-0"
-                    style={{ animation: `stagger-slide-in 0.2s ease-out ${idx * 30}ms both` }}>
+                  <div key={r.id} className="py-3 last:border-0"
+                    style={{
+                      borderBottom: "1px solid rgba(139,105,20,0.08)",
+                      animation: `stagger-slide-in 0.2s ease-out ${idx * 30}ms both`,
+                    }}>
                     <div className="flex items-start gap-2.5">
-                      <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${replyGrad} flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0 mt-0.5`}>
-                        {r.nickname.charAt(0)}
+                      <div className="mt-0.5">
+                        <Avatar nickname={r.nickname} profileImageUrl={r.profile_image_url} size="sm" gradient={replyGrad} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-white/80 text-[12px] font-bold">{r.nickname}</span>
-                          <span className="text-white/20 text-[9px]">{timeAgo(r.created_at)}</span>
+                          <span className="text-[12px] font-bold" style={{ color: "rgba(245,230,200,0.8)" }}>{r.nickname}</span>
+                          <span className="text-[9px]" style={{ color: "rgba(201,168,76,0.25)" }}>{timeAgo(r.created_at)}</span>
                           <div className="ml-auto">
                             <MoreMenu
                               isMine={r.is_mine}
@@ -756,16 +799,18 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
                             />
                           </div>
                         </div>
-                        <p className="text-white/65 text-[13px] leading-relaxed mt-0.5 break-words">
+                        <p className="text-[13px] leading-relaxed mt-0.5 break-words" style={{ color: "rgba(245,230,200,0.65)" }}>
                           {r.content}
                         </p>
                         <div className="flex items-center gap-3 mt-1.5">
                           <button onClick={() => toggleReplyLike(r.id, r.liked, selectedPost.id)}
-                            className={`text-[10px] ${r.liked ? "text-pink-400" : "text-white/20 hover:text-pink-300"} transition`}>
+                            className={`text-[10px] ${r.liked ? "text-pink-400" : ""} transition`}
+                            style={r.liked ? {} : { color: "rgba(245,230,200,0.2)" }}>
                             {r.liked ? "❤️" : "🤍"} {r.likes > 0 && <span className="tabular-nums">{r.likes}</span>}
                           </button>
                           <button onClick={() => { setReplyingTo({ id: r.id, nickname: r.nickname }); }}
-                            className="text-[10px] text-white/20 hover:text-white/40 transition">
+                            className="text-[10px] transition"
+                            style={{ color: "rgba(245,230,200,0.2)" }}>
                             답글
                           </button>
                           {subReplies.length > 0 && (
@@ -777,7 +822,8 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
                                 return next;
                               });
                             }}
-                              className="text-[10px] text-[#74B9FF] hover:text-[#C9A84C] transition">
+                              className="text-[10px] transition"
+                              style={{ color: "#C9A84C" }}>
                               {isExpanded ? "접기" : `답글 ${subReplies.length}개 보기`}
                             </button>
                           )}
@@ -787,20 +833,21 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
                         {isExpanded && subReplies.map((sr) => {
                           const srGrad = getAvatarGradient(sr.nickname);
                           return (
-                            <div key={sr.id} className="mt-2 ml-2 pl-3 border-l border-white/[0.06]">
+                            <div key={sr.id} className="mt-2 ml-2 pl-3" style={{ borderLeft: "1px solid rgba(139,105,20,0.12)" }}>
                               <div className="flex items-start gap-2">
-                                <div className={`w-5 h-5 rounded-full bg-gradient-to-br ${srGrad} flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0 mt-0.5`}>
-                                  {sr.nickname.charAt(0)}
+                                <div className="mt-0.5">
+                                  <Avatar nickname={sr.nickname} profileImageUrl={sr.profile_image_url} size="sm" gradient={srGrad} />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-1.5">
-                                    <span className="text-white/70 text-[11px] font-bold">{sr.nickname}</span>
-                                    <span className="text-white/15 text-[8px]">{timeAgo(sr.created_at)}</span>
+                                    <span className="text-[11px] font-bold" style={{ color: "rgba(245,230,200,0.7)" }}>{sr.nickname}</span>
+                                    <span className="text-[8px]" style={{ color: "rgba(201,168,76,0.2)" }}>{timeAgo(sr.created_at)}</span>
                                   </div>
-                                  <p className="text-white/55 text-[12px] mt-0.5 break-words">{sr.content}</p>
+                                  <p className="text-[12px] mt-0.5 break-words" style={{ color: "rgba(245,230,200,0.55)" }}>{sr.content}</p>
                                   <div className="flex items-center gap-3 mt-1">
                                     <button onClick={() => toggleReplyLike(sr.id, sr.liked, selectedPost.id)}
-                                      className={`text-[9px] ${sr.liked ? "text-pink-400" : "text-white/15 hover:text-pink-300"} transition`}>
+                                      className={`text-[9px] ${sr.liked ? "text-pink-400" : ""} transition`}
+                                      style={sr.liked ? {} : { color: "rgba(245,230,200,0.15)" }}>
                                       {sr.liked ? "❤️" : "🤍"} {sr.likes > 0 && <span className="tabular-nums">{sr.likes}</span>}
                                     </button>
                                   </div>
@@ -819,11 +866,14 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
         </div>
 
         {/* Reply input - fixed at bottom */}
-        <div className="shrink-0 px-4 py-3 border-t border-white/[0.06]" style={{ background: "rgba(18,18,32,0.95)" }}>
+        <div className="shrink-0 px-4 py-3" style={{
+          background: "rgba(26,14,8,0.95)",
+          borderTop: "1px solid rgba(139,105,20,0.15)",
+        }}>
           {replyingTo && (
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-[10px] text-[#74B9FF]">@{replyingTo.nickname}에게 답글</span>
-              <button onClick={() => setReplyingTo(null)} className="text-white/20 text-[10px] hover:text-white/40 transition">취소</button>
+              <span className="text-[10px]" style={{ color: "#C9A84C" }}>@{replyingTo.nickname}에게 답글</span>
+              <button onClick={() => setReplyingTo(null)} className="text-[10px] transition" style={{ color: "rgba(245,230,200,0.2)" }}>취소</button>
             </div>
           )}
           <div className="flex gap-2">
@@ -833,7 +883,14 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
               onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && submitReply(selectedPost.id)}
               placeholder={replyingTo ? `@${replyingTo.nickname}에게 답글...` : "답글을 입력하세요..."}
               maxLength={300}
-              className="flex-1 bg-white/5 text-white text-[13px] rounded-xl px-4 py-2.5 border border-white/10 focus:border-[#C9A84C]/40 focus:outline-none placeholder-white/20"
+              className="flex-1 text-[13px] rounded-xl px-4 py-2.5 focus:outline-none"
+              style={{
+                background: "rgba(245,230,200,0.05)",
+                color: "#F5E6C8",
+                border: "1px solid rgba(139,105,20,0.15)",
+              }}
+              onFocus={(e) => { (e.target as HTMLInputElement).style.borderColor = "rgba(201,168,76,0.4)"; }}
+              onBlur={(e) => { (e.target as HTMLInputElement).style.borderColor = "rgba(139,105,20,0.15)"; }}
             />
             <button
               onClick={() => submitReply(selectedPost.id)}
@@ -845,14 +902,15 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
           </div>
           {replyText.length > 0 && (
             <div className="mt-1 flex items-center gap-2">
-              <div className="flex-1 h-0.5 bg-white/[0.04] rounded-full overflow-hidden">
+              <div className="flex-1 h-0.5 rounded-full overflow-hidden" style={{ background: "rgba(139,105,20,0.1)" }}>
                 <div className="h-full rounded-full transition-all duration-300"
                   style={{
                     width: `${(replyText.length / 300) * 100}%`,
                     background: replyText.length > 270 ? "#FF6B6B" : replyText.length > 200 ? "#FFEAA7" : "#C9A84C",
                   }} />
               </div>
-              <span className={`text-[8px] tabular-nums ${replyText.length > 270 ? "text-[#FF6B6B]" : "text-white/20"}`}>
+              <span className={`text-[8px] tabular-nums ${replyText.length > 270 ? "text-[#FF6B6B]" : ""}`}
+                style={replyText.length > 270 ? {} : { color: "rgba(245,230,200,0.2)" }}>
                 {replyText.length}/300
               </span>
             </div>
@@ -865,60 +923,70 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
     );
   }
 
-  // ===== Shorts tab =====
+  // ===== Updates tab =====
   if (communityTab === "updates") {
     return (
-      <div className="h-full flex flex-col bg-[#0a0a1a]">
-        <div className="px-4 pt-3 pb-2 shrink-0 overlay-header">
+      <div className="h-full flex flex-col" style={{ background: "#1A0E08" }}>
+        <div className="px-4 pt-3 pb-2 shrink-0 overlay-header" style={{
+          background: "linear-gradient(180deg, #3D2017, #2C1810)",
+          borderBottom: "3px double #8B6914",
+        }}>
           <div className="flex items-center gap-3 mb-2">
             {onClose && (
               <button onClick={onClose}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white text-sm transition">
+                className="w-8 h-8 rounded-full flex items-center justify-center text-sm transition"
+                style={{ background: "rgba(201,168,76,0.15)", color: "#C9A84C" }}>
                 &larr;
               </button>
             )}
-            <h2 className="text-white font-bold text-[15px] flex-1">💬 커뮤니티</h2>
+            <h2 className="font-bold text-[15px] flex-1" style={{ color: "#F5E6C8", fontFamily: "Georgia, 'Times New Roman', serif" }}>💬 커뮤니티</h2>
           </div>
-          <div className="flex gap-1 rounded-xl p-1" style={{ background: "rgba(255,255,255,0.04)" }}>
+          <div className="flex gap-1 rounded-xl p-1" style={{ background: "rgba(139,105,20,0.08)", border: "1px solid rgba(139,105,20,0.1)" }}>
             <button onClick={() => setCommunityTab("board")}
               className="flex-1 py-1.5 rounded-lg text-xs font-bold transition"
-              style={{ background: "transparent", color: "rgba(255,255,255,0.4)" }}>
+              style={{ background: "transparent", color: "rgba(245,230,200,0.4)" }}>
               📋 게시판
             </button>
             <button onClick={() => setCommunityTab("shorts")}
               className="flex-1 py-1.5 rounded-lg text-xs font-bold transition"
-              style={{ background: "transparent", color: "rgba(255,255,255,0.4)" }}>
+              style={{ background: "transparent", color: "rgba(245,230,200,0.4)" }}>
               📱 쇼츠
             </button>
             <button
               className="flex-1 py-1.5 rounded-lg text-xs font-bold transition"
-              style={{ background: "rgba(255,107,107,0.15)", color: "#FF6B6B" }}>
+              style={{ background: "rgba(201,168,76,0.15)", color: "#C9A84C" }}>
               📢 공지
             </button>
           </div>
         </div>
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
           {UPDATE_NOTES.map((note, idx) => (
-            <div key={idx} className="rounded-2xl overflow-hidden border border-white/5"
-              style={{ background: "linear-gradient(180deg, rgba(20,20,40,0.9), rgba(15,15,30,0.95))" }}>
-              <div className="p-4 border-b border-white/5"
-                style={{ background: idx === 0 ? "linear-gradient(135deg, rgba(255,107,107,0.08), rgba(255,234,167,0.04))" : "transparent" }}>
+            <div key={idx} className="rounded-2xl overflow-hidden"
+              style={{
+                background: "linear-gradient(180deg, rgba(61,32,23,0.6), rgba(44,24,16,0.8))",
+                border: "1px solid rgba(139,105,20,0.15)",
+              }}>
+              <div className="p-4"
+                style={{
+                  borderBottom: "1px solid rgba(139,105,20,0.1)",
+                  background: idx === 0 ? "linear-gradient(135deg, rgba(201,168,76,0.08), rgba(212,175,55,0.04))" : "transparent",
+                }}>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xl">{note.icon}</span>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-white font-bold text-sm">{note.title}</span>
+                      <span className="font-bold text-sm" style={{ color: "#F5E6C8", fontFamily: "Georgia, 'Times New Roman', serif" }}>{note.title}</span>
                       {idx === 0 && (
-                        <span className="text-[8px] px-1.5 py-0.5 rounded-full font-bold bg-[#FF6B6B]/20 text-[#FF6B6B]">NEW</span>
+                        <span className="text-[8px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: "rgba(201,168,76,0.2)", color: "#C9A84C" }}>NEW</span>
                       )}
                     </div>
-                    <span className="text-white/30 text-[10px]">{note.version} · {note.date}</span>
+                    <span className="text-[10px]" style={{ color: "rgba(201,168,76,0.4)" }}>{note.version} · {note.date}</span>
                   </div>
                 </div>
               </div>
               <div className="p-4 space-y-1.5">
                 {note.changes.map((change, ci) => (
-                  <p key={ci} className="text-white/70 text-[12px] leading-relaxed">{change}</p>
+                  <p key={ci} className="text-[12px] leading-relaxed" style={{ color: "rgba(245,230,200,0.7)" }}>{change}</p>
                 ))}
               </div>
             </div>
@@ -930,31 +998,35 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
 
   if (communityTab === "shorts") {
     return (
-      <div className="h-full flex flex-col bg-[#0a0a1a]">
-        <div className="px-4 pt-3 pb-2 shrink-0 overlay-header">
+      <div className="h-full flex flex-col" style={{ background: "#1A0E08" }}>
+        <div className="px-4 pt-3 pb-2 shrink-0 overlay-header" style={{
+          background: "linear-gradient(180deg, #3D2017, #2C1810)",
+          borderBottom: "3px double #8B6914",
+        }}>
           <div className="flex items-center gap-3 mb-2">
             {onClose && (
               <button onClick={onClose}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white text-sm transition">
+                className="w-8 h-8 rounded-full flex items-center justify-center text-sm transition"
+                style={{ background: "rgba(201,168,76,0.15)", color: "#C9A84C" }}>
                 &larr;
               </button>
             )}
-            <h2 className="text-white font-bold text-[15px] flex-1">💬 커뮤니티</h2>
+            <h2 className="font-bold text-[15px] flex-1" style={{ color: "#F5E6C8", fontFamily: "Georgia, 'Times New Roman', serif" }}>💬 커뮤니티</h2>
           </div>
-          <div className="flex gap-1 rounded-xl p-1" style={{ background: "rgba(255,255,255,0.04)" }}>
+          <div className="flex gap-1 rounded-xl p-1" style={{ background: "rgba(139,105,20,0.08)", border: "1px solid rgba(139,105,20,0.1)" }}>
             <button onClick={() => setCommunityTab("board")}
               className="flex-1 py-1.5 rounded-lg text-xs font-bold transition"
-              style={{ background: "transparent", color: "rgba(255,255,255,0.4)" }}>
+              style={{ background: "transparent", color: "rgba(245,230,200,0.4)" }}>
               📋 게시판
             </button>
             <button
               className="flex-1 py-1.5 rounded-lg text-xs font-bold transition"
-              style={{ background: "rgba(201,168,76,0.15)", color: "#D4AF37" }}>
+              style={{ background: "rgba(201,168,76,0.15)", color: "#C9A84C" }}>
               📱 쇼츠
             </button>
             <button onClick={() => setCommunityTab("updates")}
               className="flex-1 py-1.5 rounded-lg text-xs font-bold transition"
-              style={{ background: "transparent", color: "rgba(255,255,255,0.4)" }}>
+              style={{ background: "transparent", color: "rgba(245,230,200,0.4)" }}>
               📢 공지
             </button>
           </div>
@@ -968,54 +1040,58 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
 
   // ===== Feed View =====
   return (
-    <div className="h-full flex flex-col bg-[#0a0a1a]">
+    <div className="h-full flex flex-col" style={{ background: "#1A0E08" }}>
       {/* Header */}
-      <div className="px-4 pt-3 pb-2 shrink-0 overlay-header">
+      <div className="px-4 pt-3 pb-2 shrink-0 overlay-header" style={{
+        background: "linear-gradient(180deg, #3D2017, #2C1810)",
+        borderBottom: "3px double #8B6914",
+      }}>
         <div className="flex items-center gap-3 mb-2">
           {onClose && (
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white text-sm transition"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-sm transition"
+              style={{ background: "rgba(201,168,76,0.15)", color: "#C9A84C" }}
             >
               &larr;
             </button>
           )}
-          <h2 className="text-white font-bold text-[15px] flex-1">💬 커뮤니티</h2>
+          <h2 className="font-bold text-[15px] flex-1" style={{ color: "#F5E6C8", fontFamily: "Georgia, 'Times New Roman', serif" }}>💬 커뮤니티</h2>
           {/* Sort toggle */}
-          <div className="flex rounded-lg overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.06)" }}>
+          <div className="flex rounded-lg overflow-hidden" style={{ border: "1px solid rgba(139,105,20,0.15)" }}>
             <button onClick={() => setSortMode("new")}
               className="text-[9px] font-bold px-2.5 py-1 transition"
               style={{
-                background: sortMode === "new" ? "rgba(201,168,76,0.12)" : "transparent",
-                color: sortMode === "new" ? "#D4AF37" : "rgba(255,255,255,0.3)",
+                background: sortMode === "new" ? "rgba(201,168,76,0.15)" : "transparent",
+                color: sortMode === "new" ? "#C9A84C" : "rgba(245,230,200,0.3)",
               }}>
               🕐 최신
             </button>
             <button onClick={() => setSortMode("hot")}
               className="text-[9px] font-bold px-2.5 py-1 transition"
               style={{
-                background: sortMode === "hot" ? "rgba(255,107,107,0.12)" : "transparent",
-                color: sortMode === "hot" ? "#FF6B6B" : "rgba(255,255,255,0.3)",
+                background: sortMode === "hot" ? "rgba(201,168,76,0.15)" : "transparent",
+                color: sortMode === "hot" ? "#D4AF37" : "rgba(245,230,200,0.3)",
               }}>
               🔥 인기
             </button>
           </div>
         </div>
         {/* Tab switcher */}
-        <div className="flex gap-1 rounded-xl p-1 mb-2" style={{ background: "rgba(255,255,255,0.04)" }}>
+        <div className="flex gap-1 rounded-xl p-1 mb-2" style={{ background: "rgba(139,105,20,0.08)", border: "1px solid rgba(139,105,20,0.1)" }}>
           <button
             className="flex-1 py-1.5 rounded-lg text-xs font-bold transition"
-            style={{ background: "rgba(201,168,76,0.15)", color: "#D4AF37" }}>
+            style={{ background: "rgba(201,168,76,0.15)", color: "#C9A84C" }}>
             📋 게시판
           </button>
           <button onClick={() => setCommunityTab("shorts")}
             className="flex-1 py-1.5 rounded-lg text-xs font-bold transition"
-            style={{ background: "transparent", color: "rgba(255,255,255,0.4)" }}>
+            style={{ background: "transparent", color: "rgba(245,230,200,0.4)" }}>
             📱 쇼츠
           </button>
           <button onClick={() => setCommunityTab("updates")}
             className="flex-1 py-1.5 rounded-lg text-xs font-bold transition"
-            style={{ background: "transparent", color: "rgba(255,255,255,0.4)" }}>
+            style={{ background: "transparent", color: "rgba(245,230,200,0.4)" }}>
             📢 공지
           </button>
         </div>
@@ -1029,11 +1105,11 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
               style={{
                 background: filter === t.value
                   ? `${t.color}15`
-                  : "rgba(255,255,255,0.04)",
-                color: filter === t.value ? t.color : "#B2BEC3",
+                  : "rgba(245,230,200,0.04)",
+                color: filter === t.value ? t.color : "rgba(245,230,200,0.4)",
                 border: filter === t.value
                   ? `1px solid ${t.color}25`
-                  : "1px solid transparent",
+                  : "1px solid rgba(139,105,20,0.08)",
               }}>
               {t.icon} {t.label}
             </button>
@@ -1054,8 +1130,8 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
         {posts.length === 0 && !loading && (
           <div className="text-center mt-12">
             <span className="text-4xl block mb-3 opacity-20">📝</span>
-            <p className="text-white/30 text-sm">아직 게시글이 없습니다</p>
-            <p className="text-white/15 text-[11px] mt-1">첫 번째 게시글을 작성해 보세요!</p>
+            <p className="text-sm" style={{ color: "rgba(245,230,200,0.3)" }}>아직 게시글이 없습니다</p>
+            <p className="text-[11px] mt-1" style={{ color: "rgba(245,230,200,0.15)" }}>첫 번째 게시글을 작성해 보세요!</p>
           </div>
         )}
 
@@ -1069,25 +1145,23 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
               className="w-full text-left mb-2.5 rounded-xl overflow-hidden transition-all active:scale-[0.99]"
               style={{
                 background: isHot
-                  ? "linear-gradient(160deg, rgba(255,107,107,0.04) 0%, rgba(255,255,255,0.02) 100%)"
-                  : "linear-gradient(160deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)",
+                  ? "linear-gradient(160deg, rgba(201,168,76,0.06) 0%, rgba(245,230,200,0.02) 100%)"
+                  : "linear-gradient(160deg, rgba(245,230,200,0.05) 0%, rgba(245,230,200,0.02) 100%)",
                 border: isHot
-                  ? "1px solid rgba(255,107,107,0.1)"
-                  : "1px solid rgba(255,255,255,0.06)",
+                  ? "1px solid rgba(201,168,76,0.2)"
+                  : "1px solid rgba(139,105,20,0.15)",
                 animation: `stagger-slide-in 0.25s ease-out ${idx * 30}ms both`,
               }}>
               {/* Post header */}
               <div className="px-3 pt-3 flex items-center gap-2">
-                <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${avatarGrad} flex items-center justify-center text-[11px] font-bold text-white`}>
-                  {post.nickname.charAt(0)}
-                </div>
+                <Avatar nickname={post.nickname} profileImageUrl={post.profile_image_url} size="md" gradient={avatarGrad} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-white/90 text-[12px] font-bold">{post.nickname}</span>
+                    <span className="text-[12px] font-bold" style={{ color: "rgba(245,230,200,0.9)" }}>{post.nickname}</span>
                     <PostTypeTag type={post.post_type} />
-                    {isHot && <span className="text-[9px] px-1 py-0.5 rounded font-bold" style={{ background: "rgba(255,107,107,0.12)", color: "#FF6B6B" }}>🔥</span>}
+                    {isHot && <span className="text-[9px] px-1 py-0.5 rounded font-bold" style={{ background: "rgba(201,168,76,0.15)", color: "#C9A84C" }}>🔥</span>}
                   </div>
-                  <span className="text-white/25 text-[10px]">{timeAgo(post.created_at)}</span>
+                  <span className="text-[10px]" style={{ color: "rgba(201,168,76,0.3)" }}>{timeAgo(post.created_at)}</span>
                 </div>
                 <MoreMenu
                   isMine={post.is_mine}
@@ -1099,7 +1173,7 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
 
               {/* Post content preview */}
               <div className="px-3 py-2">
-                <p className="text-white/75 text-[13px] leading-relaxed line-clamp-3 break-words">
+                <p className="text-[13px] leading-relaxed line-clamp-3 break-words" style={{ color: "rgba(245,230,200,0.75)" }}>
                   {post.content}
                 </p>
                 {/* Image thumbnails */}
@@ -1110,14 +1184,15 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
 
               {/* Post footer */}
               <div className="px-3 pb-2.5 flex items-center gap-4">
-                <span className={`flex items-center gap-1 text-[11px] ${post.liked ? "text-pink-400" : "text-white/25"}`}>
+                <span className={`flex items-center gap-1 text-[11px] ${post.liked ? "text-pink-400" : ""}`}
+                  style={post.liked ? {} : { color: "rgba(245,230,200,0.25)" }}>
                   {post.liked ? "❤️" : "🤍"} <span className="tabular-nums">{post.likes > 0 ? post.likes : ""}</span>
                 </span>
-                <span className="flex items-center gap-1 text-[11px] text-white/25">
+                <span className="flex items-center gap-1 text-[11px]" style={{ color: "rgba(245,230,200,0.25)" }}>
                   💬 <span className="tabular-nums">{post.reply_count > 0 ? post.reply_count : "답글"}</span>
                 </span>
-                <span className="flex items-center gap-1 text-[11px] text-white/15 ml-auto">
-                  👁 <span className="tabular-nums">{post.view_count > 0 ? post.view_count : ""}</span>
+                <span className="flex items-center gap-1 text-[11px] ml-auto" style={{ color: "rgba(245,230,200,0.4)" }}>
+                  👁 <span className="tabular-nums">{post.view_count}</span>
                 </span>
               </div>
             </button>
@@ -1126,8 +1201,8 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
 
         {hasMore && posts.length > 0 && (
           <button onClick={loadMore} disabled={loading}
-            className="w-full py-3 text-white/30 text-[12px] hover:text-white/50 transition rounded-xl"
-            style={{ background: "rgba(255,255,255,0.02)" }}>
+            className="w-full py-3 text-[12px] transition rounded-xl"
+            style={{ background: "rgba(245,230,200,0.02)", color: "rgba(245,230,200,0.3)", border: "1px solid rgba(139,105,20,0.1)" }}>
             {loading ? (
               <span className="animate-pulse">로딩 중...</span>
             ) : "더 보기"}
@@ -1151,11 +1226,15 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
       {/* Compose overlay */}
       {showCompose && (
         <div className="absolute inset-0 z-10 bg-black/60 backdrop-blur-sm flex flex-col justify-end" onClick={() => setShowCompose(false)}>
-          <div className="bg-[#121220] rounded-t-2xl p-4 border-t border-white/10" onClick={(e) => e.stopPropagation()}
-            style={{ animation: "compose-slide-up 0.25s ease-out" }}>
+          <div className="rounded-t-2xl p-4" onClick={(e) => e.stopPropagation()}
+            style={{
+              animation: "compose-slide-up 0.25s ease-out",
+              background: "linear-gradient(180deg, #2C1810, #1A0E08)",
+              borderTop: "3px double #8B6914",
+            }}>
             <div className="flex items-center justify-between mb-3">
-              <span className="text-white font-bold text-sm">새 게시글</span>
-              <button onClick={() => setShowCompose(false)} className="text-white/40 hover:text-white/70 text-sm transition">취소</button>
+              <span className="font-bold text-sm" style={{ color: "#F5E6C8", fontFamily: "Georgia, 'Times New Roman', serif" }}>새 게시글</span>
+              <button onClick={() => setShowCompose(false)} className="text-sm transition" style={{ color: "rgba(245,230,200,0.4)" }}>취소</button>
             </div>
 
             {/* Post type selector */}
@@ -1164,9 +1243,9 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
                 <button key={t.value} onClick={() => setComposeType(t.value)}
                   className="px-2.5 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap transition"
                   style={{
-                    background: composeType === t.value ? `${t.color}15` : "rgba(255,255,255,0.04)",
-                    color: composeType === t.value ? t.color : "#B2BEC3",
-                    border: composeType === t.value ? `1px solid ${t.color}25` : "1px solid transparent",
+                    background: composeType === t.value ? `${t.color}15` : "rgba(245,230,200,0.04)",
+                    color: composeType === t.value ? t.color : "rgba(245,230,200,0.4)",
+                    border: composeType === t.value ? `1px solid ${t.color}25` : "1px solid rgba(139,105,20,0.08)",
                   }}>
                   {t.icon} {t.label}
                 </button>
@@ -1179,7 +1258,14 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
               placeholder="슬라임토피아에서 무슨 일이 있었나요?"
               maxLength={500}
               rows={4}
-              className="w-full bg-white/5 text-white text-[13px] rounded-xl px-4 py-3 border border-white/10 focus:border-[#C9A84C]/40 focus:outline-none placeholder-white/20 resize-none"
+              className="w-full text-[13px] rounded-xl px-4 py-3 focus:outline-none resize-none"
+              style={{
+                background: "rgba(245,230,200,0.05)",
+                color: "#F5E6C8",
+                border: "1px solid rgba(139,105,20,0.15)",
+              }}
+              onFocus={(e) => { (e.target as HTMLTextAreaElement).style.borderColor = "rgba(201,168,76,0.4)"; }}
+              onBlur={(e) => { (e.target as HTMLTextAreaElement).style.borderColor = "rgba(139,105,20,0.15)"; }}
               autoFocus
             />
 
@@ -1187,7 +1273,7 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
             {composeImagePreviews.length > 0 && (
               <div className="flex gap-2 mt-3">
                 {composeImagePreviews.map((src, i) => (
-                  <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden bg-white/5">
+                  <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden" style={{ background: "rgba(245,230,200,0.05)", border: "1px solid rgba(139,105,20,0.15)" }}>
                     <img src={src} alt="" className="w-full h-full object-cover" />
                     <button onClick={() => removeImage(i)}
                       className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/70 flex items-center justify-center text-white text-[10px] hover:bg-red-500/80 transition">
@@ -1200,7 +1286,7 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
 
             {/* Upload progress */}
             {posting && uploadProgress > 0 && uploadProgress < 100 && (
-              <div className="mt-2 h-1 bg-white/[0.04] rounded-full overflow-hidden">
+              <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ background: "rgba(139,105,20,0.1)" }}>
                 <div className="h-full rounded-full transition-all"
                   style={{ width: `${uploadProgress}%`, background: "#C9A84C" }} />
               </div>
@@ -1213,7 +1299,7 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
                   onClick={() => fileInputRef.current?.click()}
                   disabled={composeImages.length >= 3}
                   className="text-[11px] px-2.5 py-1.5 rounded-lg transition disabled:opacity-20"
-                  style={{ background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)" }}>
+                  style={{ background: "rgba(245,230,200,0.04)", color: "rgba(245,230,200,0.5)", border: "1px solid rgba(139,105,20,0.1)" }}>
                   📷 {composeImages.length}/3
                 </button>
                 <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageSelect}
@@ -1221,14 +1307,15 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
 
                 {/* Character count */}
                 <div className="flex items-center gap-2">
-                  <div className="w-16 h-1 bg-white/[0.04] rounded-full overflow-hidden">
+                  <div className="w-16 h-1 rounded-full overflow-hidden" style={{ background: "rgba(139,105,20,0.1)" }}>
                     <div className="h-full rounded-full transition-all duration-300"
                       style={{
                         width: `${(composeText.length / 500) * 100}%`,
                         background: composeText.length > 450 ? "#FF6B6B" : composeText.length > 350 ? "#FFEAA7" : "#C9A84C",
                       }} />
                   </div>
-                  <span className={`text-[10px] tabular-nums ${composeText.length > 450 ? "text-[#FF6B6B]" : "text-white/20"}`}>
+                  <span className={`text-[10px] tabular-nums ${composeText.length > 450 ? "text-[#FF6B6B]" : ""}`}
+                    style={composeText.length > 450 ? {} : { color: "rgba(245,230,200,0.2)" }}>
                     {composeText.length}/500
                   </span>
                 </div>
@@ -1254,6 +1341,10 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
         @keyframes report-pop {
           from { opacity: 0; transform: scale(0.95); }
           to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes skeleton-gold {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 0.8; }
         }
       `}</style>
     </div>

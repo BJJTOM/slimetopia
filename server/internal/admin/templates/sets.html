@@ -1,0 +1,170 @@
+{{define "sets.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+{{if eq .Message "created"}}<div class="msg-success">생성 완료</div>
+{{else if eq .Message "updated"}}<div class="msg-success">수정 완료</div>
+{{else if eq .Message "saved"}}<div class="msg-success">저장 완료</div>
+{{else if eq .Message "deleted"}}<div class="msg-success">삭제 완료</div>
+{{else if eq .Message "error"}}<div class="msg-error">오류가 발생했습니다</div>
+{{end}}
+
+{{if .Error}}
+<div class="msg-error">{{.Error}}</div>
+{{end}}
+
+<!-- Create Form -->
+{{if .ShowCreate}}
+<div class="stat-card" style="margin-bottom: 24px;">
+  <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #55efc4;">새 세트 생성</div>
+  <form method="POST" action="/admin/gamedata/sets/create">
+    <div class="form-row">
+      <label style="min-width: 130px;">ID</label>
+      <input type="number" name="id" placeholder="세트 ID" required style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 130px;">Name</label>
+      <input type="text" name="name" placeholder="세트 이름" required style="width: 250px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 130px;">Name EN</label>
+      <input type="text" name="name_en" placeholder="영문 이름" style="width: 250px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 130px;">Description</label>
+      <textarea name="description" placeholder="세트 설명" rows="2" style="width: 400px;"></textarea>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 130px;">Species IDs</label>
+      <input type="text" name="species_ids" placeholder="종족 ID (쉼표 구분: 1,2,3)" style="width: 300px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 130px;">Bonus Score</label>
+      <input type="number" name="bonus_score" placeholder="보너스 점수" value="0" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 130px;">Buff Type</label>
+      <input type="text" name="buff_type" placeholder="버프 유형" style="width: 200px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 130px;">Buff Value</label>
+      <input type="number" name="buff_value" step="0.01" placeholder="버프 수치" value="0" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 130px;">Buff Label</label>
+      <input type="text" name="buff_label" placeholder="버프 표시명" style="width: 200px;" />
+    </div>
+    <div style="display: flex; gap: 8px; margin-top: 8px;">
+      <button type="submit" class="btn btn-primary">생성</button>
+      <a href="/admin/gamedata/sets" class="btn btn-danger btn-sm" style="display: inline-flex; align-items: center;">취소</a>
+    </div>
+  </form>
+</div>
+{{end}}
+
+<!-- Edit Form -->
+{{if .EditItem}}
+{{with .EditItem}}
+<div class="stat-card" style="margin-bottom: 24px; border-color: rgba(162,155,254,0.3);">
+  <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #a29bfe;">세트 #{{.ID}} 수정</div>
+  <form method="POST" action="/admin/gamedata/sets/{{.ID}}/update">
+    <div class="form-row">
+      <label style="min-width: 130px;">ID</label>
+      <span style="font-size: 13px; color: #636e72;">#{{.ID}} (변경 불가)</span>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 130px;">Name</label>
+      <input type="text" name="name" value="{{.Name}}" required style="width: 250px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 130px;">Name EN</label>
+      <input type="text" name="name_en" value="{{.NameEN}}" style="width: 250px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 130px;">Description</label>
+      <textarea name="description" rows="2" style="width: 400px;">{{.Description}}</textarea>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 130px;">Species IDs</label>
+      <input type="text" name="species_ids" value="{{intSliceStr .SpeciesIDs}}" placeholder="종족 ID (쉼표 구분)" style="width: 300px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 130px;">Bonus Score</label>
+      <input type="number" name="bonus_score" value="{{.BonusScore}}" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 130px;">Buff Type</label>
+      <input type="text" name="buff_type" value="{{.BuffType}}" style="width: 200px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 130px;">Buff Value</label>
+      <input type="number" name="buff_value" step="0.01" value="{{.BuffValue}}" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 130px;">Buff Label</label>
+      <input type="text" name="buff_label" value="{{.BuffLabel}}" style="width: 200px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 130px;">Active</label>
+      <input type="checkbox" name="is_active" {{if .IsActive}}checked{{end}} style="width: auto;" />
+      <span style="font-size: 11px; color: #636e72;">비활성화 시 게임에서 사용 불가</span>
+    </div>
+    <div style="display: flex; gap: 8px; margin-top: 8px;">
+      <button type="submit" class="btn btn-primary">저장</button>
+      <a href="/admin/gamedata/sets" class="btn btn-danger btn-sm" style="display: inline-flex; align-items: center;">취소</a>
+    </div>
+  </form>
+</div>
+{{end}}
+{{end}}
+
+<!-- Header -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+  <p style="font-size: 12px; color: #636e72;">총 {{.Total}}개 세트</p>
+  {{if not .ShowCreate}}
+  <a href="/admin/gamedata/sets?create=1" class="btn btn-primary btn-sm">+ 새 세트</a>
+  {{end}}
+</div>
+
+<!-- Sets Table -->
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Name EN</th>
+      <th>Species IDs</th>
+      <th>Bonus Score</th>
+      <th>Buff Type</th>
+      <th>Buff Value</th>
+      <th>Buff Label</th>
+      <th>Active</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Sets}}
+    <tr style="{{if not .IsActive}}opacity: 0.5;{{end}}">
+      <td style="color: #636e72;">{{.ID}}</td>
+      <td style="font-weight: 600;">{{.Name}}</td>
+      <td style="color: #b2bec3;">{{.NameEN}}</td>
+      <td style="font-size: 11px; color: #74b9ff; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{intSliceStr .SpeciesIDs}}</td>
+      <td style="color: #ffeaa7;">{{.BonusScore}}</td>
+      <td><span class="badge" style="background: rgba(162,155,254,0.15); color: #a29bfe;">{{.BuffType}}</span></td>
+      <td style="color: #55efc4;">{{.BuffValue}}</td>
+      <td style="color: #b2bec3;">{{.BuffLabel}}</td>
+      <td>{{if .IsActive}}<span style="color: #55efc4;">활성</span>{{else}}<span style="color: #ff6b6b;">비활성</span>{{end}}</td>
+      <td style="white-space: nowrap;">
+        <a href="/admin/gamedata/sets?edit={{.ID}}" class="btn btn-sm btn-warning">수정</a>
+        <form method="POST" action="/admin/gamedata/sets/{{.ID}}/delete" style="display:inline; margin-left: 4px;">
+          <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('세트 #{{.ID}}을(를) 정말 삭제하시겠습니까?')">삭제</button>
+        </form>
+      </td>
+    </tr>
+    {{else}}
+    <tr><td colspan="10" style="text-align:center; color:#636e72; padding: 24px;">세트 데이터 없음</td></tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}
