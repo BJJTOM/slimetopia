@@ -1,0 +1,31 @@
+{
+  "recipes": [
+    {
+      "id": 1,
+      "input_a": 1,
+      "input_b": 2,
+      "output": 6,
+      "output_name": "이끼 슬라임",
+      "type": "combination",
+      "hint": "물과 풀이 만나면..."
+    },
+    {
+      "id": 2,
+      "input_a": 1,
+      "input_b": 3,
+      "output": 7,
+      "output_name": "안개 슬라임",
+      "type": "combination",
+      "hint": "물과 불이 만나면 뿌연 것이..."
+    },
+    {
+      "id": 3,
+      "input_a": 4,
+      "input_b": 5,
+      "output": 8,
+      "output_name": "황혼 슬라임",
+      "type": "combination",
+      "hint": "빛과 어둠의 경계에서..."
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "buildings": [
+    {
+      "id": 1,
+      "name": "슬라임 농장",
+      "category": "production",
+      "size": [2, 2],
+      "cost": { "gold": 500 },
+      "effect": "auto_gold_production",
+      "unlock": { "type": "level", "value": 3 }
+    },
+    {
+      "id": 2,
+      "name": "코인 나무",
+      "category": "production",
+      "size": [1, 1],
+      "cost": { "gold": 200 },
+      "effect": "auto_gold_production_small",
+      "unlock": { "type": "level", "value": 1 }
+    },
+    {
+      "id": 3,
+      "name": "합성 가마솥",
+      "category": "merge",
+      "size": [2, 2],
+      "cost": { "gold": 1000 },
+      "effect": "merge_slot_expand",
+      "unlock": { "type": "progress", "value": "merge_10" }
+    },
+    {
+      "id": 4,
+      "name": "분수대",
+      "category": "decoration",
+      "size": [1, 1],
+      "cost": { "gold": 100 },
+      "effect": "none",
+      "unlock": { "type": "level", "value": 1 }
+    }
+  ]
+}

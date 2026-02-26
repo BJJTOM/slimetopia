@@ -1,0 +1,38 @@
+{
+  "explorations": [
+    {
+      "id": 1,
+      "name": "초원 들판",
+      "duration_minutes": 30,
+      "recommended_element": "grass",
+      "rewards": {
+        "gold": { "min": 50, "max": 150 },
+        "items": ["grass_seed"]
+      },
+      "unlock": { "type": "default" }
+    },
+    {
+      "id": 2,
+      "name": "맑은 호수",
+      "duration_minutes": 60,
+      "recommended_element": "water",
+      "rewards": {
+        "gold": { "min": 100, "max": 300 },
+        "items": ["water_seed", "recipe_hint"]
+      },
+      "unlock": { "type": "level", "value": 5 }
+    },
+    {
+      "id": 3,
+      "name": "붉은 화산",
+      "duration_minutes": 120,
+      "recommended_element": "fire",
+      "rewards": {
+        "gold": { "min": 200, "max": 500 },
+        "gems": { "min": 1, "max": 3 },
+        "items": ["fire_seed", "rare_egg"]
+      },
+      "unlock": { "type": "level", "value": 10 }
+    }
+  ]
+}

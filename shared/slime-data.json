@@ -1,0 +1,44 @@
+{
+  "slimes": [
+    {
+      "species_id": 1,
+      "name": "물방울 슬라임",
+      "name_en": "Droplet Slime",
+      "element": "water",
+      "grade": "common",
+      "description": "맑은 물방울 모양의 기본 슬라임. 촉촉하고 시원한 느낌이 든다."
+    },
+    {
+      "species_id": 2,
+      "name": "풀잎 슬라임",
+      "name_en": "Leaf Slime",
+      "element": "grass",
+      "grade": "common",
+      "description": "풀잎처럼 싱그러운 초록빛 슬라임. 상쾌한 풀 향기가 난다."
+    },
+    {
+      "species_id": 3,
+      "name": "불씨 슬라임",
+      "name_en": "Ember Slime",
+      "element": "fire",
+      "grade": "common",
+      "description": "따뜻한 불씨를 품은 슬라임. 만지면 포근하게 따뜻하다."
+    },
+    {
+      "species_id": 4,
+      "name": "반딧불 슬라임",
+      "name_en": "Glow Slime",
+      "element": "light",
+      "grade": "common",
+      "description": "은은하게 빛나는 슬라임. 어둠 속에서도 길을 밝혀준다."
+    },
+    {
+      "species_id": 5,
+      "name": "그림자 슬라임",
+      "name_en": "Shadow Slime",
+      "element": "dark",
+      "grade": "common",
+      "description": "그림자처럼 어둑한 슬라임. 낮에는 조용히 쉬는 걸 좋아한다."
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+DROP TABLE IF EXISTS guestbook_entries;
+DROP TABLE IF EXISTS codex_entries;
+DROP TABLE IF EXISTS explorations;
+DROP TABLE IF EXISTS slimes;
+DROP TABLE IF EXISTS villages;
+DROP TABLE IF EXISTS slime_species;
+DROP TABLE IF EXISTS users;
+DROP EXTENSION IF EXISTS "uuid-ossp";
