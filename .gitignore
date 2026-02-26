@@ -9,6 +9,7 @@ client/out/
 # Go
 server/tmp/
 server/bin/
+server/api
 
 # Environment
 .env
