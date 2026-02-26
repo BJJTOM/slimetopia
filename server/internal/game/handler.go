@@ -228,6 +228,7 @@ func RegisterRoutes(router fiber.Router, h *Handler) {
 	food := router.Group("/food")
 	food.Get("/inventory", h.GetFoodInventory)
 	food.Post("/apply", h.ApplyFood)
+	food.Post("/apply-batch", h.ApplyFoodBatch)
 
 	// World Boss
 	boss := router.Group("/boss")
@@ -294,6 +295,11 @@ func RegisterRoutes(router fiber.Router, h *Handler) {
 	bots := router.Group("/admin/bots")
 	bots.Post("/seed", h.SeedBots)
 	bots.Delete("/", h.DeleteBots)
+
+	// Admin: Activity bot seeding
+	actBots := router.Group("/admin/activity-bots")
+	actBots.Post("/seed", h.SeedActivityBots)
+	actBots.Delete("/", h.DeleteActivityBots)
 }
 
 func (h *Handler) ListSlimes(c *fiber.Ctx) error {
