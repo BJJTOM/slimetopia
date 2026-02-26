@@ -328,14 +328,14 @@ export default function CollectionPage({ onClose }: { onClose: () => void }) {
 
                         {/* Species name — ink-style text */}
                         <div className="text-center w-full">
-                          <p className="text-[10px] font-bold truncate" style={{
+                          <p className="text-[12px] font-bold truncate" style={{
                             color: isSubmitted ? "#2C1810" : "rgba(107,58,42,0.35)",
                             fontFamily: "Georgia, 'Times New Roman', serif",
                           }}>
                             {isSubmitted ? (sp?.name || "???") : (sp ? "???" : "Unknown")}
                           </p>
                           {sp && isSubmitted && (
-                            <span className="text-[7px] px-1.5 py-0.5 rounded-sm font-bold inline-block mt-0.5"
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-sm font-bold inline-block mt-0.5"
                               style={{
                                 background: `${gColor}20`,
                                 color: gColor,
@@ -345,7 +345,7 @@ export default function CollectionPage({ onClose }: { onClose: () => void }) {
                             </span>
                           )}
                           {sp && !isSubmitted && (
-                            <span className="text-[7px] px-1.5 py-0.5 rounded-sm font-bold inline-block mt-0.5"
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-sm font-bold inline-block mt-0.5"
                               style={{
                                 background: "rgba(107,58,42,0.06)",
                                 color: "rgba(107,58,42,0.3)",
@@ -360,7 +360,7 @@ export default function CollectionPage({ onClose }: { onClose: () => void }) {
                         {!isSubmitted && hasCandidate && (
                           <button
                             onClick={() => setDonateTarget({ speciesId: spId, setId: selectedSet.id })}
-                            className="w-full py-1.5 rounded-md text-[8px] font-bold tracking-wide transition-all active:scale-95"
+                            className="w-full py-1.5 rounded-md text-[10px] font-bold tracking-wide transition-all active:scale-95"
                             style={{
                               background: "linear-gradient(135deg, #6B3A2A, #3D2017)",
                               color: "#F5E6C8",
@@ -370,12 +370,12 @@ export default function CollectionPage({ onClose }: { onClose: () => void }) {
                               letterSpacing: "0.05em",
                             }}
                           >
-                            DONATE
+                            제출하기
                           </button>
                         )}
                         {!isSubmitted && !hasCandidate && sp && (
-                          <span className="text-[7px] italic" style={{ color: "rgba(107,58,42,0.3)", fontFamily: "Georgia, serif" }}>
-                            Not owned
+                          <span className="text-[9px] italic" style={{ color: "rgba(107,58,42,0.3)", fontFamily: "Georgia, serif" }}>
+                            미보유
                           </span>
                         )}
                       </div>
@@ -430,15 +430,13 @@ export default function CollectionPage({ onClose }: { onClose: () => void }) {
           const candidates = getDonationCandidates(donateTarget.speciesId);
           const sp = species.find((s) => s.id === donateTarget.speciesId);
           return (
-            <div className="fixed inset-0 z-50 flex items-end backdrop-blur-sm" onClick={() => setDonateTarget(null)}
+            <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm" onClick={() => setDonateTarget(null)}
               style={{ background: "rgba(26,14,8,0.7)" }}>
-              <div className="w-full rounded-t-2xl" onClick={(e) => e.stopPropagation()}
+              <div className="w-[90%] max-w-sm rounded-2xl max-h-[85vh] overflow-hidden" onClick={(e) => e.stopPropagation()}
                 style={{
-                  paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)",
                   background: "linear-gradient(180deg, #F5E6C8 0%, #E8D5B0 100%)",
                   border: "1px solid #C9A84C",
-                  borderBottom: "none",
-                  boxShadow: "0 -4px 20px rgba(0,0,0,0.3)",
+                  boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
                 }}>
                 <div className="flex flex-col items-center pt-3 pb-2 px-5" style={{ borderBottom: "1px solid rgba(139,105,20,0.2)" }}>
                   <div className="w-10 h-1 rounded-full mb-2" style={{ background: "#C9A84C" }} />
@@ -446,13 +444,13 @@ export default function CollectionPage({ onClose }: { onClose: () => void }) {
                     color: "#2C1810",
                     fontFamily: "Georgia, 'Times New Roman', serif",
                   }}>
-                    Donate {sp?.name || "Slime"}
+                    {sp?.name || "슬라임"} 제출
                   </h3>
                   <p className="text-[10px] mt-0.5 italic" style={{ color: "#6B3A2A" }}>
-                    The slime will be removed from your inventory
+                    제출한 슬라임은 인벤토리에서 삭제됩니다
                   </p>
                 </div>
-                <div className="px-5 py-4 space-y-2 max-h-[40vh] overflow-y-auto">
+                <div className="px-5 py-4 space-y-2 max-h-[50vh] overflow-y-auto">
                   {candidates.map((c) => (
                     <button
                       key={c.slimeId}
@@ -479,13 +477,13 @@ export default function CollectionPage({ onClose }: { onClose: () => void }) {
                           boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
                           fontFamily: "Georgia, serif",
                         }}>
-                        {donating ? "..." : "DONATE"}
+                        {donating ? "..." : "제출하기"}
                       </span>
                     </button>
                   ))}
                   {candidates.length === 0 && (
                     <p className="text-xs text-center py-4 italic" style={{ color: "#6B3A2A", fontFamily: "Georgia, serif" }}>
-                      No slimes available for donation
+                      제출 가능한 슬라임이 없습니다
                     </p>
                   )}
                 </div>
