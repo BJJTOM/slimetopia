@@ -784,8 +784,8 @@ function AttackResultModal({
 
         {/* Slime results */}
         {slimeResults.length > 0 && (
-          <div className="px-4 py-2 border-t border-white/5">
-            <div className="text-white/40 text-[9px] font-bold mb-1.5">\uD30C\uD2F0 \uACB0\uACFC</div>
+          <div className="px-4 py-2" style={{ borderTop: "1px solid rgba(201,168,76,0.1)" }}>
+            <div className="text-[9px] font-bold mb-1.5 font-serif-game" style={{ color: "rgba(245,230,200,0.4)" }}>파티 결과</div>
             <div className="flex gap-1.5 flex-wrap">
               {slimeResults.map((sr, i) => (
                 <div key={i} className="flex items-center gap-1 rounded-lg px-2 py-1"
@@ -796,8 +796,8 @@ function AttackResultModal({
                   <span className="text-[10px] font-bold" style={{ color: ELEM_COL[sr.element] || "#A29BFE" }}>
                     {sr.damage.toLocaleString()}
                   </span>
-                  {sr.strong && <span className="text-[#55EFC4] text-[8px]">{"\u2191"}\uC720\uB9AC</span>}
-                  <span className="text-white/30 text-[8px]">+{sr.exp_gain}EXP</span>
+                  {sr.strong && <span className="text-[#55EFC4] text-[8px]">{"\u2191"}유리</span>}
+                  <span className="text-[8px]" style={{ color: "rgba(245,230,200,0.3)" }}>+{sr.exp_gain}EXP</span>
                 </div>
               ))}
             </div>
@@ -805,14 +805,14 @@ function AttackResultModal({
         )}
 
         {/* Rewards */}
-        <div className="px-4 py-3 space-y-1.5 border-t border-white/5">
+        <div className="px-4 py-3 space-y-1.5" style={{ borderTop: "1px solid rgba(201,168,76,0.1)" }}>
           <div className="flex items-center justify-between">
-            <span className="text-white/40 text-[10px]">\uCC38\uC5EC \uBCF4\uC0C1</span>
+            <span className="text-[10px]" style={{ color: "rgba(245,230,200,0.4)" }}>참여 보상</span>
             <span className="text-[#FFEAA7] text-[11px] font-bold">+{gold.toLocaleString()} G</span>
           </div>
           {defeated && bonusGold > 0 && (
             <div className="flex items-center justify-between">
-              <span className="text-white/40 text-[10px]">\uACA9\uD30C \uBCF4\uB108\uC2A4</span>
+              <span className="text-[10px]" style={{ color: "rgba(245,230,200,0.4)" }}>격파 보너스</span>
               <span className="text-[#55EFC4] text-[11px] font-bold">+{bonusGold.toLocaleString()} G</span>
             </div>
           )}
