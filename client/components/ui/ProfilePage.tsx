@@ -16,16 +16,21 @@ const NICKNAME_COST = 500;
 // Homepage URL: use environment variable or same-origin root
 const HOMEPAGE_URL = process.env.NEXT_PUBLIC_HOMEPAGE_URL || (typeof window !== "undefined" ? window.location.origin : "/");
 
-// ─── Profile background presets ──────────────────────────────────────────────
+// ─── Parchment theme constants ──────────────────────────────────────────────
 
-const BG_PRESETS = [
-  { id: "purple", gradient: "linear-gradient(135deg, #6C5CE7 0%, #A29BFE 50%, #DFE6E9 100%)", label: "보라" },
-  { id: "teal", gradient: "linear-gradient(135deg, #00B894 0%, #55EFC4 50%, #81ECEC 100%)", label: "청록" },
-  { id: "sunset", gradient: "linear-gradient(135deg, #E17055 0%, #FDCB6E 50%, #FFEAA7 100%)", label: "일몰" },
-  { id: "forest", gradient: "linear-gradient(135deg, #00B894 0%, #2D3436 50%, #55EFC4 100%)", label: "숲" },
-  { id: "ocean", gradient: "linear-gradient(135deg, #0984E3 0%, #74B9FF 50%, #DFE6E9 100%)", label: "바다" },
-  { id: "night", gradient: "linear-gradient(135deg, #2D3436 0%, #6C5CE7 50%, #0984E3 100%)", label: "밤하늘" },
-];
+const PARCHMENT = {
+  pageBg: "#1A0E08",
+  headerBg: "linear-gradient(180deg, #4A2515 0%, #3D2017 50%, #2C1810 100%)",
+  parchment: "linear-gradient(170deg, #F5E6C8 0%, #E8D5B0 40%, #DCC9A3 100%)",
+  parchmentLight: "linear-gradient(160deg, #FFF8EC, #F5E6C8)",
+  leatherCard: "linear-gradient(180deg, #3D2017, #2C1810)",
+  goldPrimary: "#C9A84C",
+  goldDark: "#8B6914",
+  goldBright: "#D4AF37",
+  ink: "#2C1810",
+  inkLight: "#5C4033",
+  font: "Georgia, 'Times New Roman', serif",
+};
 
 const LANGUAGE_OPTIONS: { value: Locale; labelKey: string }[] = [
   { value: "auto", labelKey: "lang_auto" },
@@ -58,14 +63,7 @@ export default function ProfilePage({ onClose }: Props) {
   const [subView, setSubView] = useState<SubView>("main");
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showNicknameCostModal, setShowNicknameCostModal] = useState(false);
-  const [showBgPicker, setShowBgPicker] = useState(false);
   const [showSlimePicker, setShowSlimePicker] = useState(false);
-
-  // Profile background
-  const [bgId, setBgId] = useState(() => {
-    if (typeof window === "undefined") return "purple";
-    return localStorage.getItem("profile_bg") || "purple";
-  });
 
   // Avatar slime selection
   const [avatarSlimeId, setAvatarSlimeId] = useState<string | null>(() => {
@@ -105,9 +103,7 @@ export default function ProfilePage({ onClose }: Props) {
       .catch(() => {});
   }, [accessToken]);
 
-  const bgPreset = BG_PRESETS.find((b) => b.id === bgId) || BG_PRESETS[0];
-
-  // Get avatar slime info — prefer saved selection, fallback to first slime
+  // Get avatar slime info
   const avatarSlime = (avatarSlimeId ? slimes.find((s) => s.id === avatarSlimeId) : null) || slimes[0];
   const avatarSpecies = avatarSlime ? species.find((sp) => sp.id === avatarSlime.species_id) : null;
   const avatarElement = avatarSlime?.element || "water";
@@ -115,12 +111,6 @@ export default function ProfilePage({ onClose }: Props) {
   const avatarAccessoryOverlays = avatarSlime
     ? (equippedAccessories[avatarSlime.id] || []).map(e => e.svg_overlay).filter(Boolean)
     : undefined;
-
-  const handleBgChange = (id: string) => {
-    setBgId(id);
-    localStorage.setItem("profile_bg", id);
-    setShowBgPicker(false);
-  };
 
   const handleSelectAvatarSlime = (slimeId: string) => {
     setAvatarSlimeId(slimeId);
@@ -164,7 +154,6 @@ export default function ProfilePage({ onClose }: Props) {
   };
 
   const handleContactSubmit = () => {
-    // Fake submit
     toastSuccess(t("contact_success"), "📩");
     setContactContent("");
     setContactEmail("");
@@ -195,20 +184,32 @@ export default function ProfilePage({ onClose }: Props) {
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="h-full flex flex-col bg-[#0a0a1a]">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 overlay-header">
-        <button onClick={handleBack} className="text-white/60 hover:text-white transition text-lg">
+    <div className="h-full flex flex-col" style={{ background: PARCHMENT.pageBg }}>
+      {/* Header — leather texture with gold border */}
+      <div
+        className="relative flex items-center gap-3 px-4 py-3"
+        style={{
+          background: PARCHMENT.headerBg,
+          borderBottom: `3px double ${PARCHMENT.goldDark}`,
+        }}
+      >
+        <button onClick={handleBack} style={{ color: PARCHMENT.goldPrimary, fontFamily: PARCHMENT.font }}
+          className="hover:opacity-80 transition text-lg">
           ←
         </button>
-        <h1 className="text-white font-bold text-lg flex-1">{getTitle()}</h1>
+        <h1 className="font-bold text-lg flex-1 tracking-wide" style={{
+          color: "#F5E6C8",
+          fontFamily: PARCHMENT.font,
+          textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+        }}>
+          {getTitle()}
+        </h1>
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {subView === "main" && (
           <MainView
-            bgPreset={bgPreset}
             avatarElement={avatarElement}
             avatarGrade={avatarGrade}
             avatarAccessoryOverlays={avatarAccessoryOverlays}
@@ -218,7 +219,6 @@ export default function ProfilePage({ onClose }: Props) {
             nicknameInputRef={nicknameInputRef}
             communityStats={communityStats}
             locale={locale}
-            showBgPicker={showBgPicker}
             showSlimePicker={showSlimePicker}
             slimes={slimes}
             species={species}
@@ -229,9 +229,7 @@ export default function ProfilePage({ onClose }: Props) {
             setEditingNickname={setEditingNickname}
             setNicknameValue={setNicknameValue}
             handleNicknameSubmit={handleNicknameEditDone}
-            setShowBgPicker={setShowBgPicker}
             setShowSlimePicker={setShowSlimePicker}
-            handleBgChange={handleBgChange}
             handleSelectAvatarSlime={handleSelectAvatarSlime}
             setSubView={setSubView}
             setShowLogoutModal={setShowLogoutModal}
@@ -267,20 +265,39 @@ export default function ProfilePage({ onClose }: Props) {
         {subView === "creator" && <CreatorStudioView />}
       </div>
 
-      {/* Logout confirmation modal */}
+      {/* Logout confirmation modal — parchment style */}
       {showLogoutModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#1a1a2e] rounded-2xl p-6 mx-6 max-w-[320px] w-full border border-white/10"
-            style={{ boxShadow: "0 8px 40px rgba(0,0,0,0.5)" }}>
-            <p className="text-white text-center font-medium mb-6">{t("logout_confirm")}</p>
+          <div className="rounded-2xl p-6 mx-6 max-w-[320px] w-full relative"
+            style={{
+              background: PARCHMENT.parchment,
+              border: `2px solid ${PARCHMENT.goldPrimary}`,
+              boxShadow: "0 8px 40px rgba(0,0,0,0.6), inset 0 0 30px rgba(139,105,20,0.08)",
+            }}>
+            {/* Corner decorations */}
+            <CornerDecorations />
+            <p className="text-center font-medium mb-6" style={{
+              color: PARCHMENT.ink, fontFamily: PARCHMENT.font,
+            }}>{t("logout_confirm")}</p>
             <div className="flex gap-3">
               <button onClick={() => setShowLogoutModal(false)}
-                className="flex-1 py-2.5 rounded-xl bg-white/5 text-white/60 font-bold text-sm border border-white/10 active:scale-95 transition">
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm active:scale-95 transition"
+                style={{
+                  background: "rgba(44,24,16,0.08)",
+                  border: `1px solid ${PARCHMENT.goldDark}`,
+                  color: PARCHMENT.inkLight,
+                  fontFamily: PARCHMENT.font,
+                }}>
                 {t("cancel")}
               </button>
               <button onClick={handleLogout}
-                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white active:scale-95 transition"
-                style={{ background: "linear-gradient(135deg, #FF6B6B, #E17055)" }}>
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm active:scale-95 transition"
+                style={{
+                  background: "linear-gradient(135deg, #6B3A2A, #3D2017)",
+                  color: "#F5E6C8",
+                  border: `1px solid ${PARCHMENT.goldDark}`,
+                  fontFamily: PARCHMENT.font,
+                }}>
                 {t("logout")}
               </button>
             </div>
@@ -288,24 +305,42 @@ export default function ProfilePage({ onClose }: Props) {
         </div>
       )}
 
-      {/* Nickname cost confirmation modal */}
+      {/* Nickname cost confirmation modal — parchment style */}
       {showNicknameCostModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#1a1a2e] rounded-2xl p-6 mx-6 max-w-[320px] w-full border border-white/10"
-            style={{ boxShadow: "0 8px 40px rgba(0,0,0,0.5)" }}>
-            <p className="text-white text-center font-medium mb-2">닉네임 변경</p>
-            <p className="text-white/60 text-center text-sm mb-6">
+          <div className="rounded-2xl p-6 mx-6 max-w-[320px] w-full relative"
+            style={{
+              background: PARCHMENT.parchment,
+              border: `2px solid ${PARCHMENT.goldPrimary}`,
+              boxShadow: "0 8px 40px rgba(0,0,0,0.6), inset 0 0 30px rgba(139,105,20,0.08)",
+            }}>
+            <CornerDecorations />
+            <p className="text-center font-bold mb-2" style={{
+              color: PARCHMENT.ink, fontFamily: PARCHMENT.font, fontSize: "16px",
+            }}>닉네임 변경</p>
+            <p className="text-center text-sm mb-6" style={{ color: PARCHMENT.inkLight, fontFamily: PARCHMENT.font }}>
               🪙 {NICKNAME_COST} 골드를 사용하여 닉네임을 변경하시겠습니까?
             </p>
             <div className="flex gap-3">
               <button onClick={() => { setShowNicknameCostModal(false); if (user) setNicknameValue(user.nickname); }}
-                className="flex-1 py-2.5 rounded-xl bg-white/5 text-white/60 font-bold text-sm border border-white/10 active:scale-95 transition">
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm active:scale-95 transition"
+                style={{
+                  background: "rgba(44,24,16,0.08)",
+                  border: `1px solid ${PARCHMENT.goldDark}`,
+                  color: PARCHMENT.inkLight,
+                  fontFamily: PARCHMENT.font,
+                }}>
                 {t("cancel")}
               </button>
               <button onClick={handleNicknameConfirm}
-                className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white active:scale-95 transition"
-                style={{ background: "linear-gradient(135deg, #FFEAA7, #FDCB6E)" }}>
-                <span className="text-[#0a0a1a]">변경하기</span>
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm active:scale-95 transition"
+                style={{
+                  background: `linear-gradient(135deg, ${PARCHMENT.goldPrimary}, ${PARCHMENT.goldDark})`,
+                  color: "#FFF8EC",
+                  border: `1px solid ${PARCHMENT.goldBright}`,
+                  fontFamily: PARCHMENT.font,
+                }}>
+                변경하기
               </button>
             </div>
           </div>
@@ -315,10 +350,52 @@ export default function ProfilePage({ onClose }: Props) {
   );
 }
 
+// ─── Corner Decorations ──────────────────────────────────────────────────────
+
+function CornerDecorations() {
+  return (
+    <>
+      <div className="absolute top-1.5 left-1.5 w-4 h-4">
+        <div className="absolute top-0 left-0 w-full h-px" style={{ background: PARCHMENT.goldDark }} />
+        <div className="absolute top-0 left-0 w-px h-full" style={{ background: PARCHMENT.goldDark }} />
+      </div>
+      <div className="absolute top-1.5 right-1.5 w-4 h-4">
+        <div className="absolute top-0 right-0 w-full h-px" style={{ background: PARCHMENT.goldDark }} />
+        <div className="absolute top-0 right-0 w-px h-full" style={{ background: PARCHMENT.goldDark }} />
+      </div>
+      <div className="absolute bottom-1.5 left-1.5 w-4 h-4">
+        <div className="absolute bottom-0 left-0 w-full h-px" style={{ background: PARCHMENT.goldDark }} />
+        <div className="absolute bottom-0 left-0 w-px h-full" style={{ background: PARCHMENT.goldDark }} />
+      </div>
+      <div className="absolute bottom-1.5 right-1.5 w-4 h-4">
+        <div className="absolute bottom-0 right-0 w-full h-px" style={{ background: PARCHMENT.goldDark }} />
+        <div className="absolute bottom-0 right-0 w-px h-full" style={{ background: PARCHMENT.goldDark }} />
+      </div>
+    </>
+  );
+}
+
+// ─── Ornamental Divider ──────────────────────────────────────────────────────
+
+function OrnamentalDivider({ label }: { label?: string }) {
+  return (
+    <div className="flex items-center justify-center py-2 px-4">
+      <div className="flex-1 h-px" style={{ background: `linear-gradient(90deg, transparent, ${PARCHMENT.goldDark}, transparent)` }} />
+      {label && (
+        <span className="px-3 text-[9px] font-bold tracking-[0.25em] uppercase" style={{
+          color: PARCHMENT.goldDark, fontFamily: PARCHMENT.font,
+        }}>{label}</span>
+      )}
+      {label && (
+        <div className="flex-1 h-px" style={{ background: `linear-gradient(90deg, transparent, ${PARCHMENT.goldDark}, transparent)` }} />
+      )}
+    </div>
+  );
+}
+
 // ─── Main View ───────────────────────────────────────────────────────────────
 
 interface MainViewProps {
-  bgPreset: typeof BG_PRESETS[0];
   avatarElement: string;
   avatarGrade: string;
   avatarAccessoryOverlays?: string[];
@@ -328,7 +405,6 @@ interface MainViewProps {
   nicknameInputRef: React.RefObject<HTMLInputElement | null>;
   communityStats: { post_count: number; comment_count: number };
   locale: Locale;
-  showBgPicker: boolean;
   showSlimePicker: boolean;
   slimes: { id: string; species_id: number; element: string; name: string | null }[];
   species: { id: number; name: string; grade: string; element: string }[];
@@ -339,25 +415,25 @@ interface MainViewProps {
   setEditingNickname: (v: boolean) => void;
   setNicknameValue: (v: string) => void;
   handleNicknameSubmit: () => void;
-  setShowBgPicker: (v: boolean) => void;
   setShowSlimePicker: (v: boolean) => void;
-  handleBgChange: (id: string) => void;
   handleSelectAvatarSlime: (id: string) => void;
   setSubView: (v: SubView) => void;
   setShowLogoutModal: (v: boolean) => void;
 }
 
 function MainView({
-  bgPreset, avatarElement, avatarGrade, avatarAccessoryOverlays, user, editingNickname, nicknameValue,
-  nicknameInputRef, communityStats, locale, showBgPicker, showSlimePicker, slimes, species, avatarSlimeId,
+  avatarElement, avatarGrade, avatarAccessoryOverlays, user, editingNickname, nicknameValue,
+  nicknameInputRef, communityStats, locale, showSlimePicker, slimes, species, avatarSlimeId,
   accessToken, fetchUser, t,
   setEditingNickname, setNicknameValue, handleNicknameSubmit,
-  setShowBgPicker, setShowSlimePicker, handleBgChange, handleSelectAvatarSlime, setSubView, setShowLogoutModal,
+  setShowSlimePicker, handleSelectAvatarSlime, setSubView, setShowLogoutModal,
 }: MainViewProps) {
   const avatarSpeciesId = avatarSlimeId ? slimes.find((s) => s.id === avatarSlimeId)?.species_id : undefined;
   const avatarSvg = generateSlimeIconSvg(avatarElement, 80, avatarGrade, avatarAccessoryOverlays, avatarSpeciesId);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [showDeleteImageModal, setShowDeleteImageModal] = useState(false);
+  const [deletingImage, setDeletingImage] = useState(false);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -380,25 +456,51 @@ function MainView({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const handleDeleteImage = async () => {
+    if (!accessToken) return;
+    setDeletingImage(true);
+    try {
+      await authApi("/api/profile/image", accessToken, { method: "DELETE" });
+      await fetchUser();
+      toastSuccess("프로필 이미지가 삭제되었습니다");
+    } catch {
+      toastError("이미지 삭제에 실패했습니다");
+    }
+    setDeletingImage(false);
+    setShowDeleteImageModal(false);
+  };
+
   const langLabel = LANGUAGE_OPTIONS.find((o) => o.value === locale)?.labelKey || "lang_auto";
   const hasProfileImage = !!user?.profile_image_url;
 
   return (
     <div className="p-4 space-y-4">
-      {/* Profile Card */}
-      <div className="relative rounded-2xl overflow-hidden" style={{ background: bgPreset.gradient }}>
-        {/* Background picker button */}
-        <button onClick={() => setShowBgPicker(!showBgPicker)}
-          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center text-sm active:scale-90 transition z-10">
-          🎨
-        </button>
+      {/* Profile Card — parchment style */}
+      <div className="relative rounded-2xl overflow-hidden"
+        style={{
+          background: PARCHMENT.parchment,
+          border: `2px solid ${PARCHMENT.goldPrimary}`,
+          boxShadow: "4px 4px 12px rgba(0,0,0,0.4), inset 0 0 40px rgba(139,105,20,0.08)",
+        }}>
+        {/* Corner decorations */}
+        <CornerDecorations />
+
+        {/* Page corner fold */}
+        <div className="absolute top-0 right-0 w-8 h-8 overflow-hidden rounded-bl-lg">
+          <div className="absolute -top-4 -right-4 w-8 h-8 rotate-45"
+            style={{ background: "linear-gradient(135deg, #D4C4A8, #C9B896)" }} />
+        </div>
 
         <div className="p-6 flex flex-col items-center">
-          {/* Avatar — show profile image or slime */}
+          {/* Avatar — leather + gold frame */}
           <div className="relative mb-3">
             <button onClick={() => setShowSlimePicker(!showSlimePicker)}
-              className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border-2 border-white/30 active:scale-95 transition overflow-hidden"
-              style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>
+              className="w-20 h-20 rounded-full flex items-center justify-center active:scale-95 transition overflow-hidden"
+              style={{
+                border: `3px solid ${PARCHMENT.goldPrimary}`,
+                background: "linear-gradient(135deg, #3D2017, #2C1810)",
+                boxShadow: `0 4px 20px rgba(0,0,0,0.3), 0 0 0 1px ${PARCHMENT.goldDark}`,
+              }}>
               {hasProfileImage ? (
                 <img src={resolveMediaUrl(user!.profile_image_url!)} alt="profile" className="w-full h-full object-cover" draggable={false} />
               ) : (
@@ -413,12 +515,27 @@ function MainView({
             {/* Camera button for photo upload */}
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#C9A84C] flex items-center justify-center text-xs active:scale-90 transition border-2 border-white/80"
-              style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
+              className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center text-xs active:scale-90 transition"
+              style={{
+                background: `linear-gradient(135deg, ${PARCHMENT.goldPrimary}, ${PARCHMENT.goldDark})`,
+                border: "2px solid #FFF8EC",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+              }}>
               📷
             </button>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
           </div>
+
+          {/* Profile image delete button */}
+          {hasProfileImage && (
+            <button
+              onClick={() => setShowDeleteImageModal(true)}
+              className="text-[10px] font-bold mb-2 active:scale-95 transition"
+              style={{ color: "#8B4513", fontFamily: PARCHMENT.font }}
+            >
+              사진 삭제
+            </button>
+          )}
 
           {/* Nickname */}
           {editingNickname ? (
@@ -429,46 +546,80 @@ function MainView({
               onBlur={handleNicknameSubmit}
               onKeyDown={(e) => e.key === "Enter" && handleNicknameSubmit()}
               maxLength={20}
-              className="text-white font-bold text-xl text-center bg-black/30 rounded-lg px-3 py-1 outline-none border border-white/30 w-48"
+              className="font-bold text-xl text-center rounded-lg px-3 py-1 outline-none w-48"
+              style={{
+                color: PARCHMENT.ink,
+                fontFamily: PARCHMENT.font,
+                background: "rgba(139,105,20,0.08)",
+                border: `1px solid ${PARCHMENT.goldDark}`,
+              }}
             />
           ) : (
             <button onClick={() => setEditingNickname(true)} className="group">
-              <span className="text-white font-bold text-xl">{user?.nickname}</span>
-              <span className="text-white/40 text-xs ml-2 group-hover:text-white/60 transition">✏️</span>
-              <p className="text-white/50 text-[10px] mt-0.5">{t("tap_to_edit")} (🪙 {NICKNAME_COST})</p>
+              <span className="font-bold text-xl" style={{ color: PARCHMENT.ink, fontFamily: PARCHMENT.font }}>
+                {user?.nickname}
+              </span>
+              <span className="text-xs ml-2 opacity-40 group-hover:opacity-60 transition">✏️</span>
+              <p className="text-[10px] mt-0.5" style={{ color: PARCHMENT.inkLight, fontFamily: PARCHMENT.font }}>
+                {t("tap_to_edit")} (🪙 {NICKNAME_COST})
+              </p>
             </button>
           )}
 
-          {/* Level */}
-          <div className="mt-2 px-3 py-1 rounded-full bg-black/20 backdrop-blur-sm">
-            <span className="text-white/80 text-xs font-bold">{t("level")} {user?.level}</span>
+          {/* Level — wax seal style badge */}
+          <div className="mt-2 px-4 py-1 rounded-full" style={{
+            background: "linear-gradient(135deg, #6B3A2A, #3D2017)",
+            border: `1px solid ${PARCHMENT.goldDark}`,
+            boxShadow: "0 2px 4px rgba(0,0,0,0.2), inset 0 1px 0 rgba(139,105,20,0.3)",
+          }}>
+            <span className="text-xs font-bold" style={{
+              color: "#F5E6C8",
+              fontFamily: PARCHMENT.font,
+              letterSpacing: "0.05em",
+            }}>{t("level")} {user?.level}</span>
           </div>
 
           {/* Currency row */}
           <div className="flex gap-4 mt-3">
             <div className="flex items-center gap-1">
-              <span className="text-yellow-400 text-sm">🪙</span>
-              <span className="text-white/80 text-xs font-medium">{user?.gold?.toLocaleString()}</span>
+              <span className="text-sm">🪙</span>
+              <span className="text-xs font-medium" style={{ color: PARCHMENT.ink, fontFamily: PARCHMENT.font }}>
+                {user?.gold?.toLocaleString()}
+              </span>
             </div>
             <div className="flex items-center gap-1">
-              <span className="text-[#C9A84C] text-sm">💎</span>
-              <span className="text-white/80 text-xs font-medium">{user?.gems?.toLocaleString()}</span>
+              <span className="text-sm">💎</span>
+              <span className="text-xs font-medium" style={{ color: PARCHMENT.ink, fontFamily: PARCHMENT.font }}>
+                {user?.gems?.toLocaleString()}
+              </span>
             </div>
             <div className="flex items-center gap-1">
-              <span className="text-cyan-300 text-sm">✨</span>
-              <span className="text-white/80 text-xs font-medium">{user?.stardust?.toLocaleString()}</span>
+              <span className="text-sm">✨</span>
+              <span className="text-xs font-medium" style={{ color: PARCHMENT.ink, fontFamily: PARCHMENT.font }}>
+                {user?.stardust?.toLocaleString()}
+              </span>
             </div>
           </div>
 
+          <OrnamentalDivider />
+
           {/* Community stats */}
-          <div className="flex gap-6 mt-3">
+          <div className="flex gap-6">
             <div className="text-center">
-              <p className="text-white font-bold text-lg">{communityStats.post_count}</p>
-              <p className="text-white/50 text-[10px]">{t("posts")}</p>
+              <p className="font-bold text-lg" style={{ color: PARCHMENT.ink, fontFamily: PARCHMENT.font }}>
+                {communityStats.post_count}
+              </p>
+              <p className="text-[10px]" style={{ color: PARCHMENT.inkLight, fontFamily: PARCHMENT.font }}>
+                {t("posts")}
+              </p>
             </div>
             <div className="text-center">
-              <p className="text-white font-bold text-lg">{communityStats.comment_count}</p>
-              <p className="text-white/50 text-[10px]">{t("comments")}</p>
+              <p className="font-bold text-lg" style={{ color: PARCHMENT.ink, fontFamily: PARCHMENT.font }}>
+                {communityStats.comment_count}
+              </p>
+              <p className="text-[10px]" style={{ color: PARCHMENT.inkLight, fontFamily: PARCHMENT.font }}>
+                {t("comments")}
+              </p>
             </div>
           </div>
         </div>
@@ -476,8 +627,8 @@ function MainView({
         {/* Slime picker grid */}
         {showSlimePicker && slimes.length > 0 && (
           <div className="px-4 pb-4">
-            <p className="text-white/60 text-xs font-bold mb-2">아바타 슬라임 선택</p>
-            <div className="grid grid-cols-5 gap-2 max-h-40 overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
+            <OrnamentalDivider label="아바타 슬라임 선택" />
+            <div className="grid grid-cols-5 gap-2 max-h-40 overflow-y-auto mt-2" style={{ scrollbarWidth: "thin" }}>
               {slimes.map((sl) => {
                 const sp = species.find((s) => s.id === sl.species_id);
                 const icon = generateSlimeIconSvg(sl.element, 36, sp?.grade || "common", undefined, sl.species_id);
@@ -486,11 +637,11 @@ function MainView({
                   <button key={sl.id} onClick={() => handleSelectAvatarSlime(sl.id)}
                     className="flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition active:scale-90"
                     style={{
-                      background: isSelected ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.15)",
-                      border: isSelected ? "2px solid rgba(255,255,255,0.6)" : "2px solid transparent",
+                      background: isSelected ? "rgba(139,105,20,0.15)" : "rgba(44,24,16,0.05)",
+                      border: isSelected ? `2px solid ${PARCHMENT.goldPrimary}` : "2px solid transparent",
                     }}>
                     <img src={icon} alt="" className="w-9 h-9" draggable={false} />
-                    <span className="text-white/70 text-[8px] truncate max-w-full">
+                    <span className="text-[8px] truncate max-w-full" style={{ color: PARCHMENT.inkLight }}>
                       {sl.name || sp?.name || `#${sl.species_id}`}
                     </span>
                   </button>
@@ -499,68 +650,107 @@ function MainView({
             </div>
           </div>
         )}
-
-        {/* Background picker grid */}
-        {showBgPicker && (
-          <div className="px-4 pb-4">
-            <p className="text-white/60 text-xs font-bold mb-2">{t("change_background")}</p>
-            <div className="grid grid-cols-6 gap-2">
-              {BG_PRESETS.map((preset) => (
-                <button key={preset.id} onClick={() => handleBgChange(preset.id)}
-                  className="w-full aspect-square rounded-lg border-2 transition active:scale-90"
-                  style={{
-                    background: preset.gradient,
-                    borderColor: preset.id === bgPreset.id ? "rgba(255,255,255,0.8)" : "rgba(255,255,255,0.1)",
-                  }} />
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Settings Section */}
-      <div className="rounded-2xl overflow-hidden border border-white/5"
-        style={{ background: "linear-gradient(180deg, rgba(20,20,40,0.9), rgba(15,15,30,0.95))" }}>
-
+      {/* Settings Section — leather card with gold border */}
+      <div className="rounded-2xl overflow-hidden"
+        style={{
+          background: PARCHMENT.leatherCard,
+          border: `1px solid ${PARCHMENT.goldDark}`,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+        }}>
         <SettingsItem emoji="🎬" label="크리에이터 스튜디오" onClick={() => setSubView("creator")} />
-        <Divider />
+        <ParchmentDivider />
         <SettingsItem emoji="👤" label="계정 관리" onClick={() => setSubView("account")} />
-        <Divider />
+        <ParchmentDivider />
         <SettingsItem emoji="🔔" label="알림 설정" onClick={() => setSubView("notifications")} />
-        <Divider />
+        <ParchmentDivider />
         <SettingsItem emoji="🌐" label={t("language")} value={t(langLabel)} onClick={() => setSubView("language")} />
-        <Divider />
+        <ParchmentDivider />
         <SettingsItem emoji="📩" label={t("contact")} onClick={() => setSubView("contact")} />
-        <Divider />
+        <ParchmentDivider />
         <SettingsItem emoji="📋" label={t("terms")} onClick={() => setSubView("terms")} />
-        <Divider />
+        <ParchmentDivider />
         <SettingsItem emoji="🔒" label={t("privacy")} onClick={() => setSubView("privacy")} />
-        <Divider />
+        <ParchmentDivider />
         <SettingsItem emoji="🚪" label={t("logout")} danger onClick={() => setShowLogoutModal(true)} />
       </div>
 
-      {/* Homepage link */}
+      {/* Homepage link — parchment style */}
       <a
         href={HOMEPAGE_URL}
         target="_blank"
         rel="noopener noreferrer"
-        className="block w-full rounded-2xl overflow-hidden border border-white/5 active:scale-[0.98] transition"
-        style={{ background: "linear-gradient(135deg, rgba(201,168,76,0.08), rgba(139,105,20,0.04))" }}
+        className="block w-full rounded-2xl overflow-hidden active:scale-[0.98] transition"
+        style={{
+          background: PARCHMENT.parchmentLight,
+          border: `1px solid ${PARCHMENT.goldDark}`,
+        }}
       >
         <div className="flex items-center gap-3 px-4 py-3.5">
           <span className="text-lg">🏠</span>
           <div className="flex-1">
-            <p className="text-white/80 text-sm font-medium">SlimeTopia 홈페이지</p>
-            <p className="text-white/30 text-[10px] mt-0.5">공식 홈페이지 방문하기</p>
+            <p className="text-sm font-medium" style={{ color: PARCHMENT.ink, fontFamily: PARCHMENT.font }}>
+              SlimeTopia 홈페이지
+            </p>
+            <p className="text-[10px] mt-0.5" style={{ color: PARCHMENT.inkLight, fontFamily: PARCHMENT.font }}>
+              공식 홈페이지 방문하기
+            </p>
           </div>
-          <span className="text-[#C9A84C]/60 text-sm">↗</span>
+          <span className="text-sm" style={{ color: PARCHMENT.goldDark }}>↗</span>
         </div>
       </a>
 
       {/* Version info */}
-      <p className="text-center text-white/20 text-[10px] py-2">
+      <p className="text-center text-[10px] py-2" style={{
+        color: "rgba(201,168,76,0.3)",
+        fontFamily: PARCHMENT.font,
+        letterSpacing: "0.1em",
+      }}>
         SlimeTopia v1.0.0 (Build 2026.02)
       </p>
+
+      {/* Delete profile image confirmation modal */}
+      {showDeleteImageModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="rounded-2xl p-6 mx-6 max-w-[320px] w-full relative"
+            style={{
+              background: PARCHMENT.parchment,
+              border: `2px solid ${PARCHMENT.goldPrimary}`,
+              boxShadow: "0 8px 40px rgba(0,0,0,0.6), inset 0 0 30px rgba(139,105,20,0.08)",
+            }}>
+            <CornerDecorations />
+            <p className="text-center font-bold mb-2" style={{
+              color: PARCHMENT.ink, fontFamily: PARCHMENT.font, fontSize: "16px",
+            }}>프로필 사진 삭제</p>
+            <p className="text-center text-sm mb-6" style={{
+              color: PARCHMENT.inkLight, fontFamily: PARCHMENT.font,
+            }}>프로필 사진을 삭제하시겠습니까?</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowDeleteImageModal(false)}
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm active:scale-95 transition"
+                style={{
+                  background: "rgba(44,24,16,0.08)",
+                  border: `1px solid ${PARCHMENT.goldDark}`,
+                  color: PARCHMENT.inkLight,
+                  fontFamily: PARCHMENT.font,
+                }}>
+                취소
+              </button>
+              <button onClick={handleDeleteImage} disabled={deletingImage}
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm active:scale-95 transition disabled:opacity-50"
+                style={{
+                  background: "linear-gradient(135deg, #6B3A2A, #3D2017)",
+                  color: "#F5E6C8",
+                  border: `1px solid ${PARCHMENT.goldDark}`,
+                  fontFamily: PARCHMENT.font,
+                }}>
+                {deletingImage ? "삭제 중..." : "삭제"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -576,19 +766,24 @@ function SettingsItem({ emoji, label, value, danger, onClick }: {
 }) {
   return (
     <button onClick={onClick}
-      className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-white/5 transition">
+      className="w-full flex items-center gap-3 px-4 py-3.5 active:opacity-80 transition">
       <span className="text-lg">{emoji}</span>
-      <span className={`flex-1 text-left text-sm font-medium ${danger ? "text-red-400" : "text-white/80"}`}>
+      <span className="flex-1 text-left text-sm font-medium" style={{
+        color: danger ? "#A0522D" : "#F5E6C8",
+        fontFamily: PARCHMENT.font,
+      }}>
         {label}
       </span>
-      {value && <span className="text-white/40 text-xs">{value}</span>}
-      <span className="text-white/20 text-sm">›</span>
+      {value && <span className="text-xs" style={{ color: "rgba(201,168,76,0.5)" }}>{value}</span>}
+      <span className="text-sm" style={{ color: "rgba(201,168,76,0.3)" }}>›</span>
     </button>
   );
 }
 
-function Divider() {
-  return <div className="h-px bg-white/5 mx-4" />;
+function ParchmentDivider() {
+  return (
+    <div className="h-px mx-4" style={{ background: "linear-gradient(90deg, transparent, rgba(139,105,20,0.3), transparent)" }} />
+  );
 }
 
 // ─── Language View ───────────────────────────────────────────────────────────
@@ -606,17 +801,26 @@ function LanguageView({ locale, setLocale, t, setSubView }: {
 
   return (
     <div className="p-4">
-      <div className="rounded-2xl overflow-hidden border border-white/5"
-        style={{ background: "linear-gradient(180deg, rgba(20,20,40,0.9), rgba(15,15,30,0.95))" }}>
+      <div className="rounded-2xl overflow-hidden"
+        style={{
+          background: PARCHMENT.parchment,
+          border: `1px solid ${PARCHMENT.goldPrimary}`,
+          boxShadow: "4px 4px 12px rgba(0,0,0,0.4), inset 0 0 40px rgba(139,105,20,0.08)",
+        }}>
         {LANGUAGE_OPTIONS.map((opt, idx) => (
           <div key={opt.value}>
-            {idx > 0 && <Divider />}
+            {idx > 0 && (
+              <div className="h-px mx-4" style={{ background: "linear-gradient(90deg, transparent, rgba(139,105,20,0.2), transparent)" }} />
+            )}
             <button onClick={() => handleSelect(opt.value)}
-              className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-white/5 transition">
-              <span className={`flex-1 text-left text-sm font-medium ${locale === opt.value ? "text-[#D4AF37]" : "text-white/80"}`}>
+              className="w-full flex items-center gap-3 px-4 py-3.5 active:opacity-80 transition">
+              <span className="flex-1 text-left text-sm font-medium" style={{
+                color: locale === opt.value ? PARCHMENT.goldDark : PARCHMENT.ink,
+                fontFamily: PARCHMENT.font,
+              }}>
                 {t(opt.labelKey)}
               </span>
-              {locale === opt.value && <span className="text-[#D4AF37] text-sm">✓</span>}
+              {locale === opt.value && <span className="text-sm" style={{ color: PARCHMENT.goldDark }}>✓</span>}
             </button>
           </div>
         ))}
@@ -641,15 +845,18 @@ function ContactView({ t, contactCategory, setContactCategory, contactEmail, set
     <div className="p-4 space-y-4">
       {/* Category */}
       <div>
-        <label className="text-white/50 text-xs font-bold mb-2 block">{t("contact_category")}</label>
+        <label className="text-xs font-bold mb-2 block" style={{ color: PARCHMENT.goldPrimary, fontFamily: PARCHMENT.font }}>
+          {t("contact_category")}
+        </label>
         <div className="flex flex-wrap gap-2">
           {CONTACT_CATEGORIES.map((cat) => (
             <button key={cat} onClick={() => setContactCategory(cat)}
               className="px-3 py-1.5 rounded-lg text-xs font-bold transition active:scale-95"
               style={{
-                background: contactCategory === cat ? "rgba(201,168,76,0.15)" : "rgba(255,255,255,0.05)",
-                border: contactCategory === cat ? "1px solid rgba(201,168,76,0.3)" : "1px solid rgba(255,255,255,0.1)",
-                color: contactCategory === cat ? "#C9A84C" : "rgba(255,255,255,0.6)",
+                background: contactCategory === cat ? "rgba(139,105,20,0.12)" : "rgba(245,230,200,0.06)",
+                border: contactCategory === cat ? `1px solid ${PARCHMENT.goldPrimary}` : "1px solid rgba(139,105,20,0.2)",
+                color: contactCategory === cat ? PARCHMENT.goldPrimary : "rgba(245,230,200,0.6)",
+                fontFamily: PARCHMENT.font,
               }}>
               {t(cat)}
             </button>
@@ -659,26 +866,46 @@ function ContactView({ t, contactCategory, setContactCategory, contactEmail, set
 
       {/* Email */}
       <div>
-        <label className="text-white/50 text-xs font-bold mb-2 block">{t("contact_email")}</label>
+        <label className="text-xs font-bold mb-2 block" style={{ color: PARCHMENT.goldPrimary, fontFamily: PARCHMENT.font }}>
+          {t("contact_email")}
+        </label>
         <input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)}
           placeholder="email@example.com"
-          className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-[#C9A84C]/30 transition placeholder:text-white/20" />
+          className="w-full px-3 py-2.5 rounded-xl text-sm outline-none transition"
+          style={{
+            background: "rgba(245,230,200,0.06)",
+            border: "1px solid rgba(139,105,20,0.2)",
+            color: "#F5E6C8",
+            fontFamily: PARCHMENT.font,
+          }} />
       </div>
 
       {/* Content */}
       <div>
-        <label className="text-white/50 text-xs font-bold mb-2 block">{t("contact_content")}</label>
+        <label className="text-xs font-bold mb-2 block" style={{ color: PARCHMENT.goldPrimary, fontFamily: PARCHMENT.font }}>
+          {t("contact_content")}
+        </label>
         <textarea value={contactContent} onChange={(e) => setContactContent(e.target.value)}
           placeholder={t("contact_placeholder")}
           rows={6}
-          className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-[#C9A84C]/30 transition resize-none placeholder:text-white/20" />
+          className="w-full px-3 py-2.5 rounded-xl text-sm outline-none transition resize-none"
+          style={{
+            background: "rgba(245,230,200,0.06)",
+            border: "1px solid rgba(139,105,20,0.2)",
+            color: "#F5E6C8",
+            fontFamily: PARCHMENT.font,
+          }} />
       </div>
 
       {/* Submit */}
       <button onClick={handleContactSubmit}
         disabled={!contactContent.trim()}
-        className="w-full py-3 rounded-xl font-bold text-sm text-white transition active:scale-[0.98] disabled:opacity-40"
-        style={{ background: "linear-gradient(135deg, #C9A84C, #8B6914)" }}>
+        className="w-full py-3 rounded-xl font-bold text-sm transition active:scale-[0.98] disabled:opacity-40"
+        style={{
+          background: `linear-gradient(135deg, ${PARCHMENT.goldPrimary}, ${PARCHMENT.goldDark})`,
+          color: "#FFF8EC",
+          fontFamily: PARCHMENT.font,
+        }}>
         {t("contact_submit")}
       </button>
     </div>
@@ -690,9 +917,17 @@ function ContactView({ t, contactCategory, setContactCategory, contactEmail, set
 function TextView({ content }: { content: string }) {
   return (
     <div className="p-4">
-      <div className="rounded-2xl p-4 border border-white/5"
-        style={{ background: "linear-gradient(180deg, rgba(20,20,40,0.9), rgba(15,15,30,0.95))" }}>
-        <pre className="text-white/70 text-xs leading-relaxed whitespace-pre-wrap font-sans">
+      <div className="rounded-2xl p-4 relative"
+        style={{
+          background: PARCHMENT.parchment,
+          border: `1px solid ${PARCHMENT.goldPrimary}`,
+          boxShadow: "4px 4px 12px rgba(0,0,0,0.4), inset 0 0 40px rgba(139,105,20,0.08)",
+        }}>
+        <CornerDecorations />
+        <pre className="text-xs leading-relaxed whitespace-pre-wrap" style={{
+          color: PARCHMENT.ink,
+          fontFamily: PARCHMENT.font,
+        }}>
           {content}
         </pre>
       </div>
@@ -763,45 +998,79 @@ function AccountView({ user, accessToken, fetchUser, t }: {
     setPwLoading(false);
   };
 
+  const inputStyle = {
+    background: "rgba(245,230,200,0.06)",
+    border: "1px solid rgba(139,105,20,0.2)",
+    color: "#F5E6C8",
+    fontFamily: PARCHMENT.font,
+  };
+
   return (
     <div className="p-4 space-y-4">
-      <div className="rounded-2xl overflow-hidden border border-white/5"
-        style={{ background: "linear-gradient(180deg, rgba(20,20,40,0.9), rgba(15,15,30,0.95))" }}>
+      <div className="rounded-2xl overflow-hidden relative"
+        style={{
+          background: PARCHMENT.parchment,
+          border: `1px solid ${PARCHMENT.goldPrimary}`,
+          boxShadow: "4px 4px 12px rgba(0,0,0,0.4), inset 0 0 40px rgba(139,105,20,0.08)",
+        }}>
+        <CornerDecorations />
 
         {/* UUID */}
         <div className="px-4 py-3.5">
-          <p className="text-white/40 text-[10px] font-bold mb-1">내 UUID</p>
+          <p className="text-[10px] font-bold mb-1" style={{ color: PARCHMENT.goldDark, fontFamily: PARCHMENT.font }}>
+            내 UUID
+          </p>
           <div className="flex items-center gap-2">
-            <span className="text-white/70 text-xs font-mono flex-1 truncate">{user?.id || "-"}</span>
+            <span className="text-xs font-mono flex-1 truncate" style={{ color: PARCHMENT.ink }}>
+              {user?.id || "-"}
+            </span>
             <button onClick={handleCopyUuid}
-              className="px-2 py-1 rounded-lg bg-white/5 text-white/50 text-[10px] font-bold hover:bg-white/10 transition active:scale-95">
+              className="px-2 py-1 rounded-lg text-[10px] font-bold active:scale-95 transition"
+              style={{
+                background: "rgba(139,105,20,0.1)",
+                color: PARCHMENT.goldDark,
+                fontFamily: PARCHMENT.font,
+              }}>
               {copied ? "복사됨!" : "복사"}
             </button>
           </div>
         </div>
-        <Divider />
+        <div className="h-px mx-4" style={{ background: "linear-gradient(90deg, transparent, rgba(139,105,20,0.2), transparent)" }} />
 
         {/* Nickname */}
         <div className="px-4 py-3.5">
-          <p className="text-white/40 text-[10px] font-bold mb-1">닉네임</p>
-          <p className="text-white/80 text-sm">{user?.nickname || "-"}</p>
-          <p className="text-white/30 text-[10px] mt-0.5">프로필 화면에서 변경 가능 (🪙 {NICKNAME_COST})</p>
+          <p className="text-[10px] font-bold mb-1" style={{ color: PARCHMENT.goldDark, fontFamily: PARCHMENT.font }}>
+            닉네임
+          </p>
+          <p className="text-sm" style={{ color: PARCHMENT.ink, fontFamily: PARCHMENT.font }}>
+            {user?.nickname || "-"}
+          </p>
+          <p className="text-[10px] mt-0.5" style={{ color: PARCHMENT.inkLight, fontFamily: PARCHMENT.font }}>
+            프로필 화면에서 변경 가능 (🪙 {NICKNAME_COST})
+          </p>
         </div>
-        <Divider />
+        <div className="h-px mx-4" style={{ background: "linear-gradient(90deg, transparent, rgba(139,105,20,0.2), transparent)" }} />
 
         {/* Email */}
         <div className="px-4 py-3.5">
-          <p className="text-white/40 text-[10px] font-bold mb-1">이메일</p>
-          <p className="text-white/80 text-sm">{maskEmail(user?.email || "")}</p>
+          <p className="text-[10px] font-bold mb-1" style={{ color: PARCHMENT.goldDark, fontFamily: PARCHMENT.font }}>
+            이메일
+          </p>
+          <p className="text-sm" style={{ color: PARCHMENT.ink, fontFamily: PARCHMENT.font }}>
+            {maskEmail(user?.email || "")}
+          </p>
         </div>
-        <Divider />
+        <div className="h-px mx-4" style={{ background: "linear-gradient(90deg, transparent, rgba(139,105,20,0.2), transparent)" }} />
 
         {/* Password */}
         <div className="px-4 py-3.5">
           <div className="flex items-center justify-between">
-            <p className="text-white/40 text-[10px] font-bold">비밀번호</p>
+            <p className="text-[10px] font-bold" style={{ color: PARCHMENT.goldDark, fontFamily: PARCHMENT.font }}>
+              비밀번호
+            </p>
             <button onClick={() => setShowPwForm(!showPwForm)}
-              className="text-[#C9A84C] text-[10px] font-bold hover:text-[#D4AF37] transition">
+              className="text-[10px] font-bold transition"
+              style={{ color: PARCHMENT.goldPrimary, fontFamily: PARCHMENT.font }}>
               {showPwForm ? "취소" : "변경하기"}
             </button>
           </div>
@@ -810,16 +1079,23 @@ function AccountView({ user, accessToken, fetchUser, t }: {
             <div className="mt-3 space-y-2">
               <input type="password" value={currentPw} onChange={(e) => setCurrentPw(e.target.value)}
                 placeholder="현재 비밀번호"
-                className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-[#C9A84C]/30 transition placeholder:text-white/20" />
+                className="w-full px-3 py-2 rounded-xl text-sm outline-none transition"
+                style={inputStyle} />
               <input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)}
                 placeholder="새 비밀번호 (6자 이상)"
-                className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-[#C9A84C]/30 transition placeholder:text-white/20" />
+                className="w-full px-3 py-2 rounded-xl text-sm outline-none transition"
+                style={inputStyle} />
               <input type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)}
                 placeholder="새 비밀번호 확인"
-                className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-[#C9A84C]/30 transition placeholder:text-white/20" />
+                className="w-full px-3 py-2 rounded-xl text-sm outline-none transition"
+                style={inputStyle} />
               <button onClick={handleChangePassword} disabled={pwLoading || !currentPw || !newPw || !confirmPw}
-                className="w-full py-2.5 rounded-xl font-bold text-sm text-white transition active:scale-[0.98] disabled:opacity-40"
-                style={{ background: "linear-gradient(135deg, #C9A84C, #8B6914)" }}>
+                className="w-full py-2.5 rounded-xl font-bold text-sm transition active:scale-[0.98] disabled:opacity-40"
+                style={{
+                  background: `linear-gradient(135deg, ${PARCHMENT.goldPrimary}, ${PARCHMENT.goldDark})`,
+                  color: "#FFF8EC",
+                  fontFamily: PARCHMENT.font,
+                }}>
                 {pwLoading ? "변경 중..." : "비밀번호 변경"}
               </button>
             </div>
@@ -850,15 +1126,20 @@ function NotificationSettingsView({ t }: { t: (key: string) => string }) {
 
   return (
     <div className="p-4">
-      <div className="rounded-2xl overflow-hidden border border-white/5"
-        style={{ background: "linear-gradient(180deg, rgba(20,20,40,0.9), rgba(15,15,30,0.95))" }}>
+      <div className="rounded-2xl overflow-hidden relative"
+        style={{
+          background: PARCHMENT.parchment,
+          border: `1px solid ${PARCHMENT.goldPrimary}`,
+          boxShadow: "4px 4px 12px rgba(0,0,0,0.4), inset 0 0 40px rgba(139,105,20,0.08)",
+        }}>
+        <CornerDecorations />
 
         <ToggleItem label="게임 알림" desc="탐험 완료, 배고픈 슬라임 등"
           value={gameNotif} onToggle={() => toggle("notification_game", gameNotif, setGameNotif)} />
-        <Divider />
+        <div className="h-px mx-4" style={{ background: "linear-gradient(90deg, transparent, rgba(139,105,20,0.2), transparent)" }} />
         <ToggleItem label="커뮤니티 알림" desc="댓글, 좋아요 알림"
           value={communityNotif} onToggle={() => toggle("notification_community", communityNotif, setCommunityNotif)} />
-        <Divider />
+        <div className="h-px mx-4" style={{ background: "linear-gradient(90deg, transparent, rgba(139,105,20,0.2), transparent)" }} />
         <ToggleItem label="이벤트/공지 알림" desc="새 이벤트, 업데이트 공지"
           value={eventNotif} onToggle={() => toggle("notification_event", eventNotif, setEventNotif)} />
       </div>
@@ -895,48 +1176,63 @@ function CreatorStudioView() {
     return d.toLocaleDateString("ko-KR", { month: "short", day: "numeric" });
   };
 
+  const statCardStyle = {
+    background: PARCHMENT.leatherCard,
+    border: `1px solid ${PARCHMENT.goldDark}`,
+  };
+
   return (
     <div className="p-4 space-y-4">
       {/* Stats overview */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl p-3 border border-white/5" style={{ background: "rgba(20,20,40,0.9)" }}>
-          <p className="text-white/40 text-[10px]">총 조회수</p>
-          <p className="text-white font-bold text-lg">{myTotalViews.toLocaleString()}</p>
+        <div className="rounded-xl p-3" style={statCardStyle}>
+          <p className="text-[10px]" style={{ color: "rgba(201,168,76,0.5)", fontFamily: PARCHMENT.font }}>총 조회수</p>
+          <p className="font-bold text-lg" style={{ color: "#F5E6C8", fontFamily: PARCHMENT.font }}>{myTotalViews.toLocaleString()}</p>
         </div>
-        <div className="rounded-xl p-3 border border-white/5" style={{ background: "rgba(20,20,40,0.9)" }}>
-          <p className="text-white/40 text-[10px]">총 좋아요</p>
-          <p className="text-white font-bold text-lg">{myTotalLikes.toLocaleString()}</p>
+        <div className="rounded-xl p-3" style={statCardStyle}>
+          <p className="text-[10px]" style={{ color: "rgba(201,168,76,0.5)", fontFamily: PARCHMENT.font }}>총 좋아요</p>
+          <p className="font-bold text-lg" style={{ color: "#F5E6C8", fontFamily: PARCHMENT.font }}>{myTotalLikes.toLocaleString()}</p>
         </div>
-        <div className="rounded-xl p-3 border border-white/5" style={{ background: "rgba(20,20,40,0.9)" }}>
-          <p className="text-white/40 text-[10px]">받은 골드</p>
-          <p className="text-yellow-400 font-bold text-lg">{myTotalTipsGold.toLocaleString()}G</p>
+        <div className="rounded-xl p-3" style={statCardStyle}>
+          <p className="text-[10px]" style={{ color: "rgba(201,168,76,0.5)", fontFamily: PARCHMENT.font }}>받은 골드</p>
+          <p className="font-bold text-lg" style={{ color: PARCHMENT.goldPrimary, fontFamily: PARCHMENT.font }}>{myTotalTipsGold.toLocaleString()}G</p>
         </div>
-        <div className="rounded-xl p-3 border border-white/5" style={{ background: "rgba(20,20,40,0.9)" }}>
-          <p className="text-white/40 text-[10px]">받은 젬</p>
-          <p className="text-[#C9A84C] font-bold text-lg">{myTotalTipsGems.toLocaleString()}</p>
+        <div className="rounded-xl p-3" style={statCardStyle}>
+          <p className="text-[10px]" style={{ color: "rgba(201,168,76,0.5)", fontFamily: PARCHMENT.font }}>받은 젬</p>
+          <p className="font-bold text-lg" style={{ color: PARCHMENT.goldPrimary, fontFamily: PARCHMENT.font }}>{myTotalTipsGems.toLocaleString()}</p>
         </div>
       </div>
 
       {/* Upload button */}
       <button
         onClick={() => setShowUpload(true)}
-        className="w-full py-3 rounded-xl text-white font-bold text-sm"
-        style={{ background: "linear-gradient(135deg, #C9A84C, #D4AF37)" }}
+        className="w-full py-3 rounded-xl font-bold text-sm"
+        style={{
+          background: `linear-gradient(135deg, ${PARCHMENT.goldPrimary}, ${PARCHMENT.goldBright})`,
+          color: PARCHMENT.ink,
+          fontFamily: PARCHMENT.font,
+        }}
       >
         새 쇼츠 업로드
       </button>
 
       {/* My shorts grid */}
       <div>
-        <h3 className="text-white/60 text-xs font-bold mb-3">내 쇼츠 ({myShorts.length})</h3>
+        <h3 className="text-xs font-bold mb-3" style={{ color: "rgba(201,168,76,0.5)", fontFamily: PARCHMENT.font }}>
+          내 쇼츠 ({myShorts.length})
+        </h3>
         {myShorts.length === 0 ? (
-          <div className="text-center py-8 text-white/30 text-sm">
+          <div className="text-center py-8 text-sm" style={{ color: "rgba(245,230,200,0.3)", fontFamily: PARCHMENT.font }}>
             아직 업로드한 쇼츠가 없어요
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {myShorts.map((s) => (
-              <div key={s.id} className="rounded-xl overflow-hidden border border-white/5" style={{ background: "rgba(20,20,40,0.9)" }}>
+              <div key={s.id} className="rounded-xl overflow-hidden"
+                style={{
+                  background: PARCHMENT.leatherCard,
+                  border: `1px solid ${PARCHMENT.goldDark}`,
+                }}>
                 {/* Thumbnail */}
                 <div className="aspect-[9/16] max-h-36 bg-black/50 relative">
                   {s.thumbnail_url ? (
@@ -955,12 +1251,18 @@ function CreatorStudioView() {
                 </div>
                 {/* Info */}
                 <div className="p-2">
-                  <p className="text-white/80 text-xs font-bold truncate">{s.title}</p>
-                  <p className="text-white/30 text-[10px] mt-0.5">{formatTime(s.created_at)}</p>
+                  <p className="text-xs font-bold truncate" style={{ color: "#F5E6C8", fontFamily: PARCHMENT.font }}>{s.title}</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: "rgba(201,168,76,0.4)" }}>{formatTime(s.created_at)}</p>
                   <button
                     onClick={() => handleDelete(s.id)}
                     disabled={deleting === s.id}
-                    className="mt-1.5 w-full py-1 rounded-lg bg-red-500/10 text-red-400/70 text-[10px] font-bold border border-red-500/10"
+                    className="mt-1.5 w-full py-1 rounded-lg text-[10px] font-bold"
+                    style={{
+                      background: "rgba(160,82,45,0.1)",
+                      color: "rgba(160,82,45,0.7)",
+                      border: "1px solid rgba(160,82,45,0.2)",
+                      fontFamily: PARCHMENT.font,
+                    }}
                   >
                     {deleting === s.id ? "삭제 중..." : "삭제"}
                   </button>
@@ -984,17 +1286,17 @@ function ToggleItem({ label, desc, value, onToggle }: {
   onToggle: () => void;
 }) {
   return (
-    <button onClick={onToggle} className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-white/5 transition">
+    <button onClick={onToggle} className="w-full flex items-center gap-3 px-4 py-3.5 active:opacity-80 transition">
       <div className="flex-1 text-left">
-        <p className="text-white/80 text-sm font-medium">{label}</p>
-        <p className="text-white/30 text-[10px] mt-0.5">{desc}</p>
+        <p className="text-sm font-medium" style={{ color: PARCHMENT.ink, fontFamily: PARCHMENT.font }}>{label}</p>
+        <p className="text-[10px] mt-0.5" style={{ color: PARCHMENT.inkLight, fontFamily: PARCHMENT.font }}>{desc}</p>
       </div>
       <div className="w-10 h-6 rounded-full relative transition-colors duration-200"
-        style={{ background: value ? "rgba(201,168,76,0.4)" : "rgba(255,255,255,0.1)" }}>
+        style={{ background: value ? "rgba(139,105,20,0.3)" : "rgba(44,24,16,0.15)" }}>
         <div className="absolute top-1 w-4 h-4 rounded-full transition-all duration-200"
           style={{
             left: value ? 20 : 4,
-            background: value ? "#C9A84C" : "rgba(255,255,255,0.3)",
+            background: value ? PARCHMENT.goldPrimary : "rgba(44,24,16,0.3)",
           }} />
       </div>
     </button>
