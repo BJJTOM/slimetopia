@@ -103,7 +103,7 @@ export default function SlimeRace({ onClose }: Props) {
   const [maxCombo, setMaxCombo] = useState(0);
   const [jumping, setJumping] = useState(false);
   const [result, setResult] = useState<{ score: number; gold: number; exp: number; maxCombo: number; distance: number } | null>(null);
-  const [remaining, setRemaining] = useState(3);
+  const [remaining] = useState(999); // unlimited
   const [screenShake, setScreenShake] = useState(0);
   const [activePowerUp, setActivePowerUp] = useState<{ type: string; timer: number } | null>(null);
   const [hasShield, setHasShield] = useState(false);
@@ -196,11 +196,10 @@ export default function SlimeRace({ onClose }: Props) {
   const startRace = async () => {
     if (!token || !selectedSlimeId) return;
     try {
-      const res = await authApi<{ remaining: number }>("/api/race/start", token, {
+      await authApi<{ token: string }>("/api/race/start", token, {
         method: "POST",
         body: { slime_id: selectedSlimeId },
       });
-      setRemaining(res.remaining);
       finishCalledRef.current = false;
 
       setRaceState("countdown");
@@ -1350,7 +1349,7 @@ export default function SlimeRace({ onClose }: Props) {
                     border: isSelected ? `1px solid ${c}40` : "1px solid rgba(255,255,255,0.06)",
                   }}
                 >
-                  <img src={generateSlimeIconSvg(slime.element, 40)} alt="" className="w-10 h-10 drop-shadow-md" />
+                  <img src={generateSlimeIconSvg(slime.element, 40, undefined, undefined, slime.species_id)} alt="" className="w-10 h-10 drop-shadow-md" />
                   <div className="flex-1 min-w-0">
                     <div className="text-white text-xs font-medium truncate">
                       {slime.name || sp?.name || "???"}
@@ -1540,11 +1539,9 @@ export default function SlimeRace({ onClose }: Props) {
               <button onClick={onClose} className="flex-1 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[#B2BEC3] text-xs">
                 {"\uB2EB\uAE30"}
               </button>
-              {remaining > 0 && (
-                <button onClick={() => setRaceState("select")} className="flex-1 btn-primary py-2.5 text-xs font-bold">
-                  {"\uB2E4\uC2DC"} ({remaining})
-                </button>
-              )}
+              <button onClick={() => setRaceState("select")} className="flex-1 btn-primary py-2.5 text-xs font-bold">
+                다시하기
+              </button>
             </div>
           </div>
         </div>

@@ -1,0 +1,19 @@
+{
+  "accessories": [
+    { "id": 1, "name": "빨간 리본", "name_en": "Red Ribbon", "slot": "head", "icon": "🎀", "cost_gold": 200, "cost_gems": 0, "svg_overlay": "ribbon_red" },
+    { "id": 2, "name": "왕관", "name_en": "Crown", "slot": "head", "icon": "👑", "cost_gold": 0, "cost_gems": 15, "svg_overlay": "crown" },
+    { "id": 3, "name": "마법사 모자", "name_en": "Wizard Hat", "slot": "head", "icon": "🧙", "cost_gold": 500, "cost_gems": 0, "svg_overlay": "wizard_hat" },
+    { "id": 4, "name": "꽃 화관", "name_en": "Flower Crown", "slot": "head", "icon": "🌸", "cost_gold": 300, "cost_gems": 0, "svg_overlay": "flower_crown" },
+    { "id": 5, "name": "산타 모자", "name_en": "Santa Hat", "slot": "head", "icon": "🎅", "cost_gold": 0, "cost_gems": 5, "svg_overlay": "santa_hat" },
+    { "id": 6, "name": "고양이 귀", "name_en": "Cat Ears", "slot": "head", "icon": "🐱", "cost_gold": 400, "cost_gems": 0, "svg_overlay": "cat_ears" },
+    { "id": 7, "name": "하트 선글라스", "name_en": "Heart Sunglasses", "slot": "face", "icon": "💕", "cost_gold": 350, "cost_gems": 0, "svg_overlay": "heart_glasses" },
+    { "id": 8, "name": "둥근 안경", "name_en": "Round Glasses", "slot": "face", "icon": "🤓", "cost_gold": 250, "cost_gems": 0, "svg_overlay": "round_glasses" },
+    { "id": 9, "name": "별 스티커", "name_en": "Star Sticker", "slot": "face", "icon": "⭐", "cost_gold": 150, "cost_gems": 0, "svg_overlay": "star_sticker" },
+    { "id": 10, "name": "나비 넥타이", "name_en": "Bow Tie", "slot": "body", "icon": "🎩", "cost_gold": 200, "cost_gems": 0, "svg_overlay": "bow_tie" },
+    { "id": 11, "name": "목도리", "name_en": "Scarf", "slot": "body", "icon": "🧣", "cost_gold": 300, "cost_gems": 0, "svg_overlay": "scarf" },
+    { "id": 12, "name": "망토", "name_en": "Cape", "slot": "body", "icon": "🦸", "cost_gold": 0, "cost_gems": 10, "svg_overlay": "cape" },
+    { "id": 13, "name": "천사 날개", "name_en": "Angel Wings", "slot": "body", "icon": "😇", "cost_gold": 0, "cost_gems": 20, "svg_overlay": "angel_wings" },
+    { "id": 14, "name": "악마 뿔", "name_en": "Devil Horns", "slot": "head", "icon": "😈", "cost_gold": 0, "cost_gems": 8, "svg_overlay": "devil_horns" },
+    { "id": 15, "name": "무지개 후광", "name_en": "Rainbow Halo", "slot": "head", "icon": "🌈", "cost_gold": 0, "cost_gems": 25, "svg_overlay": "rainbow_halo" }
+  ]
+}

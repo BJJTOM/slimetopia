@@ -1,0 +1,66 @@
+{{define "moderation_posts.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+{{if eq .Message "deleted"}}
+<div class="msg-success">게시글이 삭제되었습니다.</div>
+{{else if eq .Message "reply_deleted"}}
+<div class="msg-success">댓글이 삭제되었습니다.</div>
+{{else if eq .Message "error"}}
+<div class="msg-error">오류가 발생했습니다.</div>
+{{end}}
+
+{{if .Error}}
+<div class="msg-error">{{.Error}}</div>
+{{end}}
+
+<form class="search-bar" method="GET" action="/admin/moderation/posts">
+  <input type="text" name="search" placeholder="내용 또는 작성자 검색..." value="{{.Search}}" />
+  <button type="submit" class="btn btn-primary">검색</button>
+  {{if .Search}}<a href="/admin/moderation/posts" class="btn btn-danger">초기화</a>{{end}}
+</form>
+
+<p style="font-size: 12px; color: #636e72; margin-bottom: 12px;">총 {{.TotalCount}}개 게시글</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>작성자</th>
+      <th>유형</th>
+      <th>내용</th>
+      <th>좋아요</th>
+      <th>댓글</th>
+      <th>작성일</th>
+      <th>액션</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Posts}}
+    <tr>
+      <td style="color: #55efc4;">{{.AuthorNick}}</td>
+      <td><span class="badge" style="background: rgba(162,155,254,0.15); color: #a29bfe;">{{.PostType}}</span></td>
+      <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{.Content}}</td>
+      <td style="color: #ff6b6b;">{{.Likes}}</td>
+      <td>{{.ReplyCount}}</td>
+      <td style="color: #636e72; font-size: 11px;">{{.CreatedAt.Format "2006-01-02 15:04"}}</td>
+      <td>
+        <form method="POST" action="/admin/moderation/posts/{{.ID}}/delete" style="display: inline;">
+          <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('이 게시글을 삭제하시겠습니까?')">삭제</button>
+        </form>
+      </td>
+    </tr>
+    {{else}}
+    <tr><td colspan="7" style="text-align:center; color:#636e72; padding: 24px;">게시글 없음</td></tr>
+    {{end}}
+  </tbody>
+</table>
+
+{{if gt .TotalPages 1}}
+<div class="pagination">
+  {{if .HasPrev}}<a href="/admin/moderation/posts?page={{.PrevPage}}&search={{.Search}}" class="btn btn-sm">&laquo; 이전</a>{{end}}
+  <span class="current">{{.Page}} / {{.TotalPages}}</span>
+  {{if .HasNext}}<a href="/admin/moderation/posts?page={{.NextPage}}&search={{.Search}}" class="btn btn-sm">다음 &raquo;</a>{{end}}
+</div>
+{{end}}
+{{end}}

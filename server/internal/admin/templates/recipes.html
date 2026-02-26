@@ -1,0 +1,44 @@
+{{define "recipes.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+{{if .Error}}
+<div class="msg-error">{{.Error}}</div>
+{{end}}
+
+<p style="font-size: 12px; color: #636e72; margin-bottom: 12px;">총 {{.Total}}개 레시피</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>입력 A</th>
+      <th>입력 B</th>
+      <th>결과</th>
+      <th>결과명</th>
+      <th>유형</th>
+      <th>힌트</th>
+      <th>히든</th>
+      <th>촉매</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Recipes}}
+    <tr{{if .Hidden}} style="background: rgba(255,107,107,0.05);"{{end}}>
+      <td style="color: #636e72;">{{.ID}}</td>
+      <td style="color: #74b9ff;">{{.InputA}}</td>
+      <td style="color: #74b9ff;">{{.InputB}}</td>
+      <td style="color: #55efc4; font-weight: 700;">{{.Output}}</td>
+      <td>{{.OutputName}}</td>
+      <td><span class="badge" style="background: rgba(162,155,254,0.15); color: #a29bfe;">{{.Type}}</span></td>
+      <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #b2bec3;">{{.Hint}}</td>
+      <td>{{if .Hidden}}<span style="color: #ff6b6b;">숨김</span>{{else}}<span style="color: #636e72;">공개</span>{{end}}</td>
+      <td>{{if .Catalyst}}Material #{{.Catalyst.MaterialID}}{{else}}-{{end}}</td>
+    </tr>
+    {{else}}
+    <tr><td colspan="9" style="text-align:center; color:#636e72; padding: 24px;">레시피 데이터 없음</td></tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}

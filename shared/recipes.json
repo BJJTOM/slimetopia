@@ -4,28 +4,301 @@
       "id": 1,
       "input_a": 1,
       "input_b": 2,
-      "output": 6,
-      "output_name": "이끼 슬라임",
+      "output": 22,
+      "output_name": "안개 슬라임",
       "type": "combination",
-      "hint": "물과 풀이 만나면..."
+      "hint": "물과 불이 만나면 뿌연 안개가...",
+      "hidden": false
     },
     {
       "id": 2,
-      "input_a": 1,
-      "input_b": 3,
-      "output": 7,
-      "output_name": "안개 슬라임",
+      "input_a": 3,
+      "input_b": 8,
+      "output": 24,
+      "output_name": "꽃향기 슬라임",
       "type": "combination",
-      "hint": "물과 불이 만나면 뿌연 것이..."
+      "hint": "풀잎과 독버섯이 만나면 향기가...",
+      "hidden": false
     },
     {
       "id": 3,
       "input_a": 4,
       "input_b": 5,
-      "output": 8,
-      "output_name": "황혼 슬라임",
+      "output": 25,
+      "output_name": "무지개빛 슬라임",
       "type": "combination",
-      "hint": "빛과 어둠의 경계에서..."
+      "hint": "빛과 어둠의 경계에서 무지개가...",
+      "hidden": false
+    },
+    {
+      "id": 4,
+      "input_a": 6,
+      "input_b": 7,
+      "output": 27,
+      "output_name": "결빙 슬라임",
+      "type": "combination",
+      "hint": "눈송이에 번개가 치면 모든 것이 얼어붙는다...",
+      "hidden": false
+    },
+    {
+      "id": 5,
+      "input_a": 9,
+      "input_b": 10,
+      "output": 21,
+      "output_name": "기록계 슬라임",
+      "type": "combination",
+      "hint": "모래와 바람이 새로운 항로를 기록한다...",
+      "hidden": false
+    },
+    {
+      "id": 6,
+      "input_a": 1,
+      "input_b": 9,
+      "output": 29,
+      "output_name": "수정 슬라임",
+      "type": "combination",
+      "hint": "물과 모래가 오랜 시간 굳으면 수정이...",
+      "hidden": false
+    },
+    {
+      "id": 7,
+      "input_a": 22,
+      "input_b": 23,
+      "output": 32,
+      "output_name": "항해 슬라임",
+      "type": "combination",
+      "hint": "안개 속 횃불이 항해의 길을 밝힌다...",
+      "hidden": false
+    },
+    {
+      "id": 8,
+      "input_a": 21,
+      "input_b": 24,
+      "output": 33,
+      "output_name": "저격 슬라임",
+      "type": "combination",
+      "hint": "기록계와 꽃향기가 정확한 저격을...",
+      "hidden": false
+    },
+    {
+      "id": 9,
+      "input_a": 25,
+      "input_b": 28,
+      "output": 37,
+      "output_name": "기계 슬라임",
+      "type": "combination",
+      "hint": "무지개빛과 낙뢰가 기계에 생명을...",
+      "hidden": false
+    },
+    {
+      "id": 10,
+      "input_a": 51,
+      "input_b": 52,
+      "output": 57,
+      "output_name": "천공 슬라임",
+      "type": "combination",
+      "hint": "구름과 천사가 만나면 하늘 너머의 세계가...",
+      "hidden": false
+    },
+    {
+      "id": 11,
+      "input_a": 46,
+      "input_b": 47,
+      "output": 74,
+      "output_name": "사막왕 슬라임",
+      "type": "combination",
+      "hint": "모래폭풍과 칼날이 사막의 왕을 만든다...",
+      "hidden": false
+    },
+    {
+      "id": 12,
+      "input_a": 99,
+      "input_b": 100,
+      "output": 105,
+      "output_name": "해병대장 슬라임",
+      "type": "combination",
+      "hint": "병사와 하사가 함께 성장하면...",
+      "hidden": false
+    },
+    {
+      "id": 13,
+      "input_a": 173,
+      "input_b": 174,
+      "output": 179,
+      "output_name": "늑대 슬라임",
+      "type": "combination",
+      "hint": "강아지와 고양이의 야생 본능이 깨어나면...",
+      "hidden": false
+    },
+    {
+      "id": 14,
+      "input_a": 159,
+      "input_b": 160,
+      "output": 164,
+      "output_name": "실실 슬라임",
+      "type": "combination",
+      "hint": "고무와 꽃이 실처럼 엮이면...",
+      "hidden": false
+    },
+    {
+      "id": 15,
+      "input_a": 188,
+      "input_b": 189,
+      "output": 191,
+      "output_name": "카라스 슬라임",
+      "type": "combination",
+      "hint": "자유와 혁명이 어둠 속에서 까마귀로 변한다...",
+      "hidden": false
+    },
+    {
+      "id": 16,
+      "input_a": 30,
+      "input_b": 31,
+      "output": 40,
+      "output_name": "태양신 슬라임",
+      "type": "combination",
+      "hint": "고무의 의지와 삼검의 각오가 태양의 힘을 깨운다...",
+      "hidden": true
+    },
+    {
+      "id": 17,
+      "input_a": 36,
+      "input_b": 38,
+      "output": 39,
+      "output_name": "어인 슬라임",
+      "type": "combination",
+      "hint": "학자의 지식과 해골의 영혼이 바다로 향한다...",
+      "hidden": true
+    },
+    {
+      "id": 18,
+      "input_a": 63,
+      "input_b": 65,
+      "output": 72,
+      "output_name": "패왕 슬라임",
+      "type": "combination",
+      "hint": "암살과 철괴의 극한 수련이 패왕의 기운을...",
+      "hidden": true
+    },
+    {
+      "id": 19,
+      "input_a": 73,
+      "input_b": 79,
+      "output": 82,
+      "output_name": "패왕색 슬라임",
+      "type": "combination",
+      "hint": "검황과 검은칼이 만나면 패왕의 별빛이...",
+      "hidden": true
+    },
+    {
+      "id": 20,
+      "input_a": 115,
+      "input_b": 117,
+      "output": 118,
+      "output_name": "원수 슬라임",
+      "type": "combination",
+      "hint": "빛의 정의와 용암의 정의가 합쳐져 원수가...",
+      "hidden": true
+    },
+    {
+      "id": 21,
+      "input_a": 119,
+      "input_b": 120,
+      "output": 129,
+      "output_name": "흰수염왕 슬라임",
+      "type": "combination",
+      "hint": "지진과 불사조의 힘이 황제를 만든다...",
+      "hidden": true
+    },
+    {
+      "id": 22,
+      "input_a": 123,
+      "input_b": 125,
+      "output": 130,
+      "output_name": "빅맘왕 슬라임",
+      "type": "combination",
+      "hint": "혼의 여왕과 과자성이 합쳐져 영혼의 황제가...",
+      "hidden": true
+    },
+    {
+      "id": 23,
+      "input_a": 131,
+      "input_b": 135,
+      "output": 141,
+      "output_name": "암흑대제 슬라임",
+      "type": "combination",
+      "hint": "화재와 암흑의 전설이 만나 대제가 탄생한다...",
+      "hidden": true
+    },
+    {
+      "id": 24,
+      "input_a": 144,
+      "input_b": 147,
+      "output": 139,
+      "output_name": "용왕 슬라임",
+      "type": "combination",
+      "hint": "불꽃과 마그마가 용의 왕을 깨운다...",
+      "hidden": true
+    },
+    {
+      "id": 25,
+      "input_a": 145,
+      "input_b": 146,
+      "output": 154,
+      "output_name": "빛빛 슬라임",
+      "type": "combination",
+      "hint": "빙하와 번개가 극한에서 순수한 빛이 된다...",
+      "hidden": true
+    },
+    {
+      "id": 26,
+      "input_a": 169,
+      "input_b": 171,
+      "output": 172,
+      "output_name": "영혼영혼 슬라임",
+      "type": "combination",
+      "hint": "중력과 수술이 영혼의 경지에 도달한다...",
+      "hidden": true
+    },
+    {
+      "id": 27,
+      "input_a": 184,
+      "input_b": 185,
+      "output": 187,
+      "output_name": "대붕 슬라임",
+      "type": "combination",
+      "hint": "공룡과 용의 고대 힘이 전설의 새로 부활한다...",
+      "hidden": true
+    },
+    {
+      "id": 28,
+      "input_a": 192,
+      "input_b": 193,
+      "output": 194,
+      "output_name": "용의얼굴 슬라임",
+      "type": "combination",
+      "hint": "참모총장과 군단장의 혁명이 용의 얼굴을 드러낸다...",
+      "hidden": true
+    },
+    {
+      "id": 29,
+      "input_a": 196,
+      "input_b": 197,
+      "output": 200,
+      "output_name": "우라노스 슬라임",
+      "type": "combination",
+      "hint": "천룡과 세계귀족이 고대병기를 깨운다...",
+      "hidden": true
+    },
+    {
+      "id": 30,
+      "input_a": 198,
+      "input_b": 199,
+      "output": 200,
+      "output_name": "우라노스 슬라임",
+      "type": "combination",
+      "hint": "플루톤과 포세이돈이 합쳐져 최후의 병기가...",
+      "hidden": true
     }
   ]
 }

@@ -1,0 +1,71 @@
+{{define "support_detail.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+{{if .Message}}
+<div class="msg-success">{{.Message}}</div>
+{{end}}
+
+<div class="stat-card" style="margin-bottom: 20px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <div>
+      <span style="font-size:18px; font-weight:700;">{{.Ticket.Subject}}</span>
+      <span style="margin-left:12px;">
+        {{if eq .Ticket.Status "open"}}<span class="badge badge-mythic">대기</span>
+        {{else if eq .Ticket.Status "in_progress"}}<span class="badge badge-legendary">진행중</span>
+        {{else if eq .Ticket.Status "resolved"}}<span class="badge badge-uncommon">해결</span>
+        {{else}}<span class="badge badge-common">종료</span>{{end}}
+      </span>
+    </div>
+    <div style="font-size:12px; color:#636e72;">
+      작성: {{.Ticket.Nickname}} | {{formatDate .Ticket.CreatedAt}}
+    </div>
+  </div>
+  <div style="display:flex; gap:16px; margin-bottom:12px;">
+    <span style="font-size:12px; color:#636e72;">카테고리: <span class="badge badge-rare">{{.Ticket.Category}}</span></span>
+    <span style="font-size:12px; color:#636e72;">우선순위: {{.Ticket.Priority}}</span>
+    <span style="font-size:12px; color:#636e72;">담당: {{if .Ticket.AssignedTo}}{{.Ticket.AssignedTo}}{{else}}미배정{{end}}</span>
+  </div>
+
+  <!-- Status change & Assign -->
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <form method="POST" action="/admin/support/{{.Ticket.ID}}/status" style="display:flex; gap:4px;">
+      <select name="status" style="width:120px;">
+        <option value="open" {{if eq .Ticket.Status "open"}}selected{{end}}>대기</option>
+        <option value="in_progress" {{if eq .Ticket.Status "in_progress"}}selected{{end}}>진행중</option>
+        <option value="resolved" {{if eq .Ticket.Status "resolved"}}selected{{end}}>해결</option>
+        <option value="closed" {{if eq .Ticket.Status "closed"}}selected{{end}}>종료</option>
+      </select>
+      <button type="submit" class="btn btn-warning btn-sm">상태 변경</button>
+    </form>
+    <form method="POST" action="/admin/support/{{.Ticket.ID}}/assign" style="display:flex; gap:4px;">
+      <input type="text" name="assign_to" placeholder="담당자 이름" style="width:120px;">
+      <button type="submit" class="btn btn-primary btn-sm">배정</button>
+    </form>
+  </div>
+</div>
+
+<!-- Reply thread -->
+<h2 style="font-size:16px; margin-bottom:12px; color:#74b9ff;">대화 내역</h2>
+<div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;">
+  {{range .Replies}}
+  <div style="background:{{if eq .SenderType "admin"}}rgba(162,155,254,0.08){{else}}rgba(255,255,255,0.03){{end}}; border-radius:8px; padding:12px; border-left:3px solid {{if eq .SenderType "admin"}}#a29bfe{{else}}#55efc4{{end}};">
+    <div style="font-size:11px; color:#636e72; margin-bottom:4px;">
+      <strong style="color:{{if eq .SenderType "admin"}}#a29bfe{{else}}#55efc4{{end}};">{{.SenderName}}</strong>
+      ({{.SenderType}}) - {{formatDate .CreatedAt}}
+    </div>
+    <div style="font-size:13px; white-space:pre-wrap;">{{.Message}}</div>
+  </div>
+  {{else}}
+  <div style="color:#636e72; text-align:center;">답변 없음</div>
+  {{end}}
+</div>
+
+<!-- Reply form -->
+<h2 style="font-size:16px; margin-bottom:12px; color:#a29bfe;">답변 작성</h2>
+<form method="POST" action="/admin/support/{{.Ticket.ID}}/reply">
+  <textarea name="message" rows="4" style="width:100%; margin-bottom:8px;" placeholder="답변 내용을 입력하세요..."></textarea>
+  <button type="submit" class="btn btn-primary">답변 보내기</button>
+</form>
+{{end}}

@@ -1,0 +1,49 @@
+{{define "shorts_list.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+{{if .Message}}<div class="msg-success">{{.Message}}</div>{{end}}
+
+<div class="tab-bar">
+  <a href="/admin/shorts?status=active" class="{{if eq .Status "active"}}active{{end}}">활성</a>
+  <a href="/admin/shorts?status=hidden" class="{{if eq .Status "hidden"}}active{{end}}">숨김</a>
+  <a href="/admin/shorts/stats" class="btn btn-primary btn-sm" style="margin-left:auto;">통계</a>
+</div>
+
+<form class="filter-bar" method="GET" action="/admin/shorts">
+  <input type="hidden" name="status" value="{{.Status}}">
+  <input type="text" name="search" placeholder="닉네임/제목 검색..." value="{{.Search}}" style="width:220px;">
+  <button type="submit" class="btn btn-primary btn-sm">검색</button>
+  <span style="color:#636e72; font-size:12px; margin-left:8px;">총 {{.TotalCount}}건</span>
+</form>
+
+<table>
+  <thead>
+    <tr><th>ID</th><th>닉네임</th><th>제목</th><th>카테고리</th><th>조회</th><th>좋아요</th><th>팁</th><th>날짜</th><th></th></tr>
+  </thead>
+  <tbody>
+    {{range .Shorts}}
+    <tr>
+      <td style="font-size:11px; color:#636e72;">{{.ID}}</td>
+      <td>{{.Nickname}}</td>
+      <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{.Title}}</td>
+      <td><span class="badge badge-rare">{{.Category}}</span></td>
+      <td>{{.Views}}</td>
+      <td style="color:#ff6b6b;">{{.Likes}}</td>
+      <td style="color:#ffeaa7;">{{.TipTotal}}</td>
+      <td style="font-size:11px; color:#636e72;">{{formatDate .CreatedAt}}</td>
+      <td><a href="/admin/shorts/{{.ID}}" class="btn btn-primary btn-sm">상세</a></td>
+    </tr>
+    {{else}}
+    <tr><td colspan="9" style="text-align:center; color:#636e72;">데이터 없음</td></tr>
+    {{end}}
+  </tbody>
+</table>
+
+<div class="pagination">
+  {{if .HasPrev}}<a href="?status={{.Status}}&page={{.PrevPage}}&search={{.Search}}">이전</a>{{end}}
+  <span class="current">{{.Page}} / {{.TotalPages}}</span>
+  {{if .HasNext}}<a href="?status={{.Status}}&page={{.NextPage}}&search={{.Search}}">다음</a>{{end}}
+</div>
+{{end}}

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuthStore } from "@/lib/store/authStore";
 import { useGameStore } from "@/lib/store/gameStore";
 import { authApi } from "@/lib/api/client";
-import { toastReward, toastError } from "@/components/ui/Toast";
+import { toastReward, toastError, toastInfo } from "@/components/ui/Toast";
 import { elementNames } from "@/lib/constants";
 import { generateSlimeIconSvg } from "@/lib/slimeSvg";
 
@@ -20,6 +20,7 @@ interface BossData {
   reward_gems: number;
   expires_at: string;
   defeated: boolean;
+  stage: number;
 }
 
 interface Attacker {
@@ -32,7 +33,16 @@ interface BossState {
   my_attacks: number;
   max_attacks: number;
   my_damage: number;
+  my_rank: number;
   top_attackers: Attacker[];
+}
+
+interface SlimeResult {
+  id: string;
+  element: string;
+  damage: number;
+  exp_gain: number;
+  strong: boolean;
 }
 
 interface AttackAnim {
@@ -94,6 +104,15 @@ const IMPACT_COLORS: Record<string, string[]> = {
   celestial: ["#FF9FF3", "#E84393", "#FFF"],
 };
 
+// Boss stage names and descriptions for the guide
+const BOSS_STAGES = [
+  { name: "Stage 1: \uBD88\uAF43 \uB4DC\uB798\uACE4", element: "fire", desc: "\uBD88\uAF43\uC744 \uD718\uB450\uB974\uB294 \uAC70\uB300\uD55C \uB4DC\uB798\uACE4. \uBB3C \uC18D\uC131 \uC2AC\uB77C\uC784\uC774 \uC720\uB9AC!" },
+  { name: "Stage 2: \uC2EC\uD574 \uD06C\uB77C\uCF04", element: "water", desc: "\uC2EC\uD574\uC5D0\uC11C \uC62C\uB77C\uC628 \uAC70\uB300\uD55C \uD06C\uB77C\uCF04. \uD480 \uC18D\uC131\uC774 \uC720\uB9AC!" },
+  { name: "Stage 3: \uC5BC\uC74C \uACE8\uB818", element: "ice", desc: "\uBE59\uD558 \uAE4A\uC740 \uACF3\uC758 \uC5BC\uC74C \uACE8\uB818. \uBD88 \uC18D\uC131\uC774 \uC720\uB9AC!" },
+  { name: "Stage 4: \uB3C5\uC548\uAC1C \uD788\uB4DC\uB77C", element: "poison", desc: "\uB3C5\uC548\uAC1C\uB97C \uBFFF\uB294 \uB2E4\uB450 \uB2EC\uB9B0 \uD788\uB4DC\uB77C. \uB300\uC9C0 \uC18D\uC131\uC774 \uC720\uB9AC!" },
+  { name: "Stage 5: \uD63C\uB3C8\uC758 \uC2AC\uB77C\uC784\uD0B9", element: "dark", desc: "\uD63C\uB3C8\uC758 \uD798\uC744 \uAC00\uC9C4 \uCD5C\uC885 \uBCF4\uC2A4. \uBE5B \uC18D\uC131\uC774 \uC720\uB9AC!" },
+];
+
 // ===== Helpers =====
 
 function isStrong(atk: string, def: string) { return STRONG[atk]?.includes(def) ?? false; }
@@ -112,22 +131,19 @@ function rgba(hex: string, a: number) {
 }
 function fmtCountdown(exp: string) {
   const d = new Date(exp).getTime() - Date.now();
-  if (d <= 0) return "만료됨";
-  return `${Math.floor(d / 3600000)}시간 ${Math.floor((d % 3600000) / 60000)}분`;
+  if (d <= 0) return "\uB9CC\uB8CC\uB428";
+  return `${Math.floor(d / 3600000)}\uC2DC\uAC04 ${Math.floor((d % 3600000) / 60000)}\uBD84`;
 }
 
-// ===== Canvas Drawing =====
+// ===== Boss Drawing Functions =====
 
-function drawBoss(
+// Each boss has unique visual features drawn on the canvas
+
+function drawBossBody(
   ctx: CanvasRenderingContext2D, cx: number, cy: number, sz: number,
-  elem: string, breath: number, phase: "normal" | "enraged" | "critical",
-  t: number, shake: { x: number; y: number },
+  col: string, dark: string, breath: number,
+  phase: "normal" | "enraged" | "critical", t: number,
 ) {
-  const col = ELEM_COL[elem] || "#A29BFE";
-  const dark = ELEM_DARK[elem] || "#6C5CE7";
-  ctx.save();
-  ctx.translate(cx + shake.x, cy + shake.y);
-
   // Breathing
   const bAmp = phase === "critical" ? 0.06 : phase === "enraged" ? 0.04 : 0.025;
   const bSpd = phase === "critical" ? 6 : phase === "enraged" ? 4 : 2;
@@ -166,35 +182,20 @@ function drawBoss(
   // Highlight
   ctx.beginPath(); ctx.ellipse(-sz * 0.15, -sz * 0.28, sz * 0.13, sz * 0.07, -0.4, 0, Math.PI * 2);
   ctx.fillStyle = "rgba(255,255,255,0.35)"; ctx.fill();
+}
 
-  // Crown horns
-  const hCol = phase === "critical" ? "#FF3333" : phase === "enraged" ? "#FF6B6B" : col;
-  for (const s of [-1, 1]) {
-    ctx.beginPath();
-    ctx.moveTo(s * sz * 0.15, -sz * 0.48); ctx.lineTo(s * sz * 0.25, -sz * 0.72); ctx.lineTo(s * sz * 0.08, -sz * 0.52);
-    ctx.fillStyle = hCol; ctx.fill();
-  }
-  ctx.beginPath();
-  ctx.moveTo(-sz * 0.05, -sz * 0.52); ctx.lineTo(0, -sz * 0.78); ctx.lineTo(sz * 0.05, -sz * 0.52);
-  ctx.fillStyle = hCol; ctx.fill();
-
-  // Horn glow tips
-  for (const s of [-1, 0, 1]) {
-    const tipX = s === 0 ? 0 : s * sz * 0.25;
-    const tipY = s === 0 ? -sz * 0.78 : -sz * 0.72;
-    const tg = ctx.createRadialGradient(tipX, tipY, 0, tipX, tipY, sz * 0.08);
-    tg.addColorStop(0, rgba(hCol, 0.6)); tg.addColorStop(1, rgba(hCol, 0));
-    ctx.beginPath(); ctx.arc(tipX, tipY, sz * 0.08, 0, Math.PI * 2); ctx.fillStyle = tg; ctx.fill();
-  }
-
-  // Eyes
+function drawBossEyes(
+  ctx: CanvasRenderingContext2D, sz: number,
+  phase: "normal" | "enraged" | "critical", t: number,
+  glowColor?: string,
+) {
   const eY = -sz * 0.08, eSp = sz * 0.16, eSz = sz * 0.07;
   for (const s of [-1, 1]) {
     const ex = s * eSp;
     ctx.beginPath(); ctx.ellipse(ex, eY, eSz, eSz * 0.85, 0, 0, Math.PI * 2);
     ctx.fillStyle = "#fff"; ctx.fill();
     ctx.beginPath(); ctx.arc(ex + s * eSz * 0.15, eY, eSz * 0.55, 0, Math.PI * 2);
-    ctx.fillStyle = phase === "critical" ? "#FF1111" : "#2D3436"; ctx.fill();
+    ctx.fillStyle = phase === "critical" ? "#FF1111" : glowColor || "#2D3436"; ctx.fill();
     ctx.beginPath(); ctx.arc(ex + s * eSz * 0.05, eY - eSz * 0.2, eSz * 0.2, 0, Math.PI * 2);
     ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.fill();
     if (phase !== "normal") {
@@ -204,8 +205,12 @@ function drawBoss(
       ctx.lineWidth = sz * 0.03; ctx.lineCap = "round"; ctx.stroke();
     }
   }
+}
 
-  // Mouth
+function drawBossMouth(
+  ctx: CanvasRenderingContext2D, sz: number,
+  phase: "normal" | "enraged" | "critical",
+) {
   if (phase === "critical") {
     ctx.beginPath(); ctx.ellipse(0, sz * 0.12, sz * 0.12, sz * 0.08, 0, 0, Math.PI * 2);
     ctx.fillStyle = "#2D3436"; ctx.fill();
@@ -221,16 +226,390 @@ function drawBoss(
     ctx.beginPath(); ctx.arc(0, sz * 0.1, sz * 0.06, 0.1, Math.PI - 0.1);
     ctx.strokeStyle = "rgba(0,0,0,0.3)"; ctx.lineWidth = sz * 0.02; ctx.stroke();
   }
+}
+
+// Stage 1: Fire Dragon - with dragon wings and flame crown
+function drawFireDragon(
+  ctx: CanvasRenderingContext2D, cx: number, cy: number, sz: number,
+  breath: number, phase: "normal" | "enraged" | "critical", t: number,
+  shake: { x: number; y: number },
+) {
+  const col = "#FF6B6B", dark = "#E17055";
+  ctx.save();
+  ctx.translate(cx + shake.x, cy + shake.y);
+
+  drawBossBody(ctx, 0, 0, sz, col, dark, breath, phase, t);
+
+  // Dragon wings
+  const wingFlap = Math.sin(t * 3) * 0.15;
+  for (const s of [-1, 1]) {
+    ctx.save();
+    ctx.rotate(s * (0.3 + wingFlap));
+    ctx.beginPath();
+    ctx.moveTo(s * sz * 0.35, -sz * 0.1);
+    ctx.quadraticCurveTo(s * sz * 0.9, -sz * 0.5, s * sz * 0.7, -sz * 0.15);
+    ctx.quadraticCurveTo(s * sz * 0.85, sz * 0.05, s * sz * 0.55, sz * 0.1);
+    ctx.closePath();
+    const wg = ctx.createLinearGradient(0, -sz * 0.3, s * sz * 0.8, 0);
+    wg.addColorStop(0, rgba(col, 0.6));
+    wg.addColorStop(1, rgba("#FF9F43", 0.3));
+    ctx.fillStyle = wg; ctx.fill();
+    ctx.strokeStyle = rgba(col, 0.4); ctx.lineWidth = 1; ctx.stroke();
+    ctx.restore();
+  }
+
+  // Flame crown (3 flames on head)
+  for (let i = -1; i <= 1; i++) {
+    const fx = i * sz * 0.15;
+    const fy = -sz * 0.52;
+    const fh = sz * (0.2 + Math.sin(t * 8 + i) * 0.08);
+    const flameG = ctx.createLinearGradient(fx, fy, fx, fy - fh);
+    flameG.addColorStop(0, "#FF9F43");
+    flameG.addColorStop(0.5, "#FF6B6B");
+    flameG.addColorStop(1, rgba("#FFEAA7", 0.6));
+    ctx.beginPath();
+    ctx.moveTo(fx - sz * 0.06, fy);
+    ctx.quadraticCurveTo(fx - sz * 0.03, fy - fh * 0.7, fx, fy - fh);
+    ctx.quadraticCurveTo(fx + sz * 0.03, fy - fh * 0.7, fx + sz * 0.06, fy);
+    ctx.closePath();
+    ctx.fillStyle = flameG; ctx.fill();
+    // Flame glow
+    const fg = ctx.createRadialGradient(fx, fy - fh * 0.5, 0, fx, fy - fh * 0.5, sz * 0.1);
+    fg.addColorStop(0, rgba("#FFEAA7", 0.4)); fg.addColorStop(1, rgba("#FFEAA7", 0));
+    ctx.beginPath(); ctx.arc(fx, fy - fh * 0.5, sz * 0.1, 0, Math.PI * 2); ctx.fillStyle = fg; ctx.fill();
+  }
+
+  drawBossEyes(ctx, sz, phase, t, "#E17055");
+  drawBossMouth(ctx, sz, phase);
 
   // Cracks for critical
   if (phase === "critical") {
     ctx.strokeStyle = "rgba(255,50,50,0.6)"; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.moveTo(-sz * 0.1, -sz * 0.3); ctx.lineTo(-sz * 0.2, -sz * 0.1); ctx.lineTo(-sz * 0.15, sz * 0.1); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(sz * 0.15, -sz * 0.2); ctx.lineTo(sz * 0.25, sz * 0.05); ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+// Stage 2: Deep Sea Kraken - with tentacles
+function drawKraken(
+  ctx: CanvasRenderingContext2D, cx: number, cy: number, sz: number,
+  breath: number, phase: "normal" | "enraged" | "critical", t: number,
+  shake: { x: number; y: number },
+) {
+  const col = "#74B9FF", dark = "#0984E3";
+  ctx.save();
+  ctx.translate(cx + shake.x, cy + shake.y);
+
+  // Tentacles behind body
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * Math.PI - Math.PI * 0.1 + 0.1;
+    const tx = Math.cos(angle) * sz * 0.35;
+    const ty = sz * 0.3;
+    const wave = Math.sin(t * 2.5 + i * 1.2) * sz * 0.15;
+    ctx.beginPath();
+    ctx.moveTo(tx, ty);
+    ctx.quadraticCurveTo(
+      tx + wave, ty + sz * 0.25,
+      tx + wave * 0.5, ty + sz * 0.45
+    );
+    ctx.strokeStyle = rgba(dark, 0.5 + Math.sin(t + i) * 0.1);
+    ctx.lineWidth = sz * 0.05 * (1 - i * 0.05);
+    ctx.lineCap = "round";
+    ctx.stroke();
+    // Sucker dots
+    const dx = tx + wave * 0.3;
+    const dy = ty + sz * 0.2;
+    ctx.beginPath(); ctx.arc(dx, dy, sz * 0.015, 0, Math.PI * 2);
+    ctx.fillStyle = rgba("#0984E3", 0.3); ctx.fill();
+  }
+
+  drawBossBody(ctx, 0, 0, sz, col, dark, breath, phase, t);
+
+  // Kraken "dome" head accent
+  ctx.beginPath();
+  ctx.ellipse(0, -sz * 0.35, sz * 0.25, sz * 0.12, 0, Math.PI, 0);
+  ctx.fillStyle = rgba("#81ECEC", 0.2); ctx.fill();
+
+  drawBossEyes(ctx, sz, phase, t, "#0984E3");
+
+  // Kraken-specific: third eye
+  ctx.beginPath(); ctx.arc(0, -sz * 0.25, sz * 0.03, 0, Math.PI * 2);
+  ctx.fillStyle = phase === "critical" ? "#FF1111" : "#81ECEC"; ctx.fill();
+
+  drawBossMouth(ctx, sz, phase);
+
+  if (phase === "critical") {
+    ctx.strokeStyle = "rgba(50,50,255,0.6)"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(-sz * 0.15, -sz * 0.2); ctx.lineTo(-sz * 0.25, sz * 0.05); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sz * 0.1, -sz * 0.25); ctx.lineTo(sz * 0.2, sz * 0.0); ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+// Stage 3: Ice Golem - angular, crystalline
+function drawIceGolem(
+  ctx: CanvasRenderingContext2D, cx: number, cy: number, sz: number,
+  breath: number, phase: "normal" | "enraged" | "critical", t: number,
+  shake: { x: number; y: number },
+) {
+  const col = "#81ECEC", dark = "#00CEC9";
+  ctx.save();
+  ctx.translate(cx + shake.x, cy + shake.y);
+
+  drawBossBody(ctx, 0, 0, sz, col, dark, breath, phase, t);
+
+  // Ice crystals growing from body
+  const crystalPositions = [
+    { x: -sz * 0.3, y: -sz * 0.35, h: sz * 0.25, r: -0.3 },
+    { x: sz * 0.25, y: -sz * 0.38, h: sz * 0.3, r: 0.2 },
+    { x: -sz * 0.15, y: -sz * 0.5, h: sz * 0.22, r: -0.1 },
+    { x: sz * 0.35, y: -sz * 0.2, h: sz * 0.18, r: 0.4 },
+    { x: -sz * 0.38, y: -sz * 0.15, h: sz * 0.15, r: -0.5 },
+  ];
+  for (const cp of crystalPositions) {
+    ctx.save();
+    ctx.translate(cp.x, cp.y);
+    ctx.rotate(cp.r);
+    // Crystal shape (hexagonal prism-like)
+    ctx.beginPath();
+    ctx.moveTo(-sz * 0.03, 0);
+    ctx.lineTo(-sz * 0.05, -cp.h * 0.4);
+    ctx.lineTo(0, -cp.h);
+    ctx.lineTo(sz * 0.05, -cp.h * 0.4);
+    ctx.lineTo(sz * 0.03, 0);
+    ctx.closePath();
+    const cg = ctx.createLinearGradient(0, 0, 0, -cp.h);
+    cg.addColorStop(0, rgba("#00CEC9", 0.6));
+    cg.addColorStop(0.5, rgba("#81ECEC", 0.8));
+    cg.addColorStop(1, rgba("#DFE6E9", 0.9));
+    ctx.fillStyle = cg; ctx.fill();
+    ctx.strokeStyle = rgba("#fff", 0.3); ctx.lineWidth = 0.5; ctx.stroke();
+    // Crystal shimmer
+    const shimmer = Math.sin(t * 4 + cp.r * 3) * 0.3 + 0.5;
+    ctx.beginPath(); ctx.arc(0, -cp.h * 0.5, sz * 0.02, 0, Math.PI * 2);
+    ctx.fillStyle = rgba("#fff", shimmer); ctx.fill();
+    ctx.restore();
+  }
+
+  drawBossEyes(ctx, sz, phase, t, "#00CEC9");
+
+  // Golem-specific mouth: horizontal crack
+  ctx.beginPath();
+  ctx.moveTo(-sz * 0.08, sz * 0.1);
+  ctx.lineTo(-sz * 0.03, sz * 0.13);
+  ctx.lineTo(sz * 0.03, sz * 0.1);
+  ctx.lineTo(sz * 0.08, sz * 0.12);
+  ctx.strokeStyle = phase === "critical" ? "#FF3333" : "rgba(0,0,0,0.3)";
+  ctx.lineWidth = sz * 0.02; ctx.lineCap = "round"; ctx.stroke();
+
+  // Ice mist around base
+  for (let i = 0; i < 3; i++) {
+    const mx = Math.sin(t * 1.5 + i * 2) * sz * 0.4;
+    const my = sz * 0.35 + Math.cos(t + i) * sz * 0.05;
+    const ms = sz * 0.08 + Math.sin(t * 2 + i) * sz * 0.02;
+    ctx.beginPath(); ctx.arc(mx, my, ms, 0, Math.PI * 2);
+    ctx.fillStyle = rgba("#81ECEC", 0.1 + Math.sin(t + i) * 0.05); ctx.fill();
+  }
+
+  if (phase === "critical") {
+    ctx.strokeStyle = "rgba(0,255,255,0.5)"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(-sz * 0.1, -sz * 0.2); ctx.lineTo(-sz * 0.25, sz * 0.1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sz * 0.15, -sz * 0.3); ctx.lineTo(sz * 0.2, -sz * 0.05); ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+// Stage 4: Poison Hydra - multiple head protrusions
+function drawPoisonHydra(
+  ctx: CanvasRenderingContext2D, cx: number, cy: number, sz: number,
+  breath: number, phase: "normal" | "enraged" | "critical", t: number,
+  shake: { x: number; y: number },
+) {
+  const col = "#6C5CE7", dark = "#5E35B1";
+  ctx.save();
+  ctx.translate(cx + shake.x, cy + shake.y);
+
+  // Poison drip particles drawn behind body
+  for (let i = 0; i < 4; i++) {
+    const dx = (Math.sin(t * 1.5 + i * 1.7) * sz * 0.35);
+    const dripY = sz * 0.4 + ((t * 30 + i * 20) % 40) * 0.01 * sz;
+    const da = 1 - ((t * 30 + i * 20) % 40) / 40;
+    ctx.beginPath(); ctx.arc(dx, dripY, sz * 0.015, 0, Math.PI * 2);
+    ctx.fillStyle = rgba("#A29BFE", da * 0.5); ctx.fill();
+  }
+
+  drawBossBody(ctx, 0, 0, sz, col, dark, breath, phase, t);
+
+  // Hydra "necks" / head bumps (3 mini-heads on top)
+  const heads = [
+    { x: -sz * 0.2, y: -sz * 0.5, size: sz * 0.12, angle: -0.2 },
+    { x: 0, y: -sz * 0.58, size: sz * 0.14, angle: 0 },
+    { x: sz * 0.2, y: -sz * 0.5, size: sz * 0.12, angle: 0.2 },
+  ];
+  for (const hd of heads) {
+    ctx.save();
+    ctx.translate(hd.x, hd.y);
+    ctx.rotate(hd.angle + Math.sin(t * 2 + hd.x) * 0.1);
+    // Neck
+    ctx.beginPath();
+    ctx.moveTo(-hd.size * 0.3, hd.size * 0.5);
+    ctx.quadraticCurveTo(0, hd.size * 0.2, 0, -hd.size * 0.3);
+    ctx.quadraticCurveTo(0, hd.size * 0.2, hd.size * 0.3, hd.size * 0.5);
+    ctx.fillStyle = rgba(dark, 0.6); ctx.fill();
+    // Mini head
+    ctx.beginPath(); ctx.arc(0, -hd.size * 0.1, hd.size, 0, Math.PI * 2);
+    const hg = ctx.createRadialGradient(0, -hd.size * 0.3, 0, 0, 0, hd.size);
+    hg.addColorStop(0, col); hg.addColorStop(1, dark);
+    ctx.fillStyle = hg; ctx.fill();
+    // Mini eyes
+    for (const es of [-1, 1]) {
+      ctx.beginPath(); ctx.arc(es * hd.size * 0.3, -hd.size * 0.2, hd.size * 0.12, 0, Math.PI * 2);
+      ctx.fillStyle = phase === "critical" ? "#FF1111" : "#A29BFE"; ctx.fill();
+      ctx.beginPath(); ctx.arc(es * hd.size * 0.3, -hd.size * 0.2, hd.size * 0.06, 0, Math.PI * 2);
+      ctx.fillStyle = "#2D3436"; ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  drawBossEyes(ctx, sz, phase, t, "#A29BFE");
+  drawBossMouth(ctx, sz, phase);
+
+  // Poison gas effect around body
+  for (let i = 0; i < 5; i++) {
+    const gx = Math.sin(t * 0.8 + i * 1.3) * sz * 0.5;
+    const gy = Math.cos(t * 0.6 + i * 0.9) * sz * 0.3 - sz * 0.1;
+    const gs = sz * (0.06 + Math.sin(t + i) * 0.02);
+    ctx.beginPath(); ctx.arc(gx, gy, gs, 0, Math.PI * 2);
+    ctx.fillStyle = rgba("#A29BFE", 0.05 + Math.sin(t * 2 + i) * 0.02); ctx.fill();
+  }
+
+  if (phase === "critical") {
+    ctx.strokeStyle = "rgba(162,155,254,0.6)"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(-sz * 0.1, -sz * 0.15); ctx.lineTo(-sz * 0.2, sz * 0.1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sz * 0.12, -sz * 0.2); ctx.lineTo(sz * 0.22, sz * 0.05); ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+// Stage 5: Chaos Slime King - crown + chaotic aura
+function drawSlimeKing(
+  ctx: CanvasRenderingContext2D, cx: number, cy: number, sz: number,
+  breath: number, phase: "normal" | "enraged" | "critical", t: number,
+  shake: { x: number; y: number },
+) {
+  const col = "#636E72", dark = "#2D3436";
+  ctx.save();
+  ctx.translate(cx + shake.x, cy + shake.y);
+
+  // Chaotic aura ring
+  const ringR = sz * (1.4 + Math.sin(t * 1.5) * 0.1);
+  ctx.save();
+  ctx.rotate(t * 0.3);
+  ctx.beginPath();
+  for (let i = 0; i < 360; i += 3) {
+    const a = (i * Math.PI) / 180;
+    const r = ringR + Math.sin(a * 8 + t * 5) * sz * 0.08;
+    if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+    else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+  }
+  ctx.closePath();
+  ctx.strokeStyle = rgba("#A29BFE", 0.15 + Math.sin(t * 3) * 0.05);
+  ctx.lineWidth = 2; ctx.stroke();
+  ctx.restore();
+
+  drawBossBody(ctx, 0, 0, sz, col, dark, breath, phase, t);
+
+  // Crown (golden)
+  ctx.beginPath();
+  ctx.moveTo(-sz * 0.25, -sz * 0.48);
+  ctx.lineTo(-sz * 0.28, -sz * 0.65);
+  ctx.lineTo(-sz * 0.15, -sz * 0.55);
+  ctx.lineTo(-sz * 0.05, -sz * 0.72);
+  ctx.lineTo(sz * 0.05, -sz * 0.55);
+  ctx.lineTo(sz * 0.15, -sz * 0.72);
+  ctx.lineTo(sz * 0.25, -sz * 0.55);
+  ctx.lineTo(sz * 0.28, -sz * 0.65);
+  ctx.lineTo(sz * 0.25, -sz * 0.48);
+  ctx.closePath();
+  const crownG = ctx.createLinearGradient(0, -sz * 0.72, 0, -sz * 0.48);
+  crownG.addColorStop(0, "#FFEAA7");
+  crownG.addColorStop(1, "#FDCB6E");
+  ctx.fillStyle = crownG; ctx.fill();
+  ctx.strokeStyle = rgba("#F9CA24", 0.6); ctx.lineWidth = 1; ctx.stroke();
+
+  // Crown jewels
+  const jewels = ["#FF6B6B", "#74B9FF", "#55EFC4"];
+  for (let i = 0; i < 3; i++) {
+    const jx = (i - 1) * sz * 0.12;
+    const jy = -sz * (i === 1 ? 0.65 : 0.58);
+    ctx.beginPath(); ctx.arc(jx, jy, sz * 0.025, 0, Math.PI * 2);
+    ctx.fillStyle = jewels[i]; ctx.fill();
+    // Jewel sparkle
+    const sp = Math.sin(t * 5 + i * 2) * 0.4 + 0.6;
+    const sg = ctx.createRadialGradient(jx, jy, 0, jx, jy, sz * 0.04);
+    sg.addColorStop(0, rgba(jewels[i], sp * 0.5)); sg.addColorStop(1, rgba(jewels[i], 0));
+    ctx.beginPath(); ctx.arc(jx, jy, sz * 0.04, 0, Math.PI * 2); ctx.fillStyle = sg; ctx.fill();
+  }
+
+  drawBossEyes(ctx, sz, phase, t, "#A29BFE");
+
+  // King's mouth: smirk
+  if (phase === "critical") {
+    drawBossMouth(ctx, sz, phase);
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(-sz * 0.08, sz * 0.1);
+    ctx.quadraticCurveTo(0, sz * 0.18, sz * 0.08, sz * 0.08);
+    ctx.strokeStyle = "rgba(255,255,255,0.3)"; ctx.lineWidth = sz * 0.02;
+    ctx.lineCap = "round"; ctx.stroke();
+  }
+
+  // Multi-element orbs orbiting
+  const orbs = [
+    { col: "#FF6B6B", off: 0 },
+    { col: "#74B9FF", off: Math.PI * 0.67 },
+    { col: "#55EFC4", off: Math.PI * 1.33 },
+  ];
+  for (const orb of orbs) {
+    const oa = t * 1.5 + orb.off;
+    const ox = Math.cos(oa) * sz * 0.65;
+    const oy = Math.sin(oa) * sz * 0.25 + sz * 0.1;
+    ctx.beginPath(); ctx.arc(ox, oy, sz * 0.035, 0, Math.PI * 2);
+    ctx.fillStyle = rgba(orb.col, 0.7); ctx.fill();
+    const og = ctx.createRadialGradient(ox, oy, 0, ox, oy, sz * 0.07);
+    og.addColorStop(0, rgba(orb.col, 0.3)); og.addColorStop(1, rgba(orb.col, 0));
+    ctx.beginPath(); ctx.arc(ox, oy, sz * 0.07, 0, Math.PI * 2); ctx.fillStyle = og; ctx.fill();
+  }
+
+  if (phase === "critical") {
+    ctx.strokeStyle = "rgba(162,155,254,0.5)"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(-sz * 0.1, -sz * 0.3); ctx.lineTo(-sz * 0.2, -sz * 0.1); ctx.lineTo(-sz * 0.15, sz * 0.1); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(sz * 0.05, -sz * 0.35); ctx.lineTo(sz * 0.12, -sz * 0.15); ctx.lineTo(sz * 0.18, sz * 0.02); ctx.stroke();
   }
 
   ctx.restore();
+}
+
+// Main boss draw dispatcher
+function drawBoss(
+  ctx: CanvasRenderingContext2D, cx: number, cy: number, sz: number,
+  stage: number, elem: string, breath: number,
+  phase: "normal" | "enraged" | "critical", t: number,
+  shake: { x: number; y: number },
+) {
+  switch (stage) {
+    case 1: drawFireDragon(ctx, cx, cy, sz, breath, phase, t, shake); break;
+    case 2: drawKraken(ctx, cx, cy, sz, breath, phase, t, shake); break;
+    case 3: drawIceGolem(ctx, cx, cy, sz, breath, phase, t, shake); break;
+    case 4: drawPoisonHydra(ctx, cx, cy, sz, breath, phase, t, shake); break;
+    case 5: drawSlimeKing(ctx, cx, cy, sz, breath, phase, t, shake); break;
+    default: drawFireDragon(ctx, cx, cy, sz, breath, phase, t, shake); break;
+  }
 }
 
 function drawPlayer(
@@ -279,16 +658,194 @@ function drawPlayer(
   ctx.restore();
 }
 
+// ===== Guide Modal =====
+
+function GuideModal({ onClose, stage }: { onClose: () => void; stage: number }) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-6"
+      onClick={onClose}>
+      <div className="w-full max-w-sm bg-[#1a1a2e] rounded-2xl border border-white/10 p-5 space-y-4"
+        onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="text-white font-bold text-base">{"\u2694\uFE0F"} \uC6D4\uB4DC \uBCF4\uC2A4 \uAC00\uC774\uB4DC</h3>
+          <button onClick={onClose} className="text-white/40 hover:text-white text-lg">x</button>
+        </div>
+
+        <div className="space-y-2 text-[11px] text-white/60 leading-relaxed">
+          <p className="text-white/80 font-bold">{"\uD83D\uDCA1"} \uAE30\uBCF8 \uADDC\uCE59</p>
+          <ul className="space-y-1 list-disc list-inside">
+            <li>\uD558\uB8E8 <span className="text-white font-bold">10\uD68C</span> \uACF5\uACA9 \uAC00\uB2A5</li>
+            <li>\uCD5C\uB300 <span className="text-white font-bold">5\uB9C8\uB9AC</span> \uC2AC\uB77C\uC784\uC73C\uB85C \uD30C\uD2F0 \uAD6C\uC131</li>
+            <li>\uD30C\uD2F0 \uC778\uC6D0\uC774 \uB9CE\uC744\uC218\uB85D <span className="text-white font-bold">\uCF64\uBCF4 \uBCF4\uB108\uC2A4</span> \uB370\uBBF8\uC9C0</li>
+            <li>\uACF5\uACA9 \uC2DC \uC2AC\uB77C\uC784\uC5D0\uAC8C <span className="text-white font-bold">EXP</span> \uD68D\uB4DD</li>
+            <li>\uBCF4\uC2A4 \uACA9\uD30C \uC2DC \uCD94\uAC00 <span className="text-[#FFEAA7] font-bold">\uBCF4\uB108\uC2A4 \uBCF4\uC0C1</span></li>
+          </ul>
+
+          <p className="text-white/80 font-bold pt-2">{"\uD83D\uDD25"} \uC18D\uC131 \uC0C1\uC131</p>
+          <p>\uBCF4\uC2A4 \uC18D\uC131\uC5D0 \uC720\uB9AC\uD55C \uC2AC\uB77C\uC784\uC73C\uB85C \uACF5\uACA9\uD558\uBA74 <span className="text-[#55EFC4] font-bold">1.5\uBC30</span> \uB370\uBBF8\uC9C0!</p>
+          <p>\uBD88\uB9AC\uD55C \uC18D\uC131\uC740 <span className="text-[#FF6B6B] font-bold">0.7\uBC30</span> \uB370\uBBF8\uC9C0.</p>
+
+          <p className="text-white/80 font-bold pt-2">{"\uD83C\uDFC6"} \uC2A4\uD14C\uC774\uC9C0 \uC2DC\uC2A4\uD15C</p>
+          <div className="space-y-1.5">
+            {BOSS_STAGES.map((bs, i) => (
+              <div key={i} className="flex items-center gap-2 rounded-lg px-2 py-1.5"
+                style={{
+                  background: i + 1 === stage ? rgba(ELEM_COL[bs.element] || "#A29BFE", 0.1) : "transparent",
+                  border: i + 1 === stage ? `1px solid ${rgba(ELEM_COL[bs.element] || "#A29BFE", 0.2)}` : "1px solid transparent",
+                }}>
+                <span className="text-[10px] font-bold w-4 shrink-0" style={{ color: i + 1 <= stage ? ELEM_COL[bs.element] || "#A29BFE" : "rgba(255,255,255,0.2)" }}>
+                  {i + 1}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[10px] font-bold truncate" style={{ color: ELEM_COL[bs.element] || "#A29BFE" }}>
+                    {bs.name}
+                  </div>
+                  <div className="text-[9px] text-white/40 truncate">{bs.desc}</div>
+                </div>
+                {i + 1 === stage && (
+                  <span className="text-[8px] text-[#55EFC4] font-bold shrink-0">NOW</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <button onClick={onClose}
+          className="w-full py-2.5 rounded-xl text-[12px] font-bold text-white/70 bg-white/5 hover:bg-white/10 transition">
+          \uB2EB\uAE30
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ===== Attack Result Modal =====
+
+function AttackResultModal({
+  damage,
+  gold,
+  bonusGold,
+  bonusGems,
+  defeated,
+  nextStage,
+  comboMultiplier,
+  slimeResults,
+  bossElement,
+  onClose,
+}: {
+  damage: number;
+  gold: number;
+  bonusGold: number;
+  bonusGems: number;
+  defeated: boolean;
+  nextStage: boolean;
+  comboMultiplier: number;
+  slimeResults: SlimeResult[];
+  bossElement: string;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-6"
+      onClick={onClose}>
+      <div className="w-full max-w-sm bg-[#1a1a2e] rounded-2xl border border-white/10 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="p-4 text-center" style={{
+          background: defeated
+            ? "linear-gradient(135deg, rgba(85,239,196,0.15), rgba(116,185,255,0.1))"
+            : "linear-gradient(135deg, rgba(255,107,107,0.15), rgba(255,159,67,0.1))",
+        }}>
+          <div className="text-2xl mb-1">{defeated ? "\uD83C\uDF89" : "\u2694\uFE0F"}</div>
+          <h3 className="text-white font-bold text-base">
+            {defeated ? "\uBCF4\uC2A4 \uACA9\uD30C!" : "\uACF5\uACA9 \uC131\uACF5!"}
+          </h3>
+          <div className="text-[#FF6B6B] font-bold text-xl mt-1"
+            style={{ textShadow: "0 0 12px rgba(255,107,107,0.4)" }}>
+            {damage.toLocaleString()} DMG
+          </div>
+          {comboMultiplier > 1 && (
+            <div className="text-[#FFEAA7] text-[10px] font-bold mt-0.5">
+              {"\u2728"} \uCF64\uBCF4 x{comboMultiplier.toFixed(1)}
+            </div>
+          )}
+        </div>
+
+        {/* Slime results */}
+        {slimeResults.length > 0 && (
+          <div className="px-4 py-2 border-t border-white/5">
+            <div className="text-white/40 text-[9px] font-bold mb-1.5">\uD30C\uD2F0 \uACB0\uACFC</div>
+            <div className="flex gap-1.5 flex-wrap">
+              {slimeResults.map((sr, i) => (
+                <div key={i} className="flex items-center gap-1 rounded-lg px-2 py-1"
+                  style={{
+                    background: rgba(ELEM_COL[sr.element] || "#A29BFE", 0.08),
+                    border: `1px solid ${rgba(ELEM_COL[sr.element] || "#A29BFE", 0.15)}`,
+                  }}>
+                  <span className="text-[10px] font-bold" style={{ color: ELEM_COL[sr.element] || "#A29BFE" }}>
+                    {sr.damage.toLocaleString()}
+                  </span>
+                  {sr.strong && <span className="text-[#55EFC4] text-[8px]">{"\u2191"}\uC720\uB9AC</span>}
+                  <span className="text-white/30 text-[8px]">+{sr.exp_gain}EXP</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Rewards */}
+        <div className="px-4 py-3 space-y-1.5 border-t border-white/5">
+          <div className="flex items-center justify-between">
+            <span className="text-white/40 text-[10px]">\uCC38\uC5EC \uBCF4\uC0C1</span>
+            <span className="text-[#FFEAA7] text-[11px] font-bold">+{gold.toLocaleString()} G</span>
+          </div>
+          {defeated && bonusGold > 0 && (
+            <div className="flex items-center justify-between">
+              <span className="text-white/40 text-[10px]">\uACA9\uD30C \uBCF4\uB108\uC2A4</span>
+              <span className="text-[#55EFC4] text-[11px] font-bold">+{bonusGold.toLocaleString()} G</span>
+            </div>
+          )}
+          {defeated && bonusGems > 0 && (
+            <div className="flex items-center justify-between">
+              <span className="text-white/40 text-[10px]">{"\uD83D\uDC8E"} \uBCF4\uC11D \uBCF4\uB108\uC2A4</span>
+              <span className="text-[#A29BFE] text-[11px] font-bold">+{bonusGems}</span>
+            </div>
+          )}
+          {nextStage && (
+            <div className="mt-2 text-center text-[#55EFC4] text-[11px] font-bold"
+              style={{ textShadow: "0 0 8px rgba(85,239,196,0.3)" }}>
+              {"\uD83D\uDD1D"} \uB2E4\uC74C \uC2A4\uD14C\uC774\uC9C0\uB85C \uC9C4\uD589!
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 pt-0">
+          <button onClick={onClose}
+            className="w-full py-2.5 rounded-xl text-[12px] font-bold text-white/70 bg-white/5 hover:bg-white/10 transition">
+            \uD655\uC778
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ===== Component =====
 
 export default function WorldBossPage({ onClose }: { onClose: () => void }) {
   const token = useAuthStore((s) => s.accessToken);
   const slimes = useGameStore((s) => s.slimes);
   const [bossState, setBossState] = useState<BossState | null>(null);
-  const [selectedSlime, setSelectedSlime] = useState<string | null>(null);
+  const [partySlimes, setPartySlimes] = useState<string[]>([]);
   const [attacking, setAttacking] = useState(false);
   const [showSelect, setShowSelect] = useState(false);
+  const [selectingSlot, setSelectingSlot] = useState<number | null>(null);
   const [countdown, setCountdown] = useState("");
+  const [showGuide, setShowGuide] = useState(false);
+  const [attackResult, setAttackResult] = useState<{
+    damage: number; gold: number; bonusGold: number; bonusGems: number;
+    defeated: boolean; nextStage: boolean; comboMultiplier: number;
+    slimeResults: SlimeResult[]; bossElement: string;
+  } | null>(null);
 
   // Canvas refs
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -502,8 +1059,8 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
         }
       }
 
-      // Draw boss
-      drawBoss(ctx, bCx, bCy, bSz, boss.element, t, phase, t,
+      // Draw boss - pass stage for unique visuals
+      drawBoss(ctx, bCx, bCy, bSz, boss.stage || 1, boss.element, t, phase, t,
         { x: shakeRef.current.x + bExX, y: shakeRef.current.y + bExY });
 
       // Defeated text
@@ -517,18 +1074,18 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
         ctx.restore();
       }
 
-      // Phase badge
+      // Stage badge top-right
       if (!boss.defeated) {
-        const pl = phase === "critical" ? "위험!" : phase === "enraged" ? "분노" : "";
-        if (pl) {
+        const phaseLabel = phase === "critical" ? "\uC704\uD5D8!" : phase === "enraged" ? "\uBD84\uB178" : "";
+        if (phaseLabel) {
           ctx.save(); ctx.font = "bold 10px sans-serif";
-          const bw = ctx.measureText(pl).width + 16;
+          const bw = ctx.measureText(phaseLabel).width + 16;
           const bx = w - bw - 8, by = 8;
           ctx.beginPath(); ctx.roundRect(bx, by, bw, 20, 10);
           ctx.fillStyle = phase === "critical" ? "rgba(255,50,50,0.3)" : "rgba(255,107,107,0.2)";
           ctx.fill();
           ctx.fillStyle = phase === "critical" ? "#FF3333" : "#FF6B6B";
-          ctx.textAlign = "center"; ctx.fillText(pl, bx + bw / 2, by + 14);
+          ctx.textAlign = "center"; ctx.fillText(phaseLabel, bx + bw / 2, by + 14);
           ctx.restore();
         }
       }
@@ -552,10 +1109,10 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
         ctx.textAlign = "center"; ctx.globalAlpha = d.alpha;
         ctx.fillStyle = d.critical ? "#FFEAA7" : "#FF6B6B";
         ctx.shadowColor = d.critical ? "#FFEAA7" : "#FF6B6B"; ctx.shadowBlur = 12;
-        ctx.fillText(`-${d.damage}`, d.x, d.y);
+        ctx.fillText(`-${d.damage.toLocaleString()}`, d.x, d.y);
         if (d.critical) {
           ctx.font = "bold 10px sans-serif"; ctx.fillStyle = "#FFEAA7";
-          ctx.fillText("유리!", d.x, d.y - 22);
+          ctx.fillText("\uC720\uB9AC!", d.x, d.y - 22);
         }
         ctx.restore();
         return true;
@@ -583,7 +1140,7 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
     return () => { cancelAnimationFrame(animRef.current); window.removeEventListener("resize", resize); };
   }, []);
 
-  // Trigger attack
+  // Trigger attack animation
   const triggerAtk = (damage: number, element: string, critical: boolean) => {
     atkRef.current = { phase: "charge", time: 0, damage, element, critical };
     setTimeout(() => {
@@ -598,70 +1155,123 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
   };
 
   const attack = async () => {
-    if (!token || !selectedSlime || attacking) return;
+    const attackIds = partySlimes.length > 0 ? partySlimes : [];
+    if (!token || attackIds.length === 0 || attacking) return;
     setAttacking(true);
     try {
       const res = await authApi<{
         damage: number; boss_hp_remaining: number; defeated: boolean;
         participation_gold: number; bonus_gold: number; bonus_gems: number;
-        slime_exp: number; slime_level_up: boolean; slime_new_level: number;
-        remaining_attacks: number;
-      }>("/api/boss/attack", token, { method: "POST", body: { slime_id: selectedSlime } });
+        slime_exp: number; combo_multiplier: number;
+        slime_results: SlimeResult[];
+        remaining_attacks: number; next_stage: boolean;
+      }>("/api/boss/attack", token, { method: "POST", body: { slime_ids: attackIds } });
 
-      const playerElem = slimes.find((s) => s.id === selectedSlime)?.element || "water";
+      const playerElem = slimes.find((s) => s.id === attackIds[0])?.element || "water";
       triggerAtk(res.damage, playerElem, isStrong(playerElem, bossState!.boss.element));
 
       if (bossRef.current) {
         bossRef.current = { ...bossRef.current, current_hp: res.boss_hp_remaining, defeated: res.defeated };
       }
 
+      // Show result modal after animation
       setTimeout(() => {
-        let msg = `${res.damage} 데미지! +${res.participation_gold}G`;
-        if (res.defeated) msg += " 보스 격파!";
-        if (res.bonus_gold > 0) msg += ` +보너스 ${res.bonus_gold}G`;
-        if (res.slime_level_up) msg += ` Lv.${res.slime_new_level}!`;
-        toastReward(msg, "⚔️");
+        setAttackResult({
+          damage: res.damage,
+          gold: res.participation_gold,
+          bonusGold: res.bonus_gold,
+          bonusGems: res.bonus_gems,
+          defeated: res.defeated,
+          nextStage: res.next_stage,
+          comboMultiplier: res.combo_multiplier,
+          slimeResults: res.slime_results || [],
+          bossElement: bossState!.boss.element,
+        });
         useAuthStore.getState().fetchUser();
         fetchBoss();
-      }, 1000);
-    } catch {
-      toastError("공격 실패");
+      }, 1200);
+    } catch (e) {
+      let errMsg = "";
+      if (e && typeof e === "object" && "data" in e) {
+        const data = (e as { data?: { error?: string } }).data;
+        errMsg = data?.error || "";
+      }
+      if (errMsg.includes("daily attack limit")) {
+        toastError("\uC624\uB298\uC758 \uACF5\uACA9 \uD69F\uC218\uB97C \uBAA8\uB450 \uC0AC\uC6A9\uD588\uC2B5\uB2C8\uB2E4");
+      } else {
+        toastError("\uACF5\uACA9 \uC2E4\uD328");
+      }
     }
-    setTimeout(() => setAttacking(false), 1200);
+    setTimeout(() => setAttacking(false), 1400);
   };
 
   if (!bossState) {
     return (
       <div className="absolute inset-0 z-50 bg-[#0a0a1a] flex items-center justify-center">
-        <span className="text-white/30 animate-pulse">로딩 중...</span>
+        <span className="text-white/30 animate-pulse">\uB85C\uB529 \uC911...</span>
       </div>
     );
   }
 
-  const { boss, my_attacks, max_attacks, my_damage, top_attackers } = bossState;
+  const { boss, my_attacks, max_attacks, my_damage, my_rank, top_attackers } = bossState;
   const hpPct = Math.max(0, (boss.current_hp / boss.max_hp) * 100);
-  const selData = slimes.find((s) => s.id === selectedSlime);
-  const adv = selData ? (isStrong(selData.element, boss.element) ? "strong" : isWeak(selData.element, boss.element) ? "weak" : "neutral") : null;
 
   const sorted = [...slimes].sort((a, b) => {
-    const as = isStrong(a.element, boss.element) ? 2 : isWeak(a.element, boss.element) ? 0 : 1;
-    const bs = isStrong(b.element, boss.element) ? 2 : isWeak(b.element, boss.element) ? 0 : 1;
-    return bs - as || b.level - a.level;
+    const aScore = isStrong(a.element, boss.element) ? 2 : isWeak(a.element, boss.element) ? 0 : 1;
+    const bScore = isStrong(b.element, boss.element) ? 2 : isWeak(b.element, boss.element) ? 0 : 1;
+    return bScore - aScore || b.level - a.level;
   });
+
+  const addToParty = (slimeId: string) => {
+    if (selectingSlot !== null) {
+      setPartySlimes((prev) => {
+        const next = [...prev];
+        next[selectingSlot] = slimeId;
+        return next;
+      });
+    } else if (partySlimes.length < 5 && !partySlimes.includes(slimeId)) {
+      setPartySlimes((prev) => [...prev, slimeId]);
+    }
+    setShowSelect(false);
+    setSelectingSlot(null);
+  };
+
+  const removeFromParty = (idx: number) => {
+    setPartySlimes((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  // Auto-fill party helper
+  const autoFillParty = () => {
+    const available = sorted.filter((s) => !partySlimes.includes(s.id));
+    const needed = 5 - partySlimes.length;
+    const toAdd = available.slice(0, needed).map((s) => s.id);
+    setPartySlimes((prev) => [...prev, ...toAdd]);
+    if (toAdd.length > 0) {
+      toastInfo(`${toAdd.length}\uB9C8\uB9AC \uC790\uB3D9 \uD3B8\uC131!`);
+    }
+  };
+
+  const stageLabel = `Stage ${boss.stage || 1}/5`;
+  const hasParty = partySlimes.length > 0;
 
   return (
     <div className="absolute inset-0 z-50 bg-[#0a0a1a] flex flex-col" style={{ bottom: 76 }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 bg-black/30 shrink-0 overlay-header">
         <div className="flex items-center gap-2.5">
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white text-sm transition">{"←"}</button>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white text-sm transition">{"\u2190"}</button>
           <div>
-            <h2 className="text-white font-bold text-sm">{"⚔️"} 월드 보스</h2>
-            {countdown && <span className="text-white/30 text-[9px]">{"⏰"} {countdown}</span>}
+            <h2 className="text-white font-bold text-sm">{"\u2694\uFE0F"} \uC6D4\uB4DC \uBCF4\uC2A4</h2>
+            {countdown && <span className="text-white/30 text-[9px]">{"\u23F0"} {countdown}</span>}
           </div>
         </div>
-        <div className="flex items-center gap-2 text-[10px]">
-          <span className="text-white/30">공격 {my_attacks}/{max_attacks}</span>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowGuide(true)}
+            className="w-7 h-7 rounded-full bg-white/8 hover:bg-white/12 flex items-center justify-center text-white/50 hover:text-white text-[11px] font-bold transition"
+            title="\uAC00\uC774\uB4DC">
+            ?
+          </button>
+          <span className="text-white/30 text-[10px]">{my_attacks}/{max_attacks}</span>
         </div>
       </div>
 
@@ -686,104 +1296,178 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
 
       {/* Controls */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+        {/* Stage indicator */}
+        <div className="flex items-center gap-1.5 mb-1">
+          {[1, 2, 3, 4, 5].map((s) => {
+            const stgBoss = BOSS_STAGES[s - 1];
+            const stgCol = ELEM_COL[stgBoss.element] || "#A29BFE";
+            return (
+              <div key={s} className="flex-1 h-1.5 rounded-full transition-all" style={{
+                background: s <= (boss.stage || 1)
+                  ? `linear-gradient(90deg, ${stgCol}, ${stgCol}CC)`
+                  : "rgba(255,255,255,0.06)",
+                boxShadow: s === (boss.stage || 1) ? `0 0 6px ${stgCol}60` : "none",
+              }} />
+            );
+          })}
+          <span className="text-white/30 text-[9px] font-bold ml-1 shrink-0">{stageLabel}</span>
+        </div>
+
         {!boss.defeated ? (
           <>
-            {/* Slime select + advantage */}
-            <div className="flex items-center gap-2">
-              <button onClick={() => setShowSelect(!showSelect)} className="flex-1 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-left px-3 flex items-center gap-2">
-                {selData ? (
-                  <>
-                    <div className="w-7 h-7" dangerouslySetInnerHTML={{ __html: generateSlimeIconSvg(selData.element, 28) }} />
-                    <div className="flex-1 min-w-0">
-                      <span className="text-white text-[11px] font-bold truncate block">{selData.name || `슬라임 #${selData.species_id}`}</span>
-                      <span className="text-white/30 text-[9px]">Lv.{selData.level}</span>
-                    </div>
-                  </>
-                ) : (
-                  <span className="text-white/30 text-[11px]">슬라임을 선택하세요</span>
-                )}
-              </button>
-              {adv && (
-                <div className={`px-3 py-2 rounded-xl text-[11px] font-bold shrink-0 ${
-                  adv === "strong" ? "bg-[#55EFC4]/15 text-[#55EFC4] border border-[#55EFC4]/20"
-                    : adv === "weak" ? "bg-[#FF6B6B]/15 text-[#FF6B6B] border border-[#FF6B6B]/20"
-                    : "bg-white/[0.04] text-white/40 border border-white/[0.06]"
-                }`}>
-                  {adv === "strong" ? "유리! ×1.5" : adv === "weak" ? "불리... ×0.7" : "보통"}
+            {/* Party slots (5 slots) */}
+            <div className="rounded-xl p-2.5" style={{
+              background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+            }}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-white/50 text-[10px] font-bold">{"\u2694\uFE0F"} \uD30C\uD2F0 ({partySlimes.length}/5)</span>
+                <div className="flex items-center gap-2">
+                  {slimes.length > 0 && partySlimes.length < 5 && (
+                    <button onClick={autoFillParty} className="text-[9px] text-[#74B9FF] hover:text-[#0984E3] font-bold transition">
+                      \uC790\uB3D9\uD3B8\uC131
+                    </button>
+                  )}
+                  {partySlimes.length > 0 && (
+                    <button onClick={() => setPartySlimes([])} className="text-[9px] text-white/30 hover:text-white transition">
+                      \uCD08\uAE30\uD654
+                    </button>
+                  )}
                 </div>
-              )}
-            </div>
-
-            {/* Slime dropdown */}
-            {showSelect && (
-              <div className="max-h-36 overflow-y-auto rounded-xl bg-[#121220] border border-white/[0.08]">
-                {sorted.map((s) => {
-                  const sa = isStrong(s.element, boss.element);
-                  const sw = isWeak(s.element, boss.element);
+              </div>
+              <div className="flex gap-1.5">
+                {[0, 1, 2, 3, 4].map((idx) => {
+                  const sid = partySlimes[idx];
+                  const sl = sid ? slimes.find((s) => s.id === sid) : null;
+                  const slCol = sl ? ELEM_COL[sl.element] || "#A29BFE" : "#636E72";
+                  const slStrong = sl ? isStrong(sl.element, boss.element) : false;
                   return (
-                    <button key={s.id} onClick={() => { setSelectedSlime(s.id); setShowSelect(false); }}
-                      className="w-full px-3 py-2 flex items-center gap-2 hover:bg-white/5 transition text-left border-b border-white/[0.03] last:border-0">
-                      <div className="w-6 h-6" dangerouslySetInnerHTML={{ __html: generateSlimeIconSvg(s.element, 24) }} />
-                      <span className="text-white/70 text-[11px] flex-1 truncate">{s.name || `#${s.species_id}`}</span>
-                      <span className="text-white/30 text-[9px]">Lv.{s.level}</span>
-                      {sa && <span className="text-[#55EFC4] text-[9px] font-bold">유리</span>}
-                      {sw && <span className="text-[#FF6B6B] text-[9px]">불리</span>}
+                    <button key={idx}
+                      onClick={() => {
+                        if (sl) {
+                          removeFromParty(idx);
+                        } else {
+                          setSelectingSlot(idx);
+                          setShowSelect(true);
+                        }
+                      }}
+                      className="flex-1 aspect-square rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all active:scale-95 relative"
+                      style={{
+                        background: sl ? `linear-gradient(145deg, ${slCol}15, ${slCol}08)` : "rgba(255,255,255,0.02)",
+                        border: sl
+                          ? slStrong
+                            ? `1.5px solid ${slCol}60`
+                            : `1px solid ${slCol}30`
+                          : "1px dashed rgba(255,255,255,0.1)",
+                      }}>
+                      {sl ? (
+                        <>
+                          <img src={generateSlimeIconSvg(sl.element, 28)} alt="" className="w-7 h-7" draggable={false} />
+                          <span className="text-[7px] text-white/50 font-bold">Lv.{sl.level}</span>
+                          {slStrong && (
+                            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#55EFC4] text-[7px] text-[#0a0a1a] font-bold flex items-center justify-center">{"\u2191"}</span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-white/15 text-lg">+</span>
+                      )}
                     </button>
                   );
                 })}
               </div>
+              {/* Combo indicator */}
+              {partySlimes.length >= 2 && (
+                <div className="mt-1.5 text-center">
+                  <span className="text-[#FFEAA7] text-[9px] font-bold">
+                    {"\u2728"} \uCF64\uBCF4 x{partySlimes.length >= 5 ? "1.5" : partySlimes.length >= 4 ? "1.35" : partySlimes.length >= 3 ? "1.2" : "1.1"} \uB370\uBBF8\uC9C0 \uBCF4\uB108\uC2A4
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Slime picker dropdown */}
+            {showSelect && (
+              <div className="max-h-48 overflow-y-auto rounded-xl bg-[#121220] border border-white/[0.08]">
+                {sorted.filter((s) => !partySlimes.includes(s.id)).length === 0 ? (
+                  <div className="px-3 py-4 text-center text-white/20 text-[11px]">\uC120\uD0DD \uAC00\uB2A5\uD55C \uC2AC\uB77C\uC784\uC774 \uC5C6\uC2B5\uB2C8\uB2E4</div>
+                ) : (
+                  sorted.filter((s) => !partySlimes.includes(s.id)).map((s) => {
+                    const sa = isStrong(s.element, boss.element);
+                    const sw = isWeak(s.element, boss.element);
+                    return (
+                      <button key={s.id} onClick={() => addToParty(s.id)}
+                        className="w-full px-3 py-2 flex items-center gap-2 hover:bg-white/5 transition text-left border-b border-white/[0.03] last:border-0">
+                        <img src={generateSlimeIconSvg(s.element, 24)} alt="" className="w-6 h-6" draggable={false} />
+                        <span className="text-white/70 text-[11px] flex-1 truncate">{s.name || `#${s.species_id}`}</span>
+                        <span className="text-white/30 text-[9px]">Lv.{s.level}</span>
+                        {sa && <span className="text-[#55EFC4] text-[9px] font-bold">{"\u2191"}\uC720\uB9AC</span>}
+                        {sw && <span className="text-[#FF6B6B] text-[9px]">{"\u2193"}\uBD88\uB9AC</span>}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
             )}
 
             {/* Attack button */}
-            <button onClick={attack} disabled={!selectedSlime || attacking || my_attacks >= max_attacks}
+            <button onClick={attack} disabled={!hasParty || attacking || my_attacks >= max_attacks}
               className="w-full py-3 rounded-xl font-bold text-sm text-[#0a0a1a] disabled:opacity-30 transition active:scale-[0.97]"
               style={{
                 background: attacking ? "linear-gradient(135deg, #636E72, #2D3436)" : "linear-gradient(135deg, #FF6B6B, #E17055)",
-                boxShadow: !attacking && selectedSlime ? "0 4px 20px rgba(255,107,107,0.3)" : "none",
+                boxShadow: !attacking && hasParty ? "0 4px 20px rgba(255,107,107,0.3)" : "none",
               }}>
-              {attacking ? "⚔️ 공격 중..." : my_attacks >= max_attacks ? "🔒 오늘의 공격 횟수 소진" : `⚔️ 공격하기 (${my_attacks}/${max_attacks})`}
+              {attacking
+                ? "\u2694\uFE0F \uACF5\uACA9 \uC911..."
+                : my_attacks >= max_attacks
+                  ? "\uD83D\uDD12 \uC624\uB298\uC758 \uACF5\uACA9 \uD69F\uC218 \uC18C\uC9C4"
+                  : `\u2694\uFE0F ${partySlimes.length > 0 ? `${partySlimes.length}\uB9C8\uB9AC\uB85C ` : ""}\uACF5\uACA9\uD558\uAE30 (${my_attacks}/${max_attacks})`
+              }
             </button>
           </>
         ) : (
           <div className="text-center py-4">
             <span className="text-[#55EFC4] font-bold text-lg" style={{ textShadow: "0 0 16px rgba(85,239,196,0.4)" }}>
-              {"🎉"} 보스 격파 완료! {"🎉"}
+              {"\uD83C\uDF89"} \uBCF4\uC2A4 \uACA9\uD30C \uC644\uB8CC! {"\uD83C\uDF89"}
             </span>
+            {(boss.stage || 1) < 5 ? (
+              <p className="text-white/40 text-xs mt-2">\uB2E4\uC74C \uC2A4\uD14C\uC774\uC9C0\uAC00 \uC900\uBE44\uB429\uB2C8\uB2E4...</p>
+            ) : (
+              <p className="text-[#FFEAA7] text-xs mt-2 font-bold">\uCD5C\uC885 \uBCF4\uC2A4 \uD074\uB9AC\uC5B4! \uCD95\uD558\uD569\uB2C8\uB2E4!</p>
+            )}
           </div>
         )}
 
-        {/* Stats */}
+        {/* Stats row */}
         <div className="flex gap-2">
           <div className="flex-1 bg-white/[0.04] rounded-xl p-2.5 text-center border border-white/[0.04]">
-            <div className="text-white/25 text-[9px]">내 총 데미지</div>
+            <div className="text-white/25 text-[9px]">\uB0B4 \uCD1D \uB370\uBBF8\uC9C0</div>
             <div className="text-white font-bold text-[13px] tabular-nums">{my_damage.toLocaleString()}</div>
           </div>
           <div className="flex-1 bg-white/[0.04] rounded-xl p-2.5 text-center border border-white/[0.04]">
-            <div className="text-white/25 text-[9px]">보상</div>
-            <div className="text-[#FFEAA7] font-bold text-[13px]">{boss.reward_gold}G +{boss.reward_gems}{"💎"}</div>
+            <div className="text-white/25 text-[9px]">\uB0B4 \uB7AD\uD0B9</div>
+            <div className="text-white font-bold text-[13px] tabular-nums">
+              {my_rank > 0 ? `#${my_rank}` : "-"}
+            </div>
           </div>
           <div className="flex-1 bg-white/[0.04] rounded-xl p-2.5 text-center border border-white/[0.04]">
-            <div className="text-white/25 text-[9px]">속성</div>
-            <div className="font-bold text-[13px]" style={{ color: ELEM_COL[boss.element] || "#A29BFE" }}>
-              {elementNames[boss.element] || boss.element}
-            </div>
+            <div className="text-white/25 text-[9px]">\uACA9\uD30C \uBCF4\uC0C1</div>
+            <div className="text-[#FFEAA7] font-bold text-[13px]">{boss.reward_gold}G +{boss.reward_gems}{"\uD83D\uDC8E"}</div>
           </div>
         </div>
 
         {/* Ranking */}
         <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] overflow-hidden">
           <div className="px-3 py-2 border-b border-white/[0.06] flex items-center justify-between">
-            <span className="text-white/50 text-[11px] font-bold">{"⚔️"} 데미지 랭킹</span>
-            <span className="text-white/20 text-[9px]">{top_attackers.length}명 참여</span>
+            <span className="text-white/50 text-[11px] font-bold">{"\u2694\uFE0F"} \uB370\uBBF8\uC9C0 \uB7AD\uD0B9</span>
+            <span className="text-white/20 text-[9px]">{top_attackers.length}\uBA85 \uCC38\uC5EC</span>
           </div>
           {top_attackers.length === 0 ? (
-            <div className="px-3 py-6 text-center text-white/15 text-[11px]">아직 공격 기록이 없습니다</div>
+            <div className="px-3 py-6 text-center text-white/15 text-[11px]">\uC544\uC9C1 \uACF5\uACA9 \uAE30\uB85D\uC774 \uC5C6\uC2B5\uB2C8\uB2E4</div>
           ) : (
             top_attackers.map((a, i) => (
               <div key={i} className="px-3 py-2 flex items-center gap-2 border-b border-white/[0.03] last:border-0"
                 style={{ background: i < 3 ? `linear-gradient(135deg, ${["rgba(255,234,167,0.04)", "rgba(200,182,255,0.03)", "rgba(255,159,243,0.03)"][i]}, transparent)` : undefined }}>
                 <span className="text-[10px] w-5 text-center font-bold" style={{ color: i < 3 ? ["#FFEAA7", "#C8B6FF", "#FF9FF3"][i] : "rgba(255,255,255,0.2)" }}>
-                  {i < 3 ? ["🥇", "🥈", "🥉"][i] : i + 1}
+                  {i < 3 ? ["\uD83E\uDD47", "\uD83E\uDD48", "\uD83E\uDD49"][i] : i + 1}
                 </span>
                 <span className="text-white/60 text-[11px] flex-1 truncate">{a.nickname}</span>
                 <span className="text-[#FF6B6B] text-[10px] font-bold tabular-nums">{a.damage.toLocaleString()}</span>
@@ -792,6 +1476,17 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
           )}
         </div>
       </div>
+
+      {/* Guide Modal */}
+      {showGuide && <GuideModal onClose={() => setShowGuide(false)} stage={boss.stage || 1} />}
+
+      {/* Attack Result Modal */}
+      {attackResult && (
+        <AttackResultModal
+          {...attackResult}
+          onClose={() => setAttackResult(null)}
+        />
+      )}
     </div>
   );
 }

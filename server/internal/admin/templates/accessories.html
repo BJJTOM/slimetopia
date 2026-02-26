@@ -1,0 +1,46 @@
+{{define "accessories.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+{{if .Error}}
+<div class="msg-error">{{.Error}}</div>
+{{end}}
+
+<p style="font-size: 12px; color: #636e72; margin-bottom: 12px;">총 {{.Total}}개 악세서리</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>아이콘</th>
+      <th>이름</th>
+      <th>영문명</th>
+      <th>슬롯</th>
+      <th>골드 비용</th>
+      <th>젬 비용</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Accessories}}
+    <tr>
+      <td style="color: #636e72;">{{.ID}}</td>
+      <td style="font-size: 18px;">{{.Icon}}</td>
+      <td>{{.Name}}</td>
+      <td style="color: #b2bec3;">{{.NameEN}}</td>
+      <td>
+        {{if eq .Slot "head"}}<span class="badge" style="background: rgba(255,234,167,0.15); color: #ffeaa7;">head</span>
+        {{else if eq .Slot "face"}}<span class="badge" style="background: rgba(116,185,255,0.15); color: #74b9ff;">face</span>
+        {{else if eq .Slot "body"}}<span class="badge" style="background: rgba(85,239,196,0.15); color: #55efc4;">body</span>
+        {{else}}<span class="badge badge-common">{{.Slot}}</span>
+        {{end}}
+      </td>
+      <td style="color: #ffeaa7;">{{if gt .CostGold 0}}{{.CostGold}}{{else}}-{{end}}</td>
+      <td style="color: #a29bfe;">{{if gt .CostGems 0}}{{.CostGems}}{{else}}-{{end}}</td>
+    </tr>
+    {{else}}
+    <tr><td colspan="7" style="text-align:center; color:#636e72; padding: 24px;">악세서리 데이터 없음</td></tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}

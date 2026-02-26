@@ -1,0 +1,37 @@
+{{define "logs_collection.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+<form class="filter-bar" method="GET" action="/admin/logs/collection">
+  <input type="text" name="search" placeholder="닉네임 검색..." value="{{.Search}}" style="width:180px;">
+  <input type="date" name="date_from" value="{{.DateFrom}}" style="width:150px;">
+  <span style="color:#636e72;">~</span>
+  <input type="date" name="date_to" value="{{.DateTo}}" style="width:150px;">
+  <button type="submit" class="btn btn-primary btn-sm">검색</button>
+  <span style="color:#636e72; font-size:12px; margin-left:8px;">총 {{.TotalCount}}건</span>
+</form>
+
+<table>
+  <thead>
+    <tr><th>시간</th><th>닉네임</th><th>상세</th></tr>
+  </thead>
+  <tbody>
+    {{range .Logs}}
+    <tr>
+      <td style="font-size:11px; color:#636e72;">{{formatDate .CreatedAt}}</td>
+      <td>{{.Nickname}}</td>
+      <td style="font-size:11px;">{{truncate .Detail 120}}</td>
+    </tr>
+    {{else}}
+    <tr><td colspan="3" style="text-align:center; color:#636e72;">데이터 없음</td></tr>
+    {{end}}
+  </tbody>
+</table>
+
+<div class="pagination">
+  {{if .HasPrev}}<a href="?page={{.PrevPage}}&search={{.Search}}&date_from={{.DateFrom}}&date_to={{.DateTo}}">이전</a>{{end}}
+  <span class="current">{{.Page}} / {{.TotalPages}}</span>
+  {{if .HasNext}}<a href="?page={{.NextPage}}&search={{.Search}}&date_from={{.DateFrom}}&date_to={{.DateTo}}">다음</a>{{end}}
+</div>
+{{end}}

@@ -1,0 +1,197 @@
+{{define "user_detail_enhanced.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+{{if eq .Message "edited"}}
+<div class="msg-success">유저 정보가 수정되었습니다.</div>
+{{else if eq .Message "banned"}}
+<div class="msg-success">유저가 정지되었습니다.</div>
+{{else if eq .Message "unbanned"}}
+<div class="msg-success">유저 정지가 해제되었습니다.</div>
+{{else if eq .Message "error"}}
+<div class="msg-error">오류가 발생했습니다.</div>
+{{else if eq .Message "success"}}
+<div class="msg-success">처리 완료!</div>
+{{end}}
+
+<!-- Ban Warning -->
+{{if .User.Banned}}
+<div class="msg-error" style="margin-bottom: 16px;">
+  이 유저는 현재 정지 상태입니다.
+  {{if .User.BannedReason}} 사유: {{.User.BannedReason}}{{end}}
+  {{if .User.BannedBy}} (by {{.User.BannedBy}}){{end}}
+  {{if .User.BanExpiresAt}} | 만료: {{.User.BanExpiresAt.Format "2006-01-02 15:04"}}{{end}}
+</div>
+{{end}}
+
+<!-- User Stats Grid -->
+<div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+  <div class="stat-card">
+    <div class="label">닉네임</div>
+    <div class="value" style="font-size: 18px; color: #e8e4f0;">{{.User.Nickname}}</div>
+    <div style="font-size: 11px; color: #636e72; margin-top: 4px;">{{.User.Provider}} | ID: {{.User.ID}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">레벨</div>
+    <div class="value">{{.User.Level}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">골드</div>
+    <div class="value" style="color: #ffeaa7;">{{.User.Gold}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">젬</div>
+    <div class="value" style="color: #a29bfe;">{{.User.Gems}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">스타더스트</div>
+    <div class="value" style="color: #74b9ff;">{{.User.Stardust}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">슬라임 수</div>
+    <div class="value">{{.User.SlimeCount}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">컬렉션</div>
+    <div class="value">{{.User.CollectionCount}} / 1200</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">소재 (총량)</div>
+    <div class="value">{{.User.MaterialCount}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">이달 출석</div>
+    <div class="value">{{.User.AttendanceDays}}일</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">업적</div>
+    <div class="value">{{.User.AchievementCount}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">진행 중 탐험</div>
+    <div class="value">{{.User.ActiveExplores}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">가입일</div>
+    <div class="value" style="font-size: 14px;">{{.User.CreatedAt.Format "2006-01-02"}}</div>
+  </div>
+</div>
+
+<!-- Edit User Form -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+  <div class="stat-card">
+    <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #55efc4;">유저 수정</div>
+    <form method="POST" action="/admin/users/{{.User.ID}}/edit">
+      <div class="form-row">
+        <label>골드 (±)</label>
+        <input type="number" name="gold" value="0" style="width: 120px;" />
+      </div>
+      <div class="form-row">
+        <label>젬 (±)</label>
+        <input type="number" name="gems" value="0" style="width: 120px;" />
+      </div>
+      <div class="form-row">
+        <label>스타더스트 (±)</label>
+        <input type="number" name="stardust" value="0" style="width: 120px;" />
+      </div>
+      <div class="form-row">
+        <label>레벨 (절대값)</label>
+        <input type="number" name="level" value="0" min="0" max="100" style="width: 120px;" />
+        <span style="font-size: 10px; color: #636e72;">0 = 변경 없음</span>
+      </div>
+      <button type="submit" class="btn btn-primary">수정</button>
+    </form>
+  </div>
+
+  <!-- Ban/Unban -->
+  <div class="stat-card">
+    {{if .User.Banned}}
+    <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #55efc4;">정지 해제</div>
+    <form method="POST" action="/admin/users/{{.User.ID}}/unban">
+      <p style="font-size: 12px; color: #b2bec3; margin-bottom: 12px;">현재 정지 사유: {{.User.BannedReason}}</p>
+      <button type="submit" class="btn btn-primary" onclick="return confirm('정말 정지를 해제하시겠습니까?')">정지 해제</button>
+    </form>
+    {{else}}
+    <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #ff6b6b;">유저 정지</div>
+    <form method="POST" action="/admin/users/{{.User.ID}}/ban">
+      <div class="form-row">
+        <label>사유</label>
+        <input type="text" name="reason" placeholder="정지 사유..." style="flex: 1;" required />
+      </div>
+      <div class="form-row">
+        <label>기간</label>
+        <select name="duration" style="width: 140px;">
+          <option value="permanent">영구</option>
+          <option value="7d">7일</option>
+          <option value="30d">30일</option>
+          <option value="custom">직접 입력</option>
+        </select>
+        <input type="date" name="custom_expiry" style="width: 160px;" />
+      </div>
+      <button type="submit" class="btn btn-danger" onclick="return confirm('정말 이 유저를 정지하시겠습니까?')">정지</button>
+    </form>
+    {{end}}
+  </div>
+</div>
+
+<!-- Gacha Pity -->
+{{if .Pity}}
+<div class="stat-card" style="margin-bottom: 24px;">
+  <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #a29bfe;">가챠 피티</div>
+  <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+    {{range .Pity}}
+    <div style="background: rgba(0,0,0,0.2); padding: 8px 16px; border-radius: 8px;">
+      <span style="color: #b2bec3;">{{.EggType}}</span>
+      <span style="color: #ffeaa7; font-weight: 700; margin-left: 8px;">{{.PullCount}}회</span>
+    </div>
+    {{end}}
+  </div>
+</div>
+{{end}}
+
+<!-- User's Slimes -->
+<h2 style="font-size: 16px; margin-bottom: 12px;">슬라임 목록 ({{.User.SlimeCount}}마리)</h2>
+<table>
+  <thead>
+    <tr>
+      <th>종</th>
+      <th>원소</th>
+      <th>등급</th>
+      <th>레벨</th>
+      <th>성격</th>
+      <th>호감도</th>
+      <th>배고픔</th>
+      <th>컨디션</th>
+      <th>상태</th>
+      <th>관리</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .User.Slimes}}
+    <tr>
+      <td>{{.SpeciesName}}</td>
+      <td>{{.Element}}</td>
+      <td><span class="badge badge-{{.Grade}}">{{.Grade}}</span></td>
+      <td>{{.Level}}</td>
+      <td>{{.Personality}}</td>
+      <td>{{.Affection}}</td>
+      <td>{{.Hunger}}</td>
+      <td>{{.Condition}}</td>
+      <td>{{if .IsSick}}<span style="color:#ff6b6b;">아픔</span>{{else}}<span style="color:#55efc4;">정상</span>{{end}}</td>
+      <td><a href="/admin/slimes/{{.ID}}" class="btn btn-sm btn-primary">상세</a></td>
+    </tr>
+    {{else}}
+    <tr><td colspan="10" style="text-align:center; color:#636e72; padding: 16px;">슬라임 없음</td></tr>
+    {{end}}
+  </tbody>
+</table>
+
+{{if gt .SlimeTotalPages 1}}
+<div class="pagination">
+  {{if .SlimeHasPrev}}<a href="/admin/users/{{.User.ID}}?page={{.SlimePrevPage}}" class="btn btn-sm">&laquo; 이전</a>{{end}}
+  <span class="current">{{.SlimePage}} / {{.SlimeTotalPages}}</span>
+  {{if .SlimeHasNext}}<a href="/admin/users/{{.User.ID}}?page={{.SlimeNextPage}}" class="btn btn-sm">다음 &raquo;</a>{{end}}
+</div>
+{{end}}
+{{end}}

@@ -1,0 +1,48 @@
+{{define "shorts_detail.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+{{if .Message}}<div class="msg-success">{{.Message}}</div>{{end}}
+
+<div class="stat-card" style="margin-bottom:20px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+    <span style="font-size:18px; font-weight:700;">{{.Short.Title}}</span>
+    <span class="badge {{if eq .Short.Status "active"}}badge-uncommon{{else}}badge-mythic{{end}}">{{.Short.Status}}</span>
+  </div>
+  <div style="font-size:12px; color:#636e72; margin-bottom:8px;">
+    작성자: {{.Short.Nickname}} | 카테고리: {{.Short.Category}} | {{formatDate .Short.CreatedAt}}
+  </div>
+  <div style="font-size:13px; margin-bottom:12px;">{{.Short.Description}}</div>
+  <div class="stats-grid" style="margin-bottom:12px;">
+    <div class="stat-card"><div class="label">조회</div><div class="value" style="font-size:18px;">{{.Short.Views}}</div></div>
+    <div class="stat-card"><div class="label">좋아요</div><div class="value" style="font-size:18px; color:#ff6b6b;">{{.Short.Likes}}</div></div>
+    <div class="stat-card"><div class="label">팁</div><div class="value" style="font-size:18px; color:#ffeaa7;">{{.Short.TipTotal}}</div></div>
+  </div>
+  <div style="display:flex; gap:8px;">
+    <form method="POST" action="/admin/shorts/{{.Short.ID}}/hide">
+      <button type="submit" class="btn btn-warning btn-sm">숨기기</button>
+    </form>
+    <form method="POST" action="/admin/shorts/{{.Short.ID}}/delete" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+      <button type="submit" class="btn btn-danger btn-sm">삭제</button>
+    </form>
+  </div>
+</div>
+
+<!-- Comments -->
+<h2 style="font-size:16px; margin-bottom:12px; color:#74b9ff;">댓글 (최근 50건)</h2>
+<table>
+  <thead><tr><th>닉네임</th><th>내용</th><th>시간</th></tr></thead>
+  <tbody>
+    {{range .Comments}}
+    <tr>
+      <td>{{.Nickname}}</td>
+      <td style="font-size:12px; max-width:400px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{.Content}}</td>
+      <td style="font-size:11px; color:#636e72;">{{formatDate .CreatedAt}}</td>
+    </tr>
+    {{else}}
+    <tr><td colspan="3" style="text-align:center; color:#636e72;">댓글 없음</td></tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}

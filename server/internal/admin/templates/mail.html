@@ -1,0 +1,84 @@
+{{define "mail.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+{{if eq .Message "sent"}}
+<div class="msg-success">우편이 발송되었습니다.</div>
+{{else if eq .Message "required"}}
+<div class="msg-error">제목과 내용을 입력해주세요.</div>
+{{else if eq .Message "error"}}
+<div class="msg-error">발송에 실패했습니다.</div>
+{{end}}
+
+<!-- Send Mail Form -->
+<div class="stat-card" style="margin-bottom: 24px;">
+  <div class="label" style="margin-bottom: 16px; font-size: 14px; color: #55efc4;">새 우편 작성</div>
+  <form method="POST" action="/admin/mail/send">
+    <div class="form-row">
+      <label style="min-width: 100px;">대상</label>
+      <select name="target_type" id="targetType" style="width: 160px;" onchange="document.getElementById('targetUser').style.display = this.value === 'user' ? 'flex' : 'none';">
+        <option value="all">전체 유저</option>
+        <option value="user">특정 유저</option>
+      </select>
+    </div>
+    <div class="form-row" id="targetUser" style="display: none;">
+      <label style="min-width: 100px;">유저 ID</label>
+      <input type="text" name="target_user_id" placeholder="UUID..." style="flex: 1;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">유형</label>
+      <select name="mail_type" style="width: 160px;">
+        <option value="reward">보상</option>
+        <option value="announcement">공지</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">제목</label>
+      <input type="text" name="title" placeholder="우편 제목..." style="flex: 1;" required />
+    </div>
+    <div class="form-row" style="align-items: start;">
+      <label style="min-width: 100px; padding-top: 8px;">내용</label>
+      <textarea name="body" rows="4" placeholder="우편 내용..." style="flex: 1;" required></textarea>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">골드 보상</label>
+      <input type="number" name="gold" value="0" min="0" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">젬 보상</label>
+      <input type="number" name="gems" value="0" min="0" style="width: 120px;" />
+    </div>
+    <button type="submit" class="btn btn-primary" style="margin-top: 8px;" onclick="return confirm('우편을 발송하시겠습니까?')">발송</button>
+  </form>
+</div>
+
+<!-- Recent Mails -->
+<h2 style="font-size: 16px; margin-bottom: 12px;">최근 발송 내역</h2>
+<table>
+  <thead>
+    <tr>
+      <th>제목</th>
+      <th>유형</th>
+      <th>골드</th>
+      <th>젬</th>
+      <th>대상</th>
+      <th>발송일</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .RecentMails}}
+    <tr>
+      <td>{{.Title}}</td>
+      <td><span class="badge" style="background: rgba(162,155,254,0.15); color: #a29bfe;">{{.MailType}}</span></td>
+      <td style="color: #ffeaa7;">{{if gt .Gold 0}}{{.Gold}}{{else}}-{{end}}</td>
+      <td style="color: #a29bfe;">{{if gt .Gems 0}}{{.Gems}}{{else}}-{{end}}</td>
+      <td style="font-size: 11px;">{{.Target}}</td>
+      <td style="color: #636e72; font-size: 11px;">{{.CreatedAt.Format "2006-01-02 15:04"}}</td>
+    </tr>
+    {{else}}
+    <tr><td colspan="6" style="text-align:center; color:#636e72; padding: 24px;">발송 내역 없음</td></tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}

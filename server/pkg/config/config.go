@@ -3,13 +3,20 @@ package config
 import "os"
 
 type Config struct {
-	Port     string
-	DBHost   string
-	DBPort   string
-	DBUser   string
-	DBPass   string
-	DBName   string
+	Port      string
+	DBHost    string
+	DBPort    string
+	DBUser    string
+	DBPass    string
+	DBName    string
 	RedisAddr string
+
+	JWTSecret         string
+	GoogleClientID    string
+	GoogleSecret      string
+	KakaoClientID     string
+	KakaoSecret       string
+	OAuthRedirectBase string
 }
 
 func Load() *Config {
@@ -21,6 +28,13 @@ func Load() *Config {
 		DBPass:    getEnv("DB_PASSWORD", "slime_secret"),
 		DBName:    getEnv("DB_NAME", "slimetopia"),
 		RedisAddr: getEnv("REDIS_ADDR", "localhost:6379"),
+
+		JWTSecret:         getEnv("JWT_SECRET", "slimetopia-dev-secret-change-in-production"),
+		GoogleClientID:    getEnv("GOOGLE_CLIENT_ID", ""),
+		GoogleSecret:      getEnv("GOOGLE_CLIENT_SECRET", ""),
+		KakaoClientID:     getEnv("KAKAO_CLIENT_ID", ""),
+		KakaoSecret:       getEnv("KAKAO_CLIENT_SECRET", ""),
+		OAuthRedirectBase: getEnv("OAUTH_REDIRECT_BASE", "http://localhost:8080"),
 	}
 }
 

@@ -1,0 +1,86 @@
+{{define "reports.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+{{if eq .Message "processed"}}
+<div class="msg-success">신고가 처리되었습니다.</div>
+{{else if eq .Message "error"}}
+<div class="msg-error">오류가 발생했습니다.</div>
+{{end}}
+
+<!-- Status Filter -->
+<div class="tab-bar">
+  <a href="/admin/moderation/reports?status=pending" {{if eq .Status "pending"}}class="active"{{end}}>대기 중</a>
+  <a href="/admin/moderation/reports?status=reviewed" {{if eq .Status "reviewed"}}class="active"{{end}}>검토 완료</a>
+  <a href="/admin/moderation/reports?status=dismissed" {{if eq .Status "dismissed"}}class="active"{{end}}>기각</a>
+</div>
+
+<p style="font-size: 12px; color: #636e72; margin-bottom: 12px;">총 {{.TotalCount}}건</p>
+
+{{if .Error}}
+<div class="msg-error">{{.Error}}</div>
+{{end}}
+
+<table>
+  <thead>
+    <tr>
+      <th>신고자</th>
+      <th>대상 유형</th>
+      <th>대상 ID</th>
+      <th>사유</th>
+      <th>상세</th>
+      <th>시간</th>
+      <th>액션</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Reports}}
+    <tr>
+      <td style="color: #55efc4;">{{.ReporterNick}}</td>
+      <td>
+        {{if eq .TargetType "post"}}<span class="badge" style="background: rgba(116,185,255,0.15); color: #74b9ff;">게시글</span>
+        {{else if eq .TargetType "reply"}}<span class="badge" style="background: rgba(162,155,254,0.15); color: #a29bfe;">댓글</span>
+        {{else if eq .TargetType "user"}}<span class="badge" style="background: rgba(255,234,167,0.15); color: #ffeaa7;">유저</span>
+        {{else}}<span class="badge badge-common">{{.TargetType}}</span>
+        {{end}}
+      </td>
+      <td style="font-size: 11px; color: #636e72;">{{.TargetID}}</td>
+      <td>
+        {{if eq .Reason "spam"}}<span style="color: #ffeaa7;">스팸</span>
+        {{else if eq .Reason "abuse"}}<span style="color: #ff6b6b;">욕설</span>
+        {{else if eq .Reason "inappropriate"}}<span style="color: #e17055;">부적절</span>
+        {{else}}<span style="color: #b2bec3;">{{.Reason}}</span>
+        {{end}}
+      </td>
+      <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #b2bec3;">{{.Detail}}</td>
+      <td style="color: #636e72; font-size: 11px;">{{.CreatedAt.Format "2006-01-02 15:04"}}</td>
+      <td>
+        {{if eq .Status "pending"}}
+        <form method="POST" action="/admin/moderation/reports/{{.ID}}/process" style="display: inline;">
+          <input type="hidden" name="action" value="reviewed" />
+          <button type="submit" class="btn btn-sm btn-success">확인</button>
+        </form>
+        <form method="POST" action="/admin/moderation/reports/{{.ID}}/process" style="display: inline; margin-left: 4px;">
+          <input type="hidden" name="action" value="dismissed" />
+          <button type="submit" class="btn btn-sm btn-danger">기각</button>
+        </form>
+        {{else}}
+        <span style="color: #636e72;">처리됨</span>
+        {{end}}
+      </td>
+    </tr>
+    {{else}}
+    <tr><td colspan="7" style="text-align:center; color:#636e72; padding: 24px;">신고 내역 없음</td></tr>
+    {{end}}
+  </tbody>
+</table>
+
+{{if gt .TotalPages 1}}
+<div class="pagination">
+  {{if .HasPrev}}<a href="/admin/moderation/reports?status={{.Status}}&page={{.PrevPage}}" class="btn btn-sm">&laquo; 이전</a>{{end}}
+  <span class="current">{{.Page}} / {{.TotalPages}}</span>
+  {{if .HasNext}}<a href="/admin/moderation/reports?status={{.Status}}&page={{.NextPage}}" class="btn btn-sm">다음 &raquo;</a>{{end}}
+</div>
+{{end}}
+{{end}}

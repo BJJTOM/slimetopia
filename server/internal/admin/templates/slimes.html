@@ -1,0 +1,55 @@
+{{define "slimes.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+<form class="search-bar" method="GET" action="/admin/slimes">
+  <input type="text" name="search" placeholder="Search by species or owner..." value="{{.Search}}" />
+  <select name="grade" style="width: 130px;">
+    <option value="">All Grades</option>
+    <option value="common" {{if eq .Grade "common"}}selected{{end}}>Common</option>
+    <option value="uncommon" {{if eq .Grade "uncommon"}}selected{{end}}>Uncommon</option>
+    <option value="rare" {{if eq .Grade "rare"}}selected{{end}}>Rare</option>
+    <option value="epic" {{if eq .Grade "epic"}}selected{{end}}>Epic</option>
+    <option value="legendary" {{if eq .Grade "legendary"}}selected{{end}}>Legendary</option>
+    <option value="mythic" {{if eq .Grade "mythic"}}selected{{end}}>Mythic</option>
+  </select>
+  <button type="submit" class="btn btn-primary">Filter</button>
+  {{if or .Search .Grade}}<a href="/admin/slimes" class="btn btn-danger">Clear</a>{{end}}
+</form>
+
+<p style="font-size: 12px; color: #636e72; margin-bottom: 12px;">Total: {{.TotalCount}} slimes</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Species</th>
+      <th>Element</th>
+      <th>Grade</th>
+      <th>Level</th>
+      <th>Owner</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Slimes}}
+    <tr>
+      <td>{{.SpeciesName}}</td>
+      <td>{{.Element}}</td>
+      <td><span class="badge badge-{{.Grade}}">{{.Grade}}</span></td>
+      <td>{{.Level}}</td>
+      <td>{{.OwnerNick}}</td>
+    </tr>
+    {{else}}
+    <tr><td colspan="5" style="text-align:center; color:#636e72; padding: 24px;">No slimes found</td></tr>
+    {{end}}
+  </tbody>
+</table>
+
+{{if gt .TotalPages 1}}
+<div class="pagination">
+  {{if .HasPrev}}<a href="/admin/slimes?page={{.PrevPage}}&search={{.Search}}&grade={{.Grade}}" class="btn btn-sm">&laquo; Prev</a>{{end}}
+  <span class="current">{{.Page}} / {{.TotalPages}}</span>
+  {{if .HasNext}}<a href="/admin/slimes?page={{.NextPage}}&search={{.Search}}&grade={{.Grade}}" class="btn btn-sm">Next &raquo;</a>{{end}}
+</div>
+{{end}}
+{{end}}

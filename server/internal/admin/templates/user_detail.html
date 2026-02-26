@@ -1,0 +1,72 @@
+{{define "user_detail.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+{{if eq .Message "success"}}
+<div class="msg-success">Currency granted successfully!</div>
+{{else if eq .Message "error"}}
+<div class="msg-error">Failed to grant currency</div>
+{{end}}
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+  <div class="stat-card">
+    <div class="label">Nickname</div>
+    <div class="value" style="font-size: 18px; color: #e8e4f0;">{{.User.Nickname}}</div>
+    <div style="font-size: 11px; color: #636e72; margin-top: 4px;">Provider: {{.User.Provider}} | ID: {{.User.ID}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Level</div>
+    <div class="value">{{.User.Level}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Gold</div>
+    <div class="value" style="color: #ffeaa7;">{{.User.Gold}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">Gems</div>
+    <div class="value" style="color: #a29bfe;">{{.User.Gems}}</div>
+  </div>
+</div>
+
+<!-- Give Currency Form -->
+<div class="stat-card" style="margin-bottom: 24px;">
+  <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #55efc4;">Give Currency</div>
+  <form method="POST" action="/admin/users/{{.User.ID}}/give">
+    <div class="form-row">
+      <label>Gold</label>
+      <input type="number" name="gold" value="0" style="width: 120px;" />
+    </div>
+    <div class="form-row">
+      <label>Gems</label>
+      <input type="number" name="gems" value="0" style="width: 120px;" />
+    </div>
+    <button type="submit" class="btn btn-primary">Give</button>
+  </form>
+</div>
+
+<!-- User's Slimes -->
+<h2 style="font-size: 16px; margin-bottom: 12px;">Slimes ({{len .User.Slimes}})</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Species</th>
+      <th>Element</th>
+      <th>Grade</th>
+      <th>Level</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .User.Slimes}}
+    <tr>
+      <td>{{.SpeciesName}}</td>
+      <td>{{.Element}}</td>
+      <td><span class="badge badge-{{.Grade}}">{{.Grade}}</span></td>
+      <td>{{.Level}}</td>
+    </tr>
+    {{else}}
+    <tr><td colspan="4" style="text-align:center; color:#636e72; padding: 16px;">No slimes</td></tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}

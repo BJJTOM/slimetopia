@@ -9,7 +9,12 @@
         "gold": { "min": 50, "max": 150 },
         "items": ["grass_seed"]
       },
-      "unlock": { "type": "default" }
+      "unlock": { "type": "default" },
+      "material_drops": [
+        { "material_id": 17, "chance": 0.50, "min_qty": 1, "max_qty": 2 },
+        { "material_id": 3,  "chance": 0.40, "min_qty": 1, "max_qty": 3 },
+        { "material_id": 4,  "chance": 0.08, "min_qty": 1, "max_qty": 1 }
+      ]
     },
     {
       "id": 2,
@@ -20,7 +25,12 @@
         "gold": { "min": 100, "max": 300 },
         "items": ["water_seed", "recipe_hint"]
       },
-      "unlock": { "type": "level", "value": 5 }
+      "unlock": { "type": "level", "value": 5 },
+      "material_drops": [
+        { "material_id": 10, "chance": 0.45, "min_qty": 1, "max_qty": 2 },
+        { "material_id": 6,  "chance": 0.10, "min_qty": 1, "max_qty": 1 },
+        { "material_id": 5,  "chance": 0.30, "min_qty": 1, "max_qty": 2 }
+      ]
     },
     {
       "id": 3,
@@ -32,7 +42,188 @@
         "gems": { "min": 1, "max": 3 },
         "items": ["fire_seed", "rare_egg"]
       },
-      "unlock": { "type": "level", "value": 10 }
+      "unlock": { "type": "level", "value": 10 },
+      "material_drops": [
+        { "material_id": 7,  "chance": 0.50, "min_qty": 1, "max_qty": 2 },
+        { "material_id": 1,  "chance": 0.40, "min_qty": 1, "max_qty": 3 },
+        { "material_id": 8,  "chance": 0.08, "min_qty": 1, "max_qty": 1 }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "얼음 동굴",
+      "duration_minutes": 45,
+      "recommended_element": "ice",
+      "rewards": {
+        "gold": { "min": 100, "max": 200 },
+        "items": ["ice_crystal"]
+      },
+      "unlock": { "type": "level", "value": 8 },
+      "material_drops": [
+        { "material_id": 10, "chance": 0.55, "min_qty": 1, "max_qty": 3 },
+        { "material_id": 2,  "chance": 0.10, "min_qty": 1, "max_qty": 1 },
+        { "material_id": 1,  "chance": 0.30, "min_qty": 1, "max_qty": 2 }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "천둥 봉우리",
+      "duration_minutes": 60,
+      "recommended_element": "electric",
+      "rewards": {
+        "gold": { "min": 150, "max": 250 },
+        "gems": { "min": 0, "max": 2 },
+        "items": ["thunder_shard"]
+      },
+      "unlock": { "type": "level", "value": 12 },
+      "material_drops": [
+        { "material_id": 11, "chance": 0.55, "min_qty": 1, "max_qty": 2 },
+        { "material_id": 1,  "chance": 0.35, "min_qty": 1, "max_qty": 2 },
+        { "material_id": 8,  "chance": 0.05, "min_qty": 1, "max_qty": 1 }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "독안개 늪",
+      "duration_minutes": 30,
+      "recommended_element": "poison",
+      "rewards": {
+        "gold": { "min": 80, "max": 160 },
+        "items": ["toxic_spore"]
+      },
+      "unlock": { "type": "level", "value": 6 },
+      "material_drops": [
+        { "material_id": 12, "chance": 0.55, "min_qty": 1, "max_qty": 2 },
+        { "material_id": 9,  "chance": 0.05, "min_qty": 1, "max_qty": 1 },
+        { "material_id": 5,  "chance": 0.25, "min_qty": 1, "max_qty": 2 }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "대지의 협곡",
+      "duration_minutes": 90,
+      "recommended_element": "earth",
+      "rewards": {
+        "gold": { "min": 200, "max": 400 },
+        "gems": { "min": 1, "max": 2 },
+        "items": ["earth_core"]
+      },
+      "unlock": { "type": "level", "value": 15 },
+      "material_drops": [
+        { "material_id": 13, "chance": 0.50, "min_qty": 1, "max_qty": 2 },
+        { "material_id": 5,  "chance": 0.35, "min_qty": 1, "max_qty": 2 },
+        { "material_id": 19, "chance": 0.03, "min_qty": 1, "max_qty": 1 }
+      ]
+    },
+    {
+      "id": 8,
+      "name": "바람의 사원",
+      "duration_minutes": 45,
+      "recommended_element": "wind",
+      "rewards": {
+        "gold": { "min": 130, "max": 230 },
+        "items": ["wind_feather"]
+      },
+      "unlock": { "type": "level", "value": 10 },
+      "material_drops": [
+        { "material_id": 14, "chance": 0.55, "min_qty": 1, "max_qty": 2 },
+        { "material_id": 17, "chance": 0.30, "min_qty": 1, "max_qty": 2 },
+        { "material_id": 4,  "chance": 0.05, "min_qty": 1, "max_qty": 1 }
+      ]
+    },
+    {
+      "id": 9,
+      "name": "천체 관측소",
+      "duration_minutes": 120,
+      "recommended_element": "celestial",
+      "rewards": {
+        "gold": { "min": 300, "max": 600 },
+        "gems": { "min": 1, "max": 3 },
+        "items": ["star_fragment"]
+      },
+      "unlock": { "type": "level", "value": 20 },
+      "material_drops": [
+        { "material_id": 15, "chance": 0.45, "min_qty": 1, "max_qty": 2 },
+        { "material_id": 2,  "chance": 0.25, "min_qty": 1, "max_qty": 1 },
+        { "material_id": 16, "chance": 0.20, "min_qty": 1, "max_qty": 1 },
+        { "material_id": 18, "chance": 0.01, "min_qty": 1, "max_qty": 1 },
+        { "material_id": 20, "chance": 0.01, "min_qty": 1, "max_qty": 1 }
+      ]
+    },
+    {
+      "id": 10,
+      "name": "빛의 신전",
+      "duration_minutes": 60,
+      "recommended_element": "light",
+      "rewards": {
+        "gold": { "min": 150, "max": 350 },
+        "gems": { "min": 0, "max": 2 },
+        "items": ["light_orb"]
+      },
+      "unlock": { "type": "level", "value": 12 },
+      "material_drops": [
+        { "material_id": 2,  "chance": 0.50, "min_qty": 1, "max_qty": 2 },
+        { "material_id": 8,  "chance": 0.15, "min_qty": 1, "max_qty": 1 },
+        { "material_id": 4,  "chance": 0.10, "min_qty": 1, "max_qty": 1 },
+        { "material_id": 15, "chance": 0.08, "min_qty": 1, "max_qty": 1 }
+      ]
+    },
+    {
+      "id": 11,
+      "name": "그림자 미궁",
+      "duration_minutes": 75,
+      "recommended_element": "dark",
+      "rewards": {
+        "gold": { "min": 180, "max": 380 },
+        "gems": { "min": 1, "max": 2 },
+        "items": ["shadow_shard"]
+      },
+      "unlock": { "type": "level", "value": 14 },
+      "material_drops": [
+        { "material_id": 16, "chance": 0.50, "min_qty": 1, "max_qty": 2 },
+        { "material_id": 9,  "chance": 0.08, "min_qty": 1, "max_qty": 1 },
+        { "material_id": 5,  "chance": 0.30, "min_qty": 1, "max_qty": 2 },
+        { "material_id": 6,  "chance": 0.06, "min_qty": 1, "max_qty": 1 }
+      ]
+    },
+    {
+      "id": 12,
+      "name": "용암 심해",
+      "duration_minutes": 180,
+      "recommended_element": "fire",
+      "rewards": {
+        "gold": { "min": 400, "max": 800 },
+        "gems": { "min": 2, "max": 5 },
+        "items": ["rare_egg", "fire_seed"]
+      },
+      "unlock": { "type": "level", "value": 25 },
+      "material_drops": [
+        { "material_id": 7,  "chance": 0.55, "min_qty": 2, "max_qty": 4 },
+        { "material_id": 8,  "chance": 0.20, "min_qty": 1, "max_qty": 2 },
+        { "material_id": 19, "chance": 0.05, "min_qty": 1, "max_qty": 1 },
+        { "material_id": 9,  "chance": 0.04, "min_qty": 1, "max_qty": 1 },
+        { "material_id": 18, "chance": 0.02, "min_qty": 1, "max_qty": 1 }
+      ]
+    },
+    {
+      "id": 13,
+      "name": "차원의 틈",
+      "duration_minutes": 240,
+      "recommended_element": "celestial",
+      "rewards": {
+        "gold": { "min": 500, "max": 1000 },
+        "gems": { "min": 3, "max": 6 },
+        "items": ["legendary_egg", "star_fragment"]
+      },
+      "unlock": { "type": "level", "value": 30 },
+      "material_drops": [
+        { "material_id": 15, "chance": 0.50, "min_qty": 2, "max_qty": 3 },
+        { "material_id": 2,  "chance": 0.35, "min_qty": 1, "max_qty": 2 },
+        { "material_id": 19, "chance": 0.08, "min_qty": 1, "max_qty": 1 },
+        { "material_id": 9,  "chance": 0.06, "min_qty": 1, "max_qty": 1 },
+        { "material_id": 18, "chance": 0.03, "min_qty": 1, "max_qty": 1 },
+        { "material_id": 20, "chance": 0.03, "min_qty": 1, "max_qty": 1 }
+      ]
     }
   ]
 }

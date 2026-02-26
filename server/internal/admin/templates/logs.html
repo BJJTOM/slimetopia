@@ -1,0 +1,81 @@
+{{template "layout.html" .}}
+{{define "content"}}
+<h2>활동 로그</h2>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:25px;">
+  <div style="background:#1e1e2e;padding:15px;border-radius:8px;text-align:center;">
+    <div style="color:#55EFC4;font-size:24px;font-weight:bold;">{{.TotalCommunityPosts}}</div>
+    <div style="color:#aaa;font-size:12px;">총 게시글</div>
+  </div>
+  <div style="background:#1e1e2e;padding:15px;border-radius:8px;text-align:center;">
+    <div style="color:#FF6B6B;font-size:24px;font-weight:bold;">{{.TotalBossAttacks}}</div>
+    <div style="color:#aaa;font-size:12px;">보스 공격</div>
+  </div>
+  <div style="background:#1e1e2e;padding:15px;border-radius:8px;text-align:center;">
+    <div style="color:#FFEAA7;font-size:24px;font-weight:bold;">{{.TotalGiftsSent}}</div>
+    <div style="color:#aaa;font-size:12px;">선물 전송</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+  <div>
+    <h3 style="color:#55EFC4;">최근 가입</h3>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr style="border-bottom:1px solid #333;">
+        <th style="padding:6px;text-align:left;color:#aaa;font-size:12px;">닉네임</th>
+        <th style="padding:6px;text-align:left;color:#aaa;font-size:12px;">경로</th>
+        <th style="padding:6px;text-align:left;color:#aaa;font-size:12px;">시간</th>
+      </tr></thead>
+      <tbody>
+      {{range .RecentSignups}}
+      <tr style="border-bottom:1px solid #222;">
+        <td style="padding:6px;color:#fff;font-size:12px;">{{.Nickname}}</td>
+        <td style="padding:6px;color:#888;font-size:12px;">{{.Detail}}</td>
+        <td style="padding:6px;color:#888;font-size:11px;">{{.CreatedAt.Format "01/02 15:04"}}</td>
+      </tr>
+      {{end}}
+      </tbody>
+    </table>
+  </div>
+
+  <div>
+    <h3 style="color:#74B9FF;">최근 게시글</h3>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr style="border-bottom:1px solid #333;">
+        <th style="padding:6px;text-align:left;color:#aaa;font-size:12px;">작성자</th>
+        <th style="padding:6px;text-align:left;color:#aaa;font-size:12px;">내용</th>
+        <th style="padding:6px;text-align:left;color:#aaa;font-size:12px;">시간</th>
+      </tr></thead>
+      <tbody>
+      {{range .RecentPosts}}
+      <tr style="border-bottom:1px solid #222;">
+        <td style="padding:6px;color:#fff;font-size:12px;">{{.Nickname}}</td>
+        <td style="padding:6px;color:#888;font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{.Detail}}</td>
+        <td style="padding:6px;color:#888;font-size:11px;">{{.CreatedAt.Format "01/02 15:04"}}</td>
+      </tr>
+      {{end}}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div style="margin-top:20px;">
+  <h3 style="color:#FF6B6B;">최근 보스 공격</h3>
+  <table style="width:100%;border-collapse:collapse;">
+    <thead><tr style="border-bottom:1px solid #333;">
+      <th style="padding:6px;text-align:left;color:#aaa;font-size:12px;">플레이어</th>
+      <th style="padding:6px;text-align:left;color:#aaa;font-size:12px;">데미지</th>
+      <th style="padding:6px;text-align:left;color:#aaa;font-size:12px;">시간</th>
+    </tr></thead>
+    <tbody>
+    {{range .RecentBossAttacks}}
+    <tr style="border-bottom:1px solid #222;">
+      <td style="padding:6px;color:#fff;font-size:12px;">{{.Nickname}}</td>
+      <td style="padding:6px;color:#FF6B6B;font-size:12px;">{{.Detail}}</td>
+      <td style="padding:6px;color:#888;font-size:11px;">{{.CreatedAt.Format "01/02 15:04"}}</td>
+    </tr>
+    {{end}}
+    </tbody>
+  </table>
+</div>
+{{end}}

@@ -1,0 +1,277 @@
+{{define "dashboard.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+<!-- Core Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="label">총 유저</div>
+    <div class="value">{{.TotalUsers}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">총 슬라임</div>
+    <div class="value">{{.TotalSlimes}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">오늘 활성 (DAU)</div>
+    <div class="value">{{.TodayActive}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">월간 활성 (MAU)</div>
+    <div class="value">{{.MAU}}</div>
+  </div>
+</div>
+
+<!-- Economy Stats -->
+<h2 style="font-size: 16px; margin-bottom: 12px; color: #ffeaa7;">경제 현황</h2>
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="label">총 골드</div>
+    <div class="value" style="color: #ffeaa7;">{{.TotalGold}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">총 젬</div>
+    <div class="value" style="color: #a29bfe;">{{.TotalGems}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">평균 골드</div>
+    <div class="value" style="color: #ffeaa7; font-size: 18px;">{{.AvgGold}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">평균 젬</div>
+    <div class="value" style="color: #a29bfe; font-size: 18px;">{{.AvgGems}}</div>
+  </div>
+</div>
+
+<!-- Economy Flow (Today) -->
+<h2 style="font-size: 16px; margin-bottom: 12px; color: #f9ca24;">오늘의 경제 흐름</h2>
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="label">골드 유입</div>
+    <div class="value" style="color: #55efc4; font-size: 18px;">+{{.GoldIn}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">골드 유출</div>
+    <div class="value" style="color: #ff6b6b; font-size: 18px;">-{{.GoldOut}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">젬 유입</div>
+    <div class="value" style="color: #55efc4; font-size: 18px;">+{{.GemsIn}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">젬 유출</div>
+    <div class="value" style="color: #ff6b6b; font-size: 18px;">-{{.GemsOut}}</div>
+  </div>
+</div>
+
+<!-- Retention & Gacha -->
+<h2 style="font-size: 16px; margin-bottom: 12px; color: #fd79a8;">리텐션 & 뽑기</h2>
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="label">D1 리텐션</div>
+    <div class="value" style="color: #fd79a8; font-size: 18px;">{{.RetD1}}%</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">D7 리텐션</div>
+    <div class="value" style="color: #fd79a8; font-size: 18px;">{{.RetD7}}%</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">D30 리텐션</div>
+    <div class="value" style="color: #fd79a8; font-size: 18px;">{{.RetD30}}%</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">오늘 뽑기</div>
+    <div class="value" style="color: #a29bfe; font-size: 18px;">{{.TodayGacha}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">대기 고객문의</div>
+    <div class="value" style="color: {{if gt .OpenTickets 0}}#ff6b6b{{else}}#55efc4{{end}}; font-size: 18px;">{{.OpenTickets}}</div>
+  </div>
+</div>
+
+<!-- Activity Stats -->
+<h2 style="font-size: 16px; margin-bottom: 12px; color: #74b9ff;">활동 현황</h2>
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="label">진행 중 탐험</div>
+    <div class="value" style="color: #74b9ff;">{{.ActiveExplores}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">오늘 게시글</div>
+    <div class="value" style="color: #55efc4;">{{.TodayPosts}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">오늘 댓글</div>
+    <div class="value" style="color: #55efc4;">{{.TodayReplies}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">대기 중 신고</div>
+    <div class="value" style="color: {{if gt .PendingReports 0}}#ff6b6b{{else}}#55efc4{{end}};">{{.PendingReports}}</div>
+  </div>
+</div>
+
+<!-- World Boss -->
+{{if .BossName}}
+<h2 style="font-size: 16px; margin-bottom: 12px; color: #ff6b6b;">월드보스</h2>
+<div class="stat-card" style="margin-bottom: 24px;">
+  <div class="label">{{.BossName}}</div>
+  <div class="value" style="color: #ff6b6b;">HP: {{.BossCurrentHP}} / {{.BossMaxHP}}</div>
+  <div style="margin-top: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; height: 8px; overflow: hidden;">
+    {{if gt .BossMaxHP 0}}
+    <div style="height: 100%; background: linear-gradient(90deg, #ff6b6b, #e17055); width: {{percentage .BossCurrentHP .BossMaxHP}}%;"></div>
+    {{end}}
+  </div>
+</div>
+{{end}}
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+  <!-- DAU Trend (14 days) -->
+  <div>
+    <h2 style="font-size: 16px; margin-bottom: 12px; color: #fd79a8;">DAU 추이 (14일)</h2>
+    <table>
+      <thead><tr><th>날짜</th><th>활성 유저</th><th></th></tr></thead>
+      <tbody>
+        {{range .DAUTrend}}
+        <tr>
+          <td>{{.Date}}</td>
+          <td style="color: #fd79a8; font-weight: 700;">{{.Count}}</td>
+          <td><div style="background: linear-gradient(90deg, #fd79a8, #e84393); height: 10px; border-radius: 4px; width: {{.Count}}px; max-width: 200px;"></div></td>
+        </tr>
+        {{else}}
+        <tr><td colspan="3" style="text-align:center; color:#636e72;">데이터 없음</td></tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Action Distribution -->
+  <div>
+    <h2 style="font-size: 16px; margin-bottom: 12px; color: #00cec9;">오늘 액션 분포 TOP 10</h2>
+    <table>
+      <thead><tr><th>액션</th><th>횟수</th></tr></thead>
+      <tbody>
+        {{range .ActionDist}}
+        <tr>
+          <td><span class="badge" style="background:rgba(0,206,201,0.15); color:#00cec9;">{{.Action}}</span></td>
+          <td style="font-weight: 700;">{{.Count}}</td>
+        </tr>
+        {{else}}
+        <tr><td colspan="2" style="text-align:center; color:#636e72;">데이터 없음</td></tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Signup Trend -->
+  <div>
+    <h2 style="font-size: 16px; margin-bottom: 12px; color: #55efc4;">최근 7일 가입</h2>
+    <table>
+      <thead><tr><th>날짜</th><th>가입 수</th></tr></thead>
+      <tbody>
+        {{range .SignupTrend}}
+        <tr>
+          <td>{{.Date}}</td>
+          <td style="color: #55efc4; font-weight: 700;">{{.Count}}</td>
+        </tr>
+        {{else}}
+        <tr><td colspan="2" style="text-align:center; color:#636e72;">데이터 없음</td></tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Grade Distribution -->
+  <div>
+    <h2 style="font-size: 16px; margin-bottom: 12px; color: #a29bfe;">등급 분포</h2>
+    <table>
+      <thead><tr><th>등급</th><th>수량</th></tr></thead>
+      <tbody>
+        {{range .GradeDistribution}}
+        <tr>
+          <td><span class="badge badge-{{.Grade}}">{{.Grade}}</span></td>
+          <td>{{.Count}}</td>
+        </tr>
+        {{else}}
+        <tr><td colspan="2" style="text-align:center; color:#636e72;">데이터 없음</td></tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Element Popularity -->
+  <div>
+    <h2 style="font-size: 16px; margin-bottom: 12px; color: #74b9ff;">원소 인기</h2>
+    <table>
+      <thead><tr><th>원소</th><th>수량</th></tr></thead>
+      <tbody>
+        {{range .ElementPopularity}}
+        <tr>
+          <td>{{.Element}}</td>
+          <td>{{.Count}}</td>
+        </tr>
+        {{else}}
+        <tr><td colspan="2" style="text-align:center; color:#636e72;">데이터 없음</td></tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Top 10 Collection -->
+  <div>
+    <h2 style="font-size: 16px; margin-bottom: 12px; color: #55efc4;">Top 10 컬렉션</h2>
+    <table>
+      <thead><tr><th>#</th><th>닉네임</th><th>수집 수</th></tr></thead>
+      <tbody>
+        {{range $i, $v := .TopCollection}}
+        <tr>
+          <td style="color: #636e72;">{{add $i 1}}</td>
+          <td>{{$v.Nickname}}</td>
+          <td style="color: #55efc4; font-weight: 700;">{{$v.Value}}</td>
+        </tr>
+        {{else}}
+        <tr><td colspan="3" style="text-align:center; color:#636e72;">데이터 없음</td></tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Top 10 Gold -->
+  <div>
+    <h2 style="font-size: 16px; margin-bottom: 12px; color: #ffeaa7;">Top 10 골드</h2>
+    <table>
+      <thead><tr><th>#</th><th>닉네임</th><th>골드</th></tr></thead>
+      <tbody>
+        {{range $i, $v := .TopGold}}
+        <tr>
+          <td style="color: #636e72;">{{add $i 1}}</td>
+          <td>{{$v.Nickname}}</td>
+          <td style="color: #ffeaa7; font-weight: 700;">{{$v.Value}}</td>
+        </tr>
+        {{else}}
+        <tr><td colspan="3" style="text-align:center; color:#636e72;">데이터 없음</td></tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Top 10 Level -->
+  <div>
+    <h2 style="font-size: 16px; margin-bottom: 12px; color: #a29bfe;">Top 10 레벨</h2>
+    <table>
+      <thead><tr><th>#</th><th>닉네임</th><th>레벨</th></tr></thead>
+      <tbody>
+        {{range $i, $v := .TopLevel}}
+        <tr>
+          <td style="color: #636e72;">{{add $i 1}}</td>
+          <td>{{$v.Nickname}}</td>
+          <td style="color: #a29bfe; font-weight: 700;">{{$v.Value}}</td>
+        </tr>
+        {{else}}
+        <tr><td colspan="3" style="text-align:center; color:#636e72;">데이터 없음</td></tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+</div>
+{{end}}

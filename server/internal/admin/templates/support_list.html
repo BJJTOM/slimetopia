@@ -1,0 +1,55 @@
+{{define "support_list.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+<div class="tab-bar">
+  <a href="/admin/support?status=open" class="{{if eq .Status "open"}}active{{end}}">대기</a>
+  <a href="/admin/support?status=in_progress" class="{{if eq .Status "in_progress"}}active{{end}}">진행중</a>
+  <a href="/admin/support?status=resolved" class="{{if eq .Status "resolved"}}active{{end}}">해결</a>
+  <a href="/admin/support?status=closed" class="{{if eq .Status "closed"}}active{{end}}">종료</a>
+</div>
+
+<form class="filter-bar" method="GET" action="/admin/support">
+  <input type="hidden" name="status" value="{{.Status}}">
+  <input type="text" name="search" placeholder="닉네임/제목 검색..." value="{{.Search}}" style="width:220px;">
+  <button type="submit" class="btn btn-primary btn-sm">검색</button>
+  <span style="color:#636e72; font-size:12px; margin-left:8px;">총 {{.TotalCount}}건</span>
+</form>
+
+{{if .Error}}<div class="msg-error">{{.Error}}</div>{{end}}
+
+<table>
+  <thead>
+    <tr><th>ID</th><th>닉네임</th><th>제목</th><th>카테고리</th><th>상태</th><th>우선순위</th><th>담당</th><th>최근 업데이트</th><th></th></tr>
+  </thead>
+  <tbody>
+    {{range .Tickets}}
+    <tr>
+      <td>{{.ID}}</td>
+      <td>{{.Nickname}}</td>
+      <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{.Subject}}</td>
+      <td><span class="badge badge-rare">{{.Category}}</span></td>
+      <td>
+        {{if eq .Status "open"}}<span class="badge badge-mythic">대기</span>
+        {{else if eq .Status "in_progress"}}<span class="badge badge-legendary">진행중</span>
+        {{else if eq .Status "resolved"}}<span class="badge badge-uncommon">해결</span>
+        {{else}}<span class="badge badge-common">종료</span>{{end}}
+      </td>
+      <td>{{.Priority}}</td>
+      <td>{{.AssignedTo}}</td>
+      <td style="font-size:11px; color:#636e72;">{{formatDate .UpdatedAt}}</td>
+      <td><a href="/admin/support/{{.ID}}" class="btn btn-primary btn-sm">상세</a></td>
+    </tr>
+    {{else}}
+    <tr><td colspan="9" style="text-align:center; color:#636e72;">데이터 없음</td></tr>
+    {{end}}
+  </tbody>
+</table>
+
+<div class="pagination">
+  {{if .HasPrev}}<a href="?status={{.Status}}&page={{.PrevPage}}&search={{.Search}}">이전</a>{{end}}
+  <span class="current">{{.Page}} / {{.TotalPages}}</span>
+  {{if .HasNext}}<a href="?status={{.Status}}&page={{.NextPage}}&search={{.Search}}">다음</a>{{end}}
+</div>
+{{end}}

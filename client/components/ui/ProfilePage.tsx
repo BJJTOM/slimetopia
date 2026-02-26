@@ -6,11 +6,25 @@ import { useAuthStore } from "@/lib/store/authStore";
 import { useGameStore } from "@/lib/store/gameStore";
 import { useLocaleStore } from "@/lib/store/localeStore";
 import { type Locale } from "@/lib/i18n/translations";
-import { authApi } from "@/lib/api/client";
+import { authApi, uploadApi, resolveMediaUrl } from "@/lib/api/client";
 import { generateSlimeIconSvg } from "@/lib/slimeSvg";
 import { toastSuccess, toastError } from "@/components/ui/Toast";
+import { useShortsStore } from "@/lib/store/shortsStore";
+import ShortsUploadModal from "./ShortsUploadModal";
 
 const NICKNAME_COST = 500;
+
+// Homepage URL: derive host from API URL for LAN/Android compatibility
+const HOMEPAGE_URL = (() => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+  if (apiUrl) {
+    try {
+      const u = new URL(apiUrl);
+      return `${u.protocol}//${u.hostname}:3003`;
+    } catch { /* fallback */ }
+  }
+  return "http://localhost:3003";
+})();
 
 // ─── Profile background presets ──────────────────────────────────────────────
 
@@ -40,7 +54,7 @@ const CONTACT_CATEGORIES = [
 
 // ─── Sub-views ───────────────────────────────────────────────────────────────
 
-type SubView = "main" | "language" | "contact" | "terms" | "privacy" | "account" | "notifications";
+type SubView = "main" | "language" | "contact" | "terms" | "privacy" | "account" | "notifications" | "creator";
 
 interface Props {
   onClose: () => void;
@@ -184,6 +198,7 @@ export default function ProfilePage({ onClose }: Props) {
       case "language": return t("select_language");
       case "account": return "계정 관리";
       case "notifications": return "알림 설정";
+      case "creator": return "크리에이터 스튜디오";
       default: return t("profile");
     }
   };
@@ -219,6 +234,8 @@ export default function ProfilePage({ onClose }: Props) {
             slimes={slimes}
             species={species}
             avatarSlimeId={avatarSlime?.id || null}
+            accessToken={accessToken}
+            fetchUser={fetchUser}
             t={t}
             setEditingNickname={setEditingNickname}
             setNicknameValue={setNicknameValue}
@@ -257,6 +274,8 @@ export default function ProfilePage({ onClose }: Props) {
         )}
 
         {subView === "notifications" && <NotificationSettingsView t={t} />}
+
+        {subView === "creator" && <CreatorStudioView />}
       </div>
 
       {/* Logout confirmation modal */}
@@ -314,7 +333,7 @@ interface MainViewProps {
   avatarElement: string;
   avatarGrade: string;
   avatarAccessoryOverlays?: string[];
-  user: { id?: string; nickname: string; level: number; gold: number; gems: number; stardust: number } | null;
+  user: { id?: string; nickname: string; level: number; gold: number; gems: number; stardust: number; profile_image_url?: string } | null;
   editingNickname: boolean;
   nicknameValue: string;
   nicknameInputRef: React.RefObject<HTMLInputElement | null>;
@@ -325,6 +344,8 @@ interface MainViewProps {
   slimes: { id: string; species_id: number; element: string; name: string | null }[];
   species: { id: number; name: string; grade: string; element: string }[];
   avatarSlimeId: string | null;
+  accessToken: string | null;
+  fetchUser: () => Promise<void>;
   t: (key: string) => string;
   setEditingNickname: (v: boolean) => void;
   setNicknameValue: (v: string) => void;
@@ -339,13 +360,39 @@ interface MainViewProps {
 
 function MainView({
   bgPreset, avatarElement, avatarGrade, avatarAccessoryOverlays, user, editingNickname, nicknameValue,
-  nicknameInputRef, communityStats, locale, showBgPicker, showSlimePicker, slimes, species, avatarSlimeId, t,
+  nicknameInputRef, communityStats, locale, showBgPicker, showSlimePicker, slimes, species, avatarSlimeId,
+  accessToken, fetchUser, t,
   setEditingNickname, setNicknameValue, handleNicknameSubmit,
   setShowBgPicker, setShowSlimePicker, handleBgChange, handleSelectAvatarSlime, setSubView, setShowLogoutModal,
 }: MainViewProps) {
-  const avatarSvg = generateSlimeIconSvg(avatarElement, 80, avatarGrade, avatarAccessoryOverlays);
+  const avatarSpeciesId = avatarSlimeId ? slimes.find((s) => s.id === avatarSlimeId)?.species_id : undefined;
+  const avatarSvg = generateSlimeIconSvg(avatarElement, 80, avatarGrade, avatarAccessoryOverlays, avatarSpeciesId);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !accessToken) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toastError("이미지 크기는 5MB 이하여야 합니다");
+      return;
+    }
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      await uploadApi<{ profile_image_url: string }>("/api/profile/image", formData, accessToken);
+      await fetchUser();
+      toastSuccess("프로필 이미지가 변경되었습니다", "📸");
+    } catch {
+      toastError("이미지 업로드에 실패했습니다");
+    }
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const langLabel = LANGUAGE_OPTIONS.find((o) => o.value === locale)?.labelKey || "lang_auto";
+  const hasProfileImage = !!user?.profile_image_url;
 
   return (
     <div className="p-4 space-y-4">
@@ -358,12 +405,31 @@ function MainView({
         </button>
 
         <div className="p-6 flex flex-col items-center">
-          {/* Avatar — tap to pick slime */}
-          <button onClick={() => setShowSlimePicker(!showSlimePicker)}
-            className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-3 border-2 border-white/30 active:scale-95 transition"
-            style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>
-            <img src={avatarSvg} alt="avatar" className="w-16 h-16" draggable={false} />
-          </button>
+          {/* Avatar — show profile image or slime */}
+          <div className="relative mb-3">
+            <button onClick={() => setShowSlimePicker(!showSlimePicker)}
+              className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border-2 border-white/30 active:scale-95 transition overflow-hidden"
+              style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>
+              {hasProfileImage ? (
+                <img src={resolveMediaUrl(user!.profile_image_url!)} alt="profile" className="w-full h-full object-cover" draggable={false} />
+              ) : (
+                <img src={avatarSvg} alt="avatar" className="w-16 h-16" draggable={false} />
+              )}
+              {uploading && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full">
+                  <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                </div>
+              )}
+            </button>
+            {/* Camera button for photo upload */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#55EFC4] flex items-center justify-center text-xs active:scale-90 transition border-2 border-white/80"
+              style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
+              📷
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+          </div>
 
           {/* Nickname */}
           {editingNickname ? (
@@ -425,7 +491,7 @@ function MainView({
             <div className="grid grid-cols-5 gap-2 max-h-40 overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
               {slimes.map((sl) => {
                 const sp = species.find((s) => s.id === sl.species_id);
-                const icon = generateSlimeIconSvg(sl.element, 36, sp?.grade || "common");
+                const icon = generateSlimeIconSvg(sl.element, 36, sp?.grade || "common", undefined, sl.species_id);
                 const isSelected = sl.id === avatarSlimeId;
                 return (
                   <button key={sl.id} onClick={() => handleSelectAvatarSlime(sl.id)}
@@ -467,6 +533,8 @@ function MainView({
       <div className="rounded-2xl overflow-hidden border border-white/5"
         style={{ background: "linear-gradient(180deg, rgba(20,20,40,0.9), rgba(15,15,30,0.95))" }}>
 
+        <SettingsItem emoji="🎬" label="크리에이터 스튜디오" onClick={() => setSubView("creator")} />
+        <Divider />
         <SettingsItem emoji="👤" label="계정 관리" onClick={() => setSubView("account")} />
         <Divider />
         <SettingsItem emoji="🔔" label="알림 설정" onClick={() => setSubView("notifications")} />
@@ -481,6 +549,24 @@ function MainView({
         <Divider />
         <SettingsItem emoji="🚪" label={t("logout")} danger onClick={() => setShowLogoutModal(true)} />
       </div>
+
+      {/* Homepage link */}
+      <a
+        href={HOMEPAGE_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block w-full rounded-2xl overflow-hidden border border-white/5 active:scale-[0.98] transition"
+        style={{ background: "linear-gradient(135deg, rgba(85,239,196,0.08), rgba(0,184,148,0.04))" }}
+      >
+        <div className="flex items-center gap-3 px-4 py-3.5">
+          <span className="text-lg">🏠</span>
+          <div className="flex-1">
+            <p className="text-white/80 text-sm font-medium">SlimeTopia 홈페이지</p>
+            <p className="text-white/30 text-[10px] mt-0.5">공식 홈페이지 방문하기</p>
+          </div>
+          <span className="text-[#55EFC4]/60 text-sm">↗</span>
+        </div>
+      </a>
 
       {/* Version info */}
       <p className="text-center text-white/20 text-[10px] py-2">
@@ -787,6 +873,116 @@ function NotificationSettingsView({ t }: { t: (key: string) => string }) {
         <ToggleItem label="이벤트/공지 알림" desc="새 이벤트, 업데이트 공지"
           value={eventNotif} onToggle={() => toggle("notification_event", eventNotif, setEventNotif)} />
       </div>
+    </div>
+  );
+}
+
+// ─── Creator Studio View ──────────────────────────────────────────────────────
+
+function CreatorStudioView() {
+  const token = useAuthStore((s) => s.accessToken);
+  const { myShorts, myTotalViews, myTotalLikes, myTotalTipsGold, myTotalTipsGems, fetchMyShorts, deleteShort } = useShortsStore();
+  const [showUpload, setShowUpload] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (token) fetchMyShorts(token);
+  }, [token]);
+
+  const handleDelete = async (id: string) => {
+    if (!token || deleting) return;
+    setDeleting(id);
+    try {
+      await deleteShort(token, id);
+      toastSuccess("삭제되었습니다");
+    } catch {
+      toastError("삭제에 실패했습니다");
+    }
+    setDeleting(null);
+  };
+
+  const formatTime = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("ko-KR", { month: "short", day: "numeric" });
+  };
+
+  return (
+    <div className="p-4 space-y-4">
+      {/* Stats overview */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-xl p-3 border border-white/5" style={{ background: "rgba(20,20,40,0.9)" }}>
+          <p className="text-white/40 text-[10px]">총 조회수</p>
+          <p className="text-white font-bold text-lg">{myTotalViews.toLocaleString()}</p>
+        </div>
+        <div className="rounded-xl p-3 border border-white/5" style={{ background: "rgba(20,20,40,0.9)" }}>
+          <p className="text-white/40 text-[10px]">총 좋아요</p>
+          <p className="text-white font-bold text-lg">{myTotalLikes.toLocaleString()}</p>
+        </div>
+        <div className="rounded-xl p-3 border border-white/5" style={{ background: "rgba(20,20,40,0.9)" }}>
+          <p className="text-white/40 text-[10px]">받은 골드</p>
+          <p className="text-yellow-400 font-bold text-lg">{myTotalTipsGold.toLocaleString()}G</p>
+        </div>
+        <div className="rounded-xl p-3 border border-white/5" style={{ background: "rgba(20,20,40,0.9)" }}>
+          <p className="text-white/40 text-[10px]">받은 젬</p>
+          <p className="text-purple-400 font-bold text-lg">{myTotalTipsGems.toLocaleString()}</p>
+        </div>
+      </div>
+
+      {/* Upload button */}
+      <button
+        onClick={() => setShowUpload(true)}
+        className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold text-sm"
+      >
+        새 쇼츠 업로드
+      </button>
+
+      {/* My shorts grid */}
+      <div>
+        <h3 className="text-white/60 text-xs font-bold mb-3">내 쇼츠 ({myShorts.length})</h3>
+        {myShorts.length === 0 ? (
+          <div className="text-center py-8 text-white/30 text-sm">
+            아직 업로드한 쇼츠가 없어요
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {myShorts.map((s) => (
+              <div key={s.id} className="rounded-xl overflow-hidden border border-white/5" style={{ background: "rgba(20,20,40,0.9)" }}>
+                {/* Thumbnail */}
+                <div className="aspect-[9/16] max-h-36 bg-black/50 relative">
+                  {s.thumbnail_url ? (
+                    <img src={s.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-3xl">🎬</div>
+                  )}
+                  <div className="absolute bottom-1 right-1 flex gap-1">
+                    <span className="text-[9px] text-white/70 bg-black/50 px-1 rounded">
+                      👁️ {s.views}
+                    </span>
+                    <span className="text-[9px] text-white/70 bg-black/50 px-1 rounded">
+                      ❤️ {s.likes}
+                    </span>
+                  </div>
+                </div>
+                {/* Info */}
+                <div className="p-2">
+                  <p className="text-white/80 text-xs font-bold truncate">{s.title}</p>
+                  <p className="text-white/30 text-[10px] mt-0.5">{formatTime(s.created_at)}</p>
+                  <button
+                    onClick={() => handleDelete(s.id)}
+                    disabled={deleting === s.id}
+                    className="mt-1.5 w-full py-1 rounded-lg bg-red-500/10 text-red-400/70 text-[10px] font-bold border border-red-500/10"
+                  >
+                    {deleting === s.id ? "삭제 중..." : "삭제"}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Upload modal */}
+      {showUpload && <ShortsUploadModal onClose={() => { setShowUpload(false); if (token) fetchMyShorts(token); }} />}
     </div>
   );
 }

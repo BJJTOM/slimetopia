@@ -1,0 +1,45 @@
+{{define "shorts_stats.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="label">총 쇼츠</div>
+    <div class="value">{{.TotalShorts}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">총 조회수</div>
+    <div class="value" style="color:#74b9ff;">{{.TotalViews}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">총 좋아요</div>
+    <div class="value" style="color:#ff6b6b;">{{.TotalLikes}}</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">총 팁</div>
+    <div class="value" style="color:#ffeaa7;">{{.TotalTips}}</div>
+  </div>
+</div>
+
+<h2 style="font-size:16px; margin-top:24px; margin-bottom:12px; color:#55efc4;">탑 크리에이터</h2>
+<table>
+  <thead><tr><th>#</th><th>닉네임</th><th>업로드 수</th><th>총 조회수</th></tr></thead>
+  <tbody>
+    {{range $i, $v := .TopCreators}}
+    <tr>
+      <td style="color:#636e72;">{{add $i 1}}</td>
+      <td>{{$v.Nickname}}</td>
+      <td style="color:#55efc4; font-weight:700;">{{$v.Count}}</td>
+      <td style="color:#74b9ff;">{{$v.Views}}</td>
+    </tr>
+    {{else}}
+    <tr><td colspan="4" style="text-align:center; color:#636e72;">데이터 없음</td></tr>
+    {{end}}
+  </tbody>
+</table>
+
+<div style="margin-top:16px;">
+  <a href="/admin/shorts" class="btn btn-primary btn-sm">쇼츠 목록으로</a>
+</div>
+{{end}}

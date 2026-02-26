@@ -1,0 +1,1 @@
+ALTER TABLE slimes DROP COLUMN IF EXISTS is_sick;

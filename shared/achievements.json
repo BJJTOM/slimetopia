@@ -1,0 +1,100 @@
+{
+  "achievements": [
+    {
+      "key": "first_slime",
+      "name": "첫 만남",
+      "description": "첫 슬라임을 획득하세요",
+      "icon": "🥚",
+      "reward_gold": 100,
+      "reward_gems": 0
+    },
+    {
+      "key": "collector_10",
+      "name": "수집가",
+      "description": "도감에서 10종을 발견하세요",
+      "icon": "📖",
+      "reward_gold": 300,
+      "reward_gems": 3
+    },
+    {
+      "key": "collector_30",
+      "name": "대수집가",
+      "description": "도감에서 30종을 발견하세요",
+      "icon": "📚",
+      "reward_gold": 1000,
+      "reward_gems": 10
+    },
+    {
+      "key": "merge_master",
+      "name": "합성의 달인",
+      "description": "합성을 10회 수행하세요",
+      "icon": "⚗️",
+      "reward_gold": 500,
+      "reward_gems": 5
+    },
+    {
+      "key": "race_champion",
+      "name": "레이스 챔피언",
+      "description": "레이스에서 5000점 이상 달성하세요",
+      "icon": "🏆",
+      "reward_gold": 500,
+      "reward_gems": 5
+    },
+    {
+      "key": "fishing_pro",
+      "name": "낚시왕",
+      "description": "전설의 물고기를 낚으세요",
+      "icon": "🎣",
+      "reward_gold": 300,
+      "reward_gems": 3
+    },
+    {
+      "key": "max_level",
+      "name": "만렙 달성",
+      "description": "슬라임 Lv.30에 도달하세요",
+      "icon": "⭐",
+      "reward_gold": 800,
+      "reward_gems": 8
+    },
+    {
+      "key": "attendance_28",
+      "name": "개근상",
+      "description": "28일 출석을 달성하세요",
+      "icon": "📅",
+      "reward_gold": 1500,
+      "reward_gems": 15
+    },
+    {
+      "key": "mythic_owner",
+      "name": "신화의 주인",
+      "description": "미시크 등급 슬라임을 보유하세요",
+      "icon": "👑",
+      "reward_gold": 1000,
+      "reward_gems": 10
+    },
+    {
+      "key": "social_butterfly",
+      "name": "사교왕",
+      "description": "마을 방문을 10회 수행하세요",
+      "icon": "🏘️",
+      "reward_gold": 200,
+      "reward_gems": 2
+    },
+    {
+      "key": "rich",
+      "name": "부자",
+      "description": "골드 10000을 달성하세요",
+      "icon": "💰",
+      "reward_gold": 0,
+      "reward_gems": 5
+    },
+    {
+      "key": "explorer",
+      "name": "탐험가",
+      "description": "탐험을 20회 완료하세요",
+      "icon": "🧭",
+      "reward_gold": 500,
+      "reward_gems": 5
+    }
+  ]
+}

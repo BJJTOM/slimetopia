@@ -1,0 +1,52 @@
+{{define "shop.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+{{if eq .Message "updated"}}
+<div class="msg-success">Price updated successfully!</div>
+{{else if eq .Message "error"}}
+<div class="msg-error">Failed to update price</div>
+{{else if .Message}}
+<div class="msg-error">{{.Message}}</div>
+{{end}}
+
+<p style="font-size: 12px; color: #636e72; margin-bottom: 16px;">
+  Shop items are loaded from shared/shop.json. DB-based price overrides shown below (if shop_items table exists).
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Gold</th>
+      <th>Gems</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Items}}
+    <tr>
+      <td>{{.ID}}</td>
+      <td>{{.Name}}</td>
+      <td>{{.Type}}</td>
+      <td>
+        <form method="POST" action="/admin/shop/{{.ID}}" style="display:inline-flex; gap: 4px; align-items: center;">
+          <input type="number" name="cost_gold" value="{{.CostGold}}" style="width: 80px; padding: 4px 8px; font-size: 12px;" />
+      </td>
+      <td>
+          <input type="number" name="cost_gems" value="{{.CostGems}}" style="width: 80px; padding: 4px 8px; font-size: 12px;" />
+      </td>
+      <td>
+          <button type="submit" class="btn btn-primary btn-sm">Update</button>
+        </form>
+      </td>
+    </tr>
+    {{else}}
+    <tr><td colspan="6" style="text-align:center; color:#636e72; padding: 24px;">No items (shop uses JSON config)</td></tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}

@@ -1,0 +1,7 @@
+ALTER TABLE users DROP COLUMN IF EXISTS ban_expires_at;
+ALTER TABLE users DROP COLUMN IF EXISTS banned_by;
+ALTER TABLE users DROP COLUMN IF EXISTS banned_reason;
+ALTER TABLE users DROP COLUMN IF EXISTS banned_at;
+ALTER TABLE users DROP COLUMN IF EXISTS banned;
+
+DROP TABLE IF EXISTS admin_audit_log;

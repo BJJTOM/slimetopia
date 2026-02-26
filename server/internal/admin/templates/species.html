@@ -1,0 +1,87 @@
+{{define "species.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+{{if .Error}}
+<div class="msg-error">{{.Error}}</div>
+{{end}}
+
+<!-- Faction Tabs -->
+<div class="tab-bar">
+  <a href="/admin/gamedata/species" {{if eq .Faction ""}}class="active"{{end}}>전체</a>
+  <a href="/admin/gamedata/species?faction=east_blue" {{if eq .Faction "east_blue"}}class="active"{{end}}>이스트블루</a>
+  <a href="/admin/gamedata/species?faction=grand_line" {{if eq .Faction "grand_line"}}class="active"{{end}}>그랜드라인</a>
+  <a href="/admin/gamedata/species?faction=straw_hat" {{if eq .Faction "straw_hat"}}class="active"{{end}}>밀짚모자</a>
+  <a href="/admin/gamedata/species?faction=baroque" {{if eq .Faction "baroque"}}class="active"{{end}}>바로크</a>
+  <a href="/admin/gamedata/species?faction=sky_island" {{if eq .Faction "sky_island"}}class="active"{{end}}>스카이아일랜드</a>
+  <a href="/admin/gamedata/species?faction=cipher_pol" {{if eq .Faction "cipher_pol"}}class="active"{{end}}>사이퍼폴</a>
+  <a href="/admin/gamedata/species?faction=warlords" {{if eq .Faction "warlords"}}class="active"{{end}}>칠무해</a>
+  <a href="/admin/gamedata/species?faction=worst_gen" {{if eq .Faction "worst_gen"}}class="active"{{end}}>최악의세대</a>
+  <a href="/admin/gamedata/species?faction=marines" {{if eq .Faction "marines"}}class="active"{{end}}>해군</a>
+  <a href="/admin/gamedata/species?faction=yonko" {{if eq .Faction "yonko"}}class="active"{{end}}>사황</a>
+  <a href="/admin/gamedata/species?faction=logia" {{if eq .Faction "logia"}}class="active"{{end}}>로기아</a>
+  <a href="/admin/gamedata/species?faction=paramecia" {{if eq .Faction "paramecia"}}class="active"{{end}}>파라미시아</a>
+  <a href="/admin/gamedata/species?faction=zoan" {{if eq .Faction "zoan"}}class="active"{{end}}>조안</a>
+  <a href="/admin/gamedata/species?faction=revolutionary" {{if eq .Faction "revolutionary"}}class="active"{{end}}>혁명군</a>
+  <a href="/admin/gamedata/species?faction=celestial" {{if eq .Faction "celestial"}}class="active"{{end}}>천룡인</a>
+  <a href="/admin/gamedata/species?faction=hidden" {{if eq .Faction "hidden"}}class="active"{{end}}>히든</a>
+</div>
+
+<!-- Filters -->
+<form class="filter-bar" method="GET" action="/admin/gamedata/species">
+  {{if .Faction}}<input type="hidden" name="faction" value="{{.Faction}}" />{{end}}
+  <select name="element" style="width: 130px;">
+    <option value="">전체 원소</option>
+    <option value="water" {{if eq .Element "water"}}selected{{end}}>water</option>
+    <option value="fire" {{if eq .Element "fire"}}selected{{end}}>fire</option>
+    <option value="grass" {{if eq .Element "grass"}}selected{{end}}>grass</option>
+    <option value="light" {{if eq .Element "light"}}selected{{end}}>light</option>
+    <option value="dark" {{if eq .Element "dark"}}selected{{end}}>dark</option>
+    <option value="ice" {{if eq .Element "ice"}}selected{{end}}>ice</option>
+    <option value="electric" {{if eq .Element "electric"}}selected{{end}}>electric</option>
+    <option value="poison" {{if eq .Element "poison"}}selected{{end}}>poison</option>
+    <option value="earth" {{if eq .Element "earth"}}selected{{end}}>earth</option>
+    <option value="wind" {{if eq .Element "wind"}}selected{{end}}>wind</option>
+    <option value="celestial" {{if eq .Element "celestial"}}selected{{end}}>celestial</option>
+  </select>
+  <select name="grade" style="width: 130px;">
+    <option value="">전체 등급</option>
+    <option value="common" {{if eq .Grade "common"}}selected{{end}}>common</option>
+    <option value="uncommon" {{if eq .Grade "uncommon"}}selected{{end}}>uncommon</option>
+    <option value="rare" {{if eq .Grade "rare"}}selected{{end}}>rare</option>
+    <option value="epic" {{if eq .Grade "epic"}}selected{{end}}>epic</option>
+    <option value="legendary" {{if eq .Grade "legendary"}}selected{{end}}>legendary</option>
+    <option value="mythic" {{if eq .Grade "mythic"}}selected{{end}}>mythic</option>
+  </select>
+  <button type="submit" class="btn btn-primary">필터</button>
+  <a href="/admin/gamedata/species" class="btn btn-danger btn-sm">초기화</a>
+</form>
+
+<p style="font-size: 12px; color: #636e72; margin-bottom: 12px;">총 {{.Total}}종</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>이름</th>
+      <th>영문명</th>
+      <th>원소</th>
+      <th>등급</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Species}}
+    <tr>
+      <td style="color: #636e72;">{{.ID}}</td>
+      <td>{{.Name}}</td>
+      <td style="color: #b2bec3;">{{.NameEN}}</td>
+      <td>{{.Element}}</td>
+      <td><span class="badge badge-{{.Grade}}">{{.Grade}}</span></td>
+    </tr>
+    {{else}}
+    <tr><td colspan="5" style="text-align:center; color:#636e72; padding: 24px;">종족 데이터 없음</td></tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}

@@ -1,0 +1,48 @@
+{{define "logs_gacha.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+<form class="filter-bar" method="GET" action="/admin/logs/gacha">
+  <input type="text" name="search" placeholder="닉네임 검색..." value="{{.Search}}" style="width:180px;">
+  <input type="date" name="date_from" value="{{.DateFrom}}" style="width:150px;">
+  <span style="color:#636e72;">~</span>
+  <input type="date" name="date_to" value="{{.DateTo}}" style="width:150px;">
+  <select name="action" style="width:120px;">
+    <option value="">전체</option>
+    <option value="gacha_single" {{if eq .Action "gacha_single"}}selected{{end}}>단일 뽑기</option>
+    <option value="gacha_multi" {{if eq .Action "gacha_multi"}}selected{{end}}>다중 뽑기</option>
+  </select>
+  <button type="submit" class="btn btn-primary btn-sm">검색</button>
+  <span style="color:#636e72; font-size:12px; margin-left:8px;">총 {{.TotalCount}}건</span>
+</form>
+
+<table>
+  <thead>
+    <tr><th>시간</th><th>닉네임</th><th>타입</th><th>골드</th><th>젬</th><th>상세</th></tr>
+  </thead>
+  <tbody>
+    {{range .Logs}}
+    <tr>
+      <td style="font-size:11px; color:#636e72;">{{formatDate .CreatedAt}}</td>
+      <td>{{.Nickname}}</td>
+      <td>
+        {{if eq .Action "gacha_single"}}<span class="badge badge-rare">단일</span>
+        {{else}}<span class="badge badge-legendary">다중</span>{{end}}
+      </td>
+      <td style="color:{{if lt .GoldDelta 0}}#ff6b6b{{else}}#636e72{{end}};">{{.GoldDelta}}</td>
+      <td style="color:{{if lt .GemsDelta 0}}#ff6b6b{{else}}#636e72{{end}};">{{.GemsDelta}}</td>
+      <td style="font-size:11px; max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{truncate .Detail 80}}</td>
+    </tr>
+    {{else}}
+    <tr><td colspan="6" style="text-align:center; color:#636e72;">데이터 없음</td></tr>
+    {{end}}
+  </tbody>
+</table>
+
+<div class="pagination">
+  {{if .HasPrev}}<a href="?page={{.PrevPage}}&search={{.Search}}&date_from={{.DateFrom}}&date_to={{.DateTo}}&action={{.Action}}">이전</a>{{end}}
+  <span class="current">{{.Page}} / {{.TotalPages}}</span>
+  {{if .HasNext}}<a href="?page={{.NextPage}}&search={{.Search}}&date_from={{.DateFrom}}&date_to={{.DateTo}}&action={{.Action}}">다음</a>{{end}}
+</div>
+{{end}}

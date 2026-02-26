@@ -1,0 +1,90 @@
+{{define "announcements.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+{{if .Message}}
+<div class="msg-success">
+  {{if eq .Message "created"}}공지사항이 등록되었습니다.{{end}}
+  {{if eq .Message "toggled"}}상태가 변경되었습니다.{{end}}
+  {{if eq .Message "deleted"}}삭제되었습니다.{{end}}
+  {{if eq .Message "error"}}오류가 발생했습니다.{{end}}
+  {{if eq .Message "required"}}제목과 내용을 입력해주세요.{{end}}
+</div>
+{{end}}
+
+<!-- Create Form -->
+<div class="stat-card" style="margin-bottom: 24px;">
+  <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #a29bfe;">새 공지 작성</div>
+  <form method="POST" action="/admin/announcements">
+    <div class="form-row">
+      <label style="min-width: 80px;">제목</label>
+      <input type="text" name="title" placeholder="공지 제목..." style="flex: 1;" required />
+    </div>
+    <div class="form-row" style="align-items: start;">
+      <label style="min-width: 80px; padding-top: 8px;">내용</label>
+      <textarea name="content" rows="4" placeholder="공지 내용..." style="flex: 1;" required></textarea>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 80px;">우선순위</label>
+      <select name="priority" style="width: 120px;">
+        <option value="normal">일반</option>
+        <option value="important">중요</option>
+        <option value="urgent">긴급</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 80px;">만료일</label>
+      <input type="date" name="expires_at" style="width: 180px;" />
+      <span style="font-size: 10px; color: #636e72;">비워두면 무기한</span>
+    </div>
+    <button type="submit" class="btn btn-primary">등록</button>
+  </form>
+</div>
+
+<!-- Announcements Table -->
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>제목</th>
+      <th>우선순위</th>
+      <th>상태</th>
+      <th>작성자</th>
+      <th>작성일</th>
+      <th>만료일</th>
+      <th>액션</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Announcements}}
+    <tr>
+      <td style="color: #636e72;">{{.ID}}</td>
+      <td>{{.Title}}</td>
+      <td>
+        {{if eq .Priority "urgent"}}<span style="color:#ff6b6b;">긴급</span>
+        {{else if eq .Priority "important"}}<span style="color:#ffeaa7;">중요</span>
+        {{else}}<span style="color:#b2bec3;">일반</span>
+        {{end}}
+      </td>
+      <td>
+        {{if .Active}}<span style="color:#55efc4;">활성</span>{{else}}<span style="color:#636e72;">비활성</span>{{end}}
+      </td>
+      <td style="color: #636e72;">{{.CreatedBy}}</td>
+      <td style="color: #636e72; font-size: 11px;">{{.CreatedAt.Format "2006-01-02 15:04"}}</td>
+      <td style="color: #636e72; font-size: 11px;">{{if .ExpiresAt}}{{.ExpiresAt.Format "2006-01-02"}}{{else}}-{{end}}</td>
+      <td>
+        <form method="POST" action="/admin/announcements/{{.ID}}/toggle" style="display:inline;">
+          <button type="submit" class="btn btn-sm btn-primary">{{if .Active}}비활성{{else}}활성{{end}}</button>
+        </form>
+        <form method="POST" action="/admin/announcements/{{.ID}}/delete" style="display:inline; margin-left: 4px;">
+          <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('정말 삭제하시겠습니까?')">삭제</button>
+        </form>
+      </td>
+    </tr>
+    {{else}}
+    <tr><td colspan="8" style="text-align:center; color:#636e72; padding: 24px;">공지사항 없음</td></tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}

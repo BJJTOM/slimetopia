@@ -1,0 +1,124 @@
+{
+  "materials": [
+    {
+      "id": 1, "name": "철광석", "name_en": "Iron Ore",
+      "type": "basic", "rarity": "common", "icon": "⛏️",
+      "description": "단단한 광물. 기본적인 합성 촉매제로 사용된다.",
+      "effects": {}
+    },
+    {
+      "id": 2, "name": "별의 조각", "name_en": "Star Fragment",
+      "type": "element_stone", "rarity": "rare", "icon": "⭐",
+      "description": "별빛을 머금은 조각. 빛 속성 확률이 크게 증가한다.",
+      "effects": { "element_boost": { "element": "light", "chance": 0.8 } }
+    },
+    {
+      "id": 3, "name": "신선한 먹이", "name_en": "Fresh Feed",
+      "type": "basic", "rarity": "common", "icon": "🥬",
+      "description": "잘 자란 풀사료. 합성 결과물의 초기 능력치가 높아진다.",
+      "effects": {}
+    },
+    {
+      "id": 4, "name": "네잎클로버", "name_en": "Four-leaf Clover",
+      "type": "catalyst", "rarity": "rare", "icon": "🍀",
+      "description": "행운의 상징. 합성 대성공 확률이 크게 증가한다.",
+      "effects": { "great_success": 0.15 }
+    },
+    {
+      "id": 5, "name": "고대 화석", "name_en": "Ancient Fossil",
+      "type": "basic", "rarity": "common", "icon": "🦴",
+      "description": "심해에서 발굴된 오래된 화석. 대지와 물의 힘이 깃들어 있다.",
+      "effects": {}
+    },
+    {
+      "id": 6, "name": "심해의 진주", "name_en": "Deep Sea Pearl",
+      "type": "element_stone", "rarity": "rare", "icon": "🦪",
+      "description": "심해에서 자란 영롱한 진주. 물 속성과 돌연변이 확률이 증가한다.",
+      "effects": { "element_boost": { "element": "water", "chance": 0.6 }, "mutation_boost": 0.05 }
+    },
+    {
+      "id": 7, "name": "불꽃 열매", "name_en": "Flame Fruit",
+      "type": "element_stone", "rarity": "uncommon", "icon": "🔥",
+      "description": "불의 기운이 응축된 열매. 불 속성 확률이 크게 증가한다.",
+      "effects": { "element_boost": { "element": "fire", "chance": 0.8 } }
+    },
+    {
+      "id": 8, "name": "황금 가루", "name_en": "Golden Dust",
+      "type": "grade_boost", "rarity": "rare", "icon": "✨",
+      "description": "순수한 황금 가루. 상위 등급 탄생 확률이 증가한다.",
+      "effects": { "grade_boost": 0.2 }
+    },
+    {
+      "id": 9, "name": "방사능 젤리", "name_en": "Radioactive Jelly",
+      "type": "mutation", "rarity": "epic", "icon": "☢️",
+      "description": "위험한 돌연변이 촉매. 예상치 못한 슬라임이 탄생할 수 있다.",
+      "effects": { "mutation_boost": 0.15 }
+    },
+    {
+      "id": 10, "name": "얼음 결정", "name_en": "Ice Crystal",
+      "type": "element_stone", "rarity": "uncommon", "icon": "❄️",
+      "description": "차가운 얼음 결정. 얼음 속성 확률이 증가한다.",
+      "effects": { "element_boost": { "element": "ice", "chance": 0.7 } }
+    },
+    {
+      "id": 11, "name": "천둥석", "name_en": "Thunder Stone",
+      "type": "element_stone", "rarity": "uncommon", "icon": "⚡",
+      "description": "전기가 흐르는 돌. 전기 속성 확률이 증가한다.",
+      "effects": { "element_boost": { "element": "electric", "chance": 0.7 } }
+    },
+    {
+      "id": 12, "name": "독 에센스", "name_en": "Poison Essence",
+      "type": "element_stone", "rarity": "uncommon", "icon": "🧪",
+      "description": "농축된 독 성분. 독 속성 확률이 증가한다.",
+      "effects": { "element_boost": { "element": "poison", "chance": 0.7 } }
+    },
+    {
+      "id": 13, "name": "대지의 핵", "name_en": "Earth Core",
+      "type": "element_stone", "rarity": "uncommon", "icon": "🪨",
+      "description": "대지의 중심에서 온 핵. 땅 속성 확률이 증가한다.",
+      "effects": { "element_boost": { "element": "earth", "chance": 0.7 } }
+    },
+    {
+      "id": 14, "name": "바람의 깃털", "name_en": "Wind Feather",
+      "type": "element_stone", "rarity": "uncommon", "icon": "🪶",
+      "description": "바람에 날리는 신비한 깃털. 바람 속성 확률이 증가한다.",
+      "effects": { "element_boost": { "element": "wind", "chance": 0.7 } }
+    },
+    {
+      "id": 15, "name": "천체의 파편", "name_en": "Celestial Shard",
+      "type": "element_stone", "rarity": "rare", "icon": "💫",
+      "description": "우주에서 떨어진 파편. 천체 속성 확률이 증가한다.",
+      "effects": { "element_boost": { "element": "celestial", "chance": 0.7 } }
+    },
+    {
+      "id": 16, "name": "어둠의 수정", "name_en": "Dark Crystal",
+      "type": "element_stone", "rarity": "uncommon", "icon": "🔮",
+      "description": "어둠의 기운이 담긴 수정. 어둠 속성 확률이 증가한다.",
+      "effects": { "element_boost": { "element": "dark", "chance": 0.7 } }
+    },
+    {
+      "id": 17, "name": "자연의 정수", "name_en": "Nature Essence",
+      "type": "element_stone", "rarity": "uncommon", "icon": "🌿",
+      "description": "자연의 힘이 농축된 정수. 풀 속성 확률이 증가한다.",
+      "effects": { "element_boost": { "element": "grass", "chance": 0.7 } }
+    },
+    {
+      "id": 18, "name": "무지개 젤", "name_en": "Rainbow Gel",
+      "type": "mutation", "rarity": "legendary", "icon": "🌈",
+      "description": "모든 속성이 혼합된 전설의 젤. 불과 물의 슬라임에게 사용하면...",
+      "effects": { "mutation_boost": 0.3, "mutation_target": 777 }
+    },
+    {
+      "id": 19, "name": "현자의 돌", "name_en": "Philosopher's Stone",
+      "type": "grade_boost", "rarity": "epic", "icon": "💎",
+      "description": "연금술의 정수. 등급 상승 확률이 대폭 증가한다.",
+      "effects": { "grade_boost": 0.4 }
+    },
+    {
+      "id": 20, "name": "공허의 파편", "name_en": "Void Fragment",
+      "type": "mutation", "rarity": "legendary", "icon": "🕳️",
+      "description": "존재와 비존재의 경계에서 온 파편. 천체와 빛의 슬라임에게 사용하면...",
+      "effects": { "mutation_boost": 0.3, "mutation_target": 999 }
+    }
+  ]
+}

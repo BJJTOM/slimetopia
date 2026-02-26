@@ -10,16 +10,19 @@ const config: CapacitorConfig = {
     allowMixedContent: true,
   },
   server: {
-    // Use http to avoid mixed-content blocking when API is http://
-    androidScheme: "http",
-    cleartext: true,
+    androidScheme: isLiveReload ? "http" : "https",
     // Live reload: load from dev server instead of bundled files
     ...(isLiveReload && {
       url: process.env.LIVE_RELOAD_URL,
+      cleartext: true,
     }),
   },
   plugins: {
     App: {},
+    // Native HTTP — bypasses WebView mixed-content & CORS restrictions
+    CapacitorHttp: {
+      enabled: true,
+    },
   },
 };
 

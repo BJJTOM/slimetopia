@@ -195,6 +195,25 @@ func (r *UserRepository) ChangePassword(ctx context.Context, userID, newHash str
 	return err
 }
 
+func (r *UserRepository) GetCapacity(ctx context.Context, userID string) (int, error) {
+	var cap int
+	err := r.pool.QueryRow(ctx,
+		`SELECT slime_capacity FROM users WHERE id = $1`, userID,
+	).Scan(&cap)
+	if err != nil {
+		return 30, err // default fallback
+	}
+	return cap, nil
+}
+
+func (r *UserRepository) UpdateCapacity(ctx context.Context, userID string, newCapacity int) error {
+	_, err := r.pool.Exec(ctx,
+		`UPDATE users SET slime_capacity = $1, updated_at = NOW() WHERE id = $2`,
+		newCapacity, userID,
+	)
+	return err
+}
+
 func (r *UserRepository) SpendCurrency(ctx context.Context, userID string, gold int64, gems, stardust int) error {
 	tag, err := r.pool.Exec(ctx,
 		`UPDATE users SET gold = gold - $1, gems = gems - $2, stardust = stardust - $3, updated_at = NOW()

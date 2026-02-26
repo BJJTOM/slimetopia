@@ -1,0 +1,74 @@
+{{define "gacha.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+  <!-- Normal Egg -->
+  <div>
+    <h2 style="font-size: 16px; margin-bottom: 12px; color: #b2bec3;">일반 알</h2>
+    <table>
+      <thead>
+        <tr><th>등급</th><th>확률</th><th>피티</th></tr>
+      </thead>
+      <tbody>
+        {{range .NormalRates}}
+        <tr>
+          <td><span class="badge badge-{{.Grade}}">{{.Grade}}</span></td>
+          <td style="color: #ffeaa7;">{{.Rate}}%</td>
+          <td>{{if gt .Pity 0}}<span style="color: #ff6b6b;">{{.Pity}}회</span>{{else}}-{{end}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Premium Egg -->
+  <div>
+    <h2 style="font-size: 16px; margin-bottom: 12px; color: #a29bfe;">프리미엄 알</h2>
+    <table>
+      <thead>
+        <tr><th>등급</th><th>확률</th><th>피티</th></tr>
+      </thead>
+      <tbody>
+        {{range .PremiumRates}}
+        <tr>
+          <td><span class="badge badge-{{.Grade}}">{{.Grade}}</span></td>
+          <td style="color: #ffeaa7;">{{.Rate}}%</td>
+          <td>{{if gt .Pity 0}}<span style="color: #ff6b6b;">{{.Pity}}회</span>{{else}}-{{end}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Legendary Egg -->
+  <div>
+    <h2 style="font-size: 16px; margin-bottom: 12px; color: #ffeaa7;">전설 알</h2>
+    <table>
+      <thead>
+        <tr><th>등급</th><th>확률</th><th>피티</th></tr>
+      </thead>
+      <tbody>
+        {{range .LegendaryRates}}
+        <tr>
+          <td><span class="badge badge-{{.Grade}}">{{.Grade}}</span></td>
+          <td style="color: #ffeaa7;">{{.Rate}}%</td>
+          <td>{{if gt .Pity 0}}<span style="color: #ff6b6b;">{{.Pity}}회</span>{{else}}-{{end}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="stat-card" style="margin-top: 24px;">
+  <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #a29bfe;">피티 시스템 설명</div>
+  <div style="font-size: 13px; color: #b2bec3; line-height: 1.8;">
+    <p>일반 알: 50회 연속 legendary 미획득 시 다음 뽑기에서 legendary 확정</p>
+    <p>프리미엄 알: 30회 연속 legendary 미획득 시 다음 뽑기에서 legendary 확정</p>
+    <p>전설 알: 20회 연속 legendary 미획득 시 다음 뽑기에서 legendary 확정</p>
+    <p style="color: #636e72; margin-top: 8px;">※ 피티 카운트는 egg_type별로 독립적으로 관리됩니다.</p>
+  </div>
+</div>
+{{end}}

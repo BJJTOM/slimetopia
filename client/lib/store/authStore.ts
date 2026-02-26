@@ -9,6 +9,7 @@ interface User {
   stardust: number;
   level: number;
   email?: string;
+  profile_image_url?: string;
 }
 
 interface AuthState {

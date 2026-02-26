@@ -1,0 +1,133 @@
+{
+  "trees": {
+    "1": {
+      "species_name": "물방울 해적 슬라임",
+      "nodes": [
+        { "id": 1, "name": "물방울 강화", "type": "stat_buff", "buff": { "affection": 5 }, "cost": 50, "requires": [] },
+        { "id": 2, "name": "수분 충전", "type": "nurture_buff", "buff": { "hunger_decay_reduce": 1 }, "cost": 80, "requires": [1] },
+        { "id": 3, "name": "동해의 축복", "type": "explore_buff", "buff": { "water_explore_bonus": 0.1 }, "cost": 120, "requires": [2] }
+      ]
+    },
+    "2": {
+      "species_name": "불씨 해적 슬라임",
+      "nodes": [
+        { "id": 1, "name": "불씨 강화", "type": "stat_buff", "buff": { "exp": 3 }, "cost": 50, "requires": [] },
+        { "id": 2, "name": "열정의 불꽃", "type": "nurture_buff", "buff": { "play_bonus": 2 }, "cost": 80, "requires": [1] },
+        { "id": 3, "name": "동해의 화염", "type": "explore_buff", "buff": { "fire_explore_bonus": 0.1 }, "cost": 120, "requires": [2] }
+      ]
+    },
+    "3": {
+      "species_name": "풀잎 해적 슬라임",
+      "nodes": [
+        { "id": 1, "name": "풀잎 강화", "type": "stat_buff", "buff": { "condition": 5 }, "cost": 50, "requires": [] },
+        { "id": 2, "name": "광합성", "type": "nurture_buff", "buff": { "exp_bonus": 1 }, "cost": 80, "requires": [1] },
+        { "id": 3, "name": "동해의 녹음", "type": "explore_buff", "buff": { "grass_explore_bonus": 0.1 }, "cost": 120, "requires": [2] }
+      ]
+    },
+    "4": {
+      "species_name": "반딧불 해적 슬라임",
+      "nodes": [
+        { "id": 1, "name": "빛 강화", "type": "stat_buff", "buff": { "affection": 3 }, "cost": 50, "requires": [] },
+        { "id": 2, "name": "빛의 치유", "type": "nurture_buff", "buff": { "pet_bonus": 2 }, "cost": 80, "requires": [1] },
+        { "id": 3, "name": "동해의 빛", "type": "explore_buff", "buff": { "light_explore_bonus": 0.1 }, "cost": 120, "requires": [2] }
+      ]
+    },
+    "5": {
+      "species_name": "그림자 해적 슬라임",
+      "nodes": [
+        { "id": 1, "name": "어둠 강화", "type": "stat_buff", "buff": { "exp": 5 }, "cost": 50, "requires": [] },
+        { "id": 2, "name": "그림자 은신", "type": "nurture_buff", "buff": { "condition_decay_reduce": 1 }, "cost": 80, "requires": [1] },
+        { "id": 3, "name": "동해의 어둠", "type": "explore_buff", "buff": { "dark_explore_bonus": 0.1 }, "cost": 120, "requires": [2] }
+      ]
+    },
+    "30": {
+      "species_name": "고무 슬라임",
+      "nodes": [
+        { "id": 1, "name": "고무 탄성", "type": "stat_buff", "buff": { "affection": 8, "condition": 5 }, "cost": 80, "requires": [] },
+        { "id": 2, "name": "기어 세컨드", "type": "nurture_buff", "buff": { "exp_bonus": 3, "play_bonus": 3 }, "cost": 150, "requires": [1] },
+        { "id": 3, "name": "기어 포스", "type": "evolution", "buff": { "fire_explore_bonus": 0.2 }, "cost": 250, "requires": [2] },
+        { "id": 4, "name": "태양의 각성", "type": "explore_buff", "buff": { "fire_explore_bonus": 0.3, "exp_bonus": 5 }, "cost": 400, "requires": [3] }
+      ]
+    },
+    "40": {
+      "species_name": "태양신 슬라임",
+      "nodes": [
+        { "id": 1, "name": "니카의 자유", "type": "stat_buff", "buff": { "affection": 15, "condition": 10 }, "cost": 200, "requires": [] },
+        { "id": 2, "name": "태양의 드럼", "type": "nurture_buff", "buff": { "exp_bonus": 8, "play_bonus": 5, "pet_bonus": 5 }, "cost": 350, "requires": [1] },
+        { "id": 3, "name": "해방의 불꽃", "type": "evolution", "buff": { "fire_explore_bonus": 0.25, "all_explore_bonus": 0.1 }, "cost": 500, "requires": [2] },
+        { "id": 4, "name": "해방의 전사", "type": "explore_buff", "buff": { "all_explore_bonus": 0.2, "exp_bonus": 10 }, "cost": 700, "requires": [3] }
+      ]
+    },
+    "73": {
+      "species_name": "검황 슬라임",
+      "nodes": [
+        { "id": 1, "name": "검기 연마", "type": "stat_buff", "buff": { "exp": 8, "condition": 5 }, "cost": 100, "requires": [] },
+        { "id": 2, "name": "흑도 강화", "type": "nurture_buff", "buff": { "play_bonus": 5, "condition_decay_reduce": 2 }, "cost": 180, "requires": [1] },
+        { "id": 3, "name": "세계최강의 검", "type": "explore_buff", "buff": { "dark_explore_bonus": 0.2, "exp_bonus": 5 }, "cost": 300, "requires": [2] }
+      ]
+    },
+    "118": {
+      "species_name": "원수 슬라임",
+      "nodes": [
+        { "id": 1, "name": "원수의 위엄", "type": "stat_buff", "buff": { "affection": 12, "exp": 10 }, "cost": 200, "requires": [] },
+        { "id": 2, "name": "절대 정의", "type": "nurture_buff", "buff": { "exp_bonus": 6, "hunger_decay_reduce": 3 }, "cost": 350, "requires": [1] },
+        { "id": 3, "name": "마그마의 심판", "type": "evolution", "buff": { "fire_explore_bonus": 0.25 }, "cost": 500, "requires": [2] },
+        { "id": 4, "name": "해군의 절대 권위", "type": "explore_buff", "buff": { "fire_explore_bonus": 0.3, "all_explore_bonus": 0.1, "exp_bonus": 8 }, "cost": 700, "requires": [3] }
+      ]
+    },
+    "139": {
+      "species_name": "용왕 슬라임",
+      "nodes": [
+        { "id": 1, "name": "용의 비늘", "type": "stat_buff", "buff": { "affection": 15, "condition": 15 }, "cost": 300, "requires": [] },
+        { "id": 2, "name": "보로브레스", "type": "nurture_buff", "buff": { "exp_bonus": 10, "play_bonus": 8, "condition_decay_reduce": 5 }, "cost": 500, "requires": [1] },
+        { "id": 3, "name": "용의 각성", "type": "evolution", "buff": { "fire_explore_bonus": 0.3, "all_explore_bonus": 0.15 }, "cost": 750, "requires": [2] },
+        { "id": 4, "name": "사황의 패기", "type": "explore_buff", "buff": { "all_explore_bonus": 0.25, "exp_bonus": 15 }, "cost": 1000, "requires": [3] }
+      ]
+    },
+    "140": {
+      "species_name": "패왕자 슬라임",
+      "nodes": [
+        { "id": 1, "name": "패왕색 각성", "type": "stat_buff", "buff": { "affection": 15, "exp": 15 }, "cost": 300, "requires": [] },
+        { "id": 2, "name": "왕의 자질", "type": "nurture_buff", "buff": { "exp_bonus": 10, "pet_bonus": 8, "hunger_decay_reduce": 5 }, "cost": 500, "requires": [1] },
+        { "id": 3, "name": "만물의 지배", "type": "evolution", "buff": { "celestial_explore_bonus": 0.3, "all_explore_bonus": 0.15 }, "cost": 750, "requires": [2] },
+        { "id": 4, "name": "천상의 패기", "type": "explore_buff", "buff": { "all_explore_bonus": 0.25, "exp_bonus": 15 }, "cost": 1000, "requires": [3] }
+      ]
+    },
+    "154": {
+      "species_name": "빛빛 슬라임",
+      "nodes": [
+        { "id": 1, "name": "광속의 힘", "type": "stat_buff", "buff": { "exp": 15, "condition": 10 }, "cost": 300, "requires": [] },
+        { "id": 2, "name": "레이저 집중", "type": "nurture_buff", "buff": { "exp_bonus": 10, "play_bonus": 10, "condition_decay_reduce": 5 }, "cost": 500, "requires": [1] },
+        { "id": 3, "name": "빛의 지배", "type": "evolution", "buff": { "light_explore_bonus": 0.3, "all_explore_bonus": 0.15 }, "cost": 750, "requires": [2] },
+        { "id": 4, "name": "절대 광속", "type": "explore_buff", "buff": { "all_explore_bonus": 0.25, "exp_bonus": 15 }, "cost": 1000, "requires": [3] }
+      ]
+    },
+    "198": {
+      "species_name": "플루톤 슬라임",
+      "nodes": [
+        { "id": 1, "name": "전함의 장갑", "type": "stat_buff", "buff": { "condition": 20, "affection": 10 }, "cost": 400, "requires": [] },
+        { "id": 2, "name": "고대 포격", "type": "nurture_buff", "buff": { "exp_bonus": 12, "hunger_decay_reduce": 5, "condition_decay_reduce": 5 }, "cost": 600, "requires": [1] },
+        { "id": 3, "name": "섬 파괴 포", "type": "evolution", "buff": { "earth_explore_bonus": 0.35, "all_explore_bonus": 0.15 }, "cost": 900, "requires": [2] },
+        { "id": 4, "name": "고대병기의 진가", "type": "explore_buff", "buff": { "all_explore_bonus": 0.3, "exp_bonus": 20 }, "cost": 1200, "requires": [3] }
+      ]
+    },
+    "199": {
+      "species_name": "포세이돈 슬라임",
+      "nodes": [
+        { "id": 1, "name": "해왕류 소환", "type": "stat_buff", "buff": { "affection": 20, "exp": 10 }, "cost": 400, "requires": [] },
+        { "id": 2, "name": "바다의 지배", "type": "nurture_buff", "buff": { "exp_bonus": 12, "feed_bonus": 8, "pet_bonus": 8 }, "cost": 600, "requires": [1] },
+        { "id": 3, "name": "해왕류 군단", "type": "evolution", "buff": { "water_explore_bonus": 0.35, "all_explore_bonus": 0.15 }, "cost": 900, "requires": [2] },
+        { "id": 4, "name": "고대병기의 진가", "type": "explore_buff", "buff": { "all_explore_bonus": 0.3, "exp_bonus": 20 }, "cost": 1200, "requires": [3] }
+      ]
+    },
+    "200": {
+      "species_name": "우라노스 슬라임",
+      "nodes": [
+        { "id": 1, "name": "천벌의 힘", "type": "stat_buff", "buff": { "exp": 20, "affection": 15 }, "cost": 400, "requires": [] },
+        { "id": 2, "name": "하늘의 심판", "type": "nurture_buff", "buff": { "exp_bonus": 15, "play_bonus": 10, "condition_decay_reduce": 5 }, "cost": 600, "requires": [1] },
+        { "id": 3, "name": "천상의 포격", "type": "evolution", "buff": { "celestial_explore_bonus": 0.35, "all_explore_bonus": 0.15 }, "cost": 900, "requires": [2] },
+        { "id": 4, "name": "고대병기의 진가", "type": "explore_buff", "buff": { "all_explore_bonus": 0.3, "exp_bonus": 20 }, "cost": 1200, "requires": [3] }
+      ]
+    }
+  }
+}

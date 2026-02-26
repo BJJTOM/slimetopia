@@ -48,7 +48,7 @@ export default function LoginPage() {
     setError("");
     try {
       await guestLogin();
-      if (useAuthStore.getState().accessToken) router.push("/");
+      if (useAuthStore.getState().accessToken) router.push("/play");
       else setError("게스트 로그인에 실패했습니다.");
     } catch {
       setError("서버와 연결할 수 없습니다.");
@@ -67,7 +67,7 @@ export default function LoginPage() {
       if (err === "email_taken") setError("이미 사용 중인 이메일입니다.");
       else setError("회원가입에 실패했습니다.");
     } else if (useAuthStore.getState().accessToken) {
-      router.push("/");
+      router.push("/play");
     }
     setIsLoading(false);
   };
@@ -81,12 +81,13 @@ export default function LoginPage() {
       if (err === "invalid_credentials") setError("이메일 또는 비밀번호가 틀립니다.");
       else setError("로그인에 실패했습니다.");
     } else if (useAuthStore.getState().accessToken) {
-      router.push("/");
+      router.push("/play");
     }
     setIsLoading(false);
   };
 
   return (
+    <div className="game-body">
     <div className="game-frame flex items-center justify-center p-4 relative overflow-hidden">
       {/* === Background layers === */}
       <div className="absolute inset-0 galaxy-bg" />
@@ -288,6 +289,7 @@ export default function LoginPage() {
           SlimeTopia v1.0.0
         </p>
       </div>
+    </div>
     </div>
   );
 }

@@ -1,0 +1,55 @@
+{{define "slime_create.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+{{if eq .Message "required"}}
+<div class="msg-error">모든 필드를 입력해주세요.</div>
+{{else if eq .Message "invalid_species"}}
+<div class="msg-error">잘못된 종족입니다.</div>
+{{else if eq .Message "user_not_found"}}
+<div class="msg-error">해당 유저를 찾을 수 없습니다.</div>
+{{else if eq .Message "error"}}
+<div class="msg-error">슬라임 생성에 실패했습니다.</div>
+{{end}}
+
+<div class="stat-card" style="max-width: 600px;">
+  <div class="label" style="margin-bottom: 16px; font-size: 14px; color: #55efc4;">새 슬라임 지급</div>
+  <form method="POST" action="/admin/slimes/create">
+    <div class="form-row">
+      <label style="min-width: 100px;">유저 ID (UUID)</label>
+      <input type="text" name="user_id" placeholder="유저 UUID를 입력..." style="flex: 1;" required />
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">종족</label>
+      <select name="species_id" style="flex: 1;" required>
+        <option value="">종족 선택...</option>
+        {{range .Species}}
+        <option value="{{.ID}}">[{{.ID}}] {{.Name}} ({{.Element}}, {{.Grade}})</option>
+        {{end}}
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">성격</label>
+      <select name="personality" style="width: 160px;" required>
+        <option value="">성격 선택...</option>
+        <option value="energetic">energetic</option>
+        <option value="chill">chill</option>
+        <option value="foodie">foodie</option>
+        <option value="curious">curious</option>
+        <option value="tsundere">tsundere</option>
+        <option value="gentle">gentle</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label style="min-width: 100px;">레벨</label>
+      <input type="number" name="level" value="1" min="1" max="100" style="width: 100px;" />
+    </div>
+    <button type="submit" class="btn btn-primary" style="margin-top: 8px;">슬라임 생성</button>
+  </form>
+</div>
+
+<div style="margin-top: 16px;">
+  <a href="/admin/slimes" class="btn btn-sm" style="background: rgba(255,255,255,0.06); color: #b2bec3;">&larr; 슬라임 목록으로</a>
+</div>
+{{end}}

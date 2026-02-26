@@ -1,0 +1,46 @@
+{{define "login.html"}}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - SlimeTopia Admin</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0e17; color: #e8e4f0; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .login-card { background: #161224; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 40px; width: 360px; }
+    .login-card h1 { font-size: 20px; text-align: center; margin-bottom: 8px; color: #55efc4; }
+    .login-card p { font-size: 12px; text-align: center; color: #636e72; margin-bottom: 24px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 12px; color: #b2bec3; margin-bottom: 6px; }
+    .form-group input { width: 100%; padding: 10px 14px; background: #0f0e17; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #e8e4f0; font-size: 14px; outline: none; }
+    .form-group input:focus { border-color: #a29bfe; }
+    .btn-login { width: 100%; padding: 12px; background: linear-gradient(135deg, #a29bfe, #74b9ff); color: #0f0e17; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+    .btn-login:hover { opacity: 0.9; }
+    .error { background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.2); color: #ff6b6b; padding: 10px; border-radius: 8px; margin-bottom: 16px; font-size: 12px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <h1>SlimeTopia Admin</h1>
+    <p>관리자 계정으로 로그인하세요</p>
+    {{if .Error}}
+    <div class="error">
+      {{if eq .Error "credentials_required"}}아이디와 비밀번호를 입력하세요{{else if eq .Error "invalid_credentials"}}아이디 또는 비밀번호가 잘못되었습니다{{else}}{{.Error}}{{end}}
+    </div>
+    {{end}}
+    <form method="POST" action="/admin/login">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" name="username" autocomplete="username" required />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" autocomplete="current-password" required />
+      </div>
+      <button type="submit" class="btn-login">Login</button>
+    </form>
+  </div>
+</body>
+</html>
+{{end}}

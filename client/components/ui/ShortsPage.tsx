@@ -1,91 +1,12 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { useGameStore } from "@/lib/store/gameStore";
-import { generateSlimeIconSvg } from "@/lib/slimeSvg";
-import { elementColors, elementNames, gradeNames, personalityNames, personalityEmoji } from "@/lib/constants";
-
-interface ShortContent {
-  id: string;
-  type: "tip" | "showcase" | "recipe" | "fact" | "quiz";
-  title: string;
-  author: string;
-  content: string;
-  element?: string;
-  grade?: string;
-  likes: number;
-  comments: number;
-  shares: number;
-  gradient: string;
-  icon: string;
-}
-
-const SHORTS_DATA: ShortContent[] = [
-  {
-    id: "s1", type: "tip", title: "초보자 필수 팁!",
-    author: "슬라임마스터", content: "매일 출석체크와 일일미션을 꼭 완료하세요!\n골드와 젬을 꾸준히 모을 수 있어요.",
-    likes: 342, comments: 28, shares: 15,
-    gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", icon: "💡",
-  },
-  {
-    id: "s2", type: "showcase", title: "전설급 합성 성공!",
-    author: "럭키가이", content: "불 + 물 속성 합성으로 전설급을 뽑았어요!\n확률이 정말 낮은데 대박!",
-    element: "fire", grade: "legendary",
-    likes: 891, comments: 67, shares: 44,
-    gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)", icon: "✨",
-  },
-  {
-    id: "s3", type: "recipe", title: "숨겨진 합성 레시피",
-    author: "연구원슬라임", content: "같은 종의 에픽 등급 2마리를 합성하면\n레전더리 등급으로 업그레이드 가능!",
-    element: "dark", grade: "epic",
-    likes: 1205, comments: 89, shares: 72,
-    gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)", icon: "🔮",
-  },
-  {
-    id: "s4", type: "fact", title: "슬라임 성격의 비밀",
-    author: "도감왕", content: "같은 종이라도 성격에 따라 행동이 달라요!\n먹보 성격은 배고파지는 속도가 빨라요.",
-    likes: 567, comments: 34, shares: 21,
-    gradient: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)", icon: "🧬",
-  },
-  {
-    id: "s5", type: "tip", title: "탐험 효율 높이기",
-    author: "탐험가", content: "탐험 보내기 전에 날씨를 확인하세요!\n날씨 버프가 적용되는 속성의 슬라임을\n보내면 보상이 더 좋아요.",
-    likes: 423, comments: 41, shares: 33,
-    gradient: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)", icon: "🧭",
-  },
-  {
-    id: "s6", type: "quiz", title: "슬라임 퀴즈!",
-    author: "퀴즈봇", content: "Q: 전체 슬라임 종류는 몇 개일까요?\n\nA: 200종 + 3종 히든 = 총 203종!\n도감 완성을 목표로 해보세요!",
-    likes: 234, comments: 56, shares: 12,
-    gradient: "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)", icon: "❓",
-  },
-  {
-    id: "s7", type: "showcase", title: "미식 슬라임 6성 달성",
-    author: "등급장인", content: "드디어 미식 등급 슬라임을 만들었습니다!\n레전더리 2마리 합성이 핵심!",
-    element: "celestial", grade: "mythic",
-    likes: 2341, comments: 156, shares: 98,
-    gradient: "linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)", icon: "👑",
-  },
-  {
-    id: "s8", type: "tip", title: "마을 건설 가이드",
-    author: "건축왕", content: "마을 건물은 레벨이 높을수록 보너스도 커져요.\n골드 광산 → 상점 → 연구소 순서로\n업그레이드하는 게 효율적!",
-    likes: 678, comments: 45, shares: 37,
-    gradient: "linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)", icon: "🏗️",
-  },
-  {
-    id: "s9", type: "fact", title: "히든 슬라임 존재?!",
-    author: "루머헌터", content: "특별한 재료와 조합으로만 얻을 수 있는\n히든 슬라임 3종이 존재합니다!\n조이보이, 임, 원피스...",
-    element: "light", grade: "mythic",
-    likes: 3456, comments: 234, shares: 167,
-    gradient: "linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)", icon: "🔒",
-  },
-  {
-    id: "s10", type: "tip", title: "낚시 미니게임 공략",
-    author: "낚시왕", content: "타이밍 바가 초록 구간에 있을 때 탭하세요!\n연속 성공할수록 희귀한 보상이 나와요.\nPERFECT 노려보세요!",
-    likes: 890, comments: 67, shares: 45,
-    gradient: "linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)", icon: "🎣",
-  },
-];
+import { useAuthStore } from "@/lib/store/authStore";
+import { useShortsStore, type Short } from "@/lib/store/shortsStore";
+import ShortsUploadModal from "./ShortsUploadModal";
+import ShortsCommentSheet from "./ShortsCommentSheet";
+import ShortsGiftSheet from "./ShortsGiftSheet";
+import { toastSuccess } from "./Toast";
 
 function formatCount(n: number): string {
   if (n >= 10000) return `${(n / 10000).toFixed(1)}만`;
@@ -93,233 +14,523 @@ function formatCount(n: number): string {
   return String(n);
 }
 
+/* Card colors for shorts without video */
+const CARD_GRADIENTS = [
+  "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+  "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+  "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+  "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+  "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)",
+  "linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)",
+  "linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)",
+  "linear-gradient(135deg, #fddb92 0%, #d1fdff 100%)",
+  "linear-gradient(135deg, #c471f5 0%, #fa71cd 100%)",
+];
+
+const CARD_EMOJIS = ["🐌", "🌟", "✨", "🎮", "🏆", "💎", "🔥", "🌊", "🌿", "⚡", "🎯", "🎪"];
+
+function getCardStyle(index: number) {
+  return {
+    background: CARD_GRADIENTS[index % CARD_GRADIENTS.length],
+  };
+}
+
+/* ─── Skeleton ────────────────────────────────────────────────────────────── */
+function ShortsSkeleton() {
+  return (
+    <div className="absolute inset-0 bg-[#0a0a1a] flex flex-col items-center justify-center">
+      <div className="w-20 h-20 rounded-2xl skeleton mb-4" />
+      <div className="w-32 h-3 skeleton rounded mb-2" />
+      <div className="w-24 h-2 skeleton rounded" />
+      <div className="absolute right-4 bottom-32 flex flex-col items-center gap-6">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="w-10 h-10 rounded-full skeleton" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── ShortsCard — renders a content card for shorts ───────────────── */
+interface ShortsCardProps {
+  short: Short;
+  index: number;
+  isActive: boolean;
+  onLike: () => void;
+  onUnlike: () => void;
+  onComment: () => void;
+  onGift: () => void;
+  onShare: () => void;
+  onView: () => void;
+}
+
+function ShortsCard({ short, index, isActive, onLike, onUnlike, onComment, onGift, onShare, onView }: ShortsCardProps) {
+  const [showHeart, setShowHeart] = useState(false);
+  const lastTapRef = useRef(0);
+  const viewedRef = useRef(false);
+
+  useEffect(() => {
+    if (isActive && !viewedRef.current) {
+      viewedRef.current = true;
+      onView();
+    }
+  }, [isActive, onView]);
+
+  const handleTap = useCallback(() => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      if (!short.liked) onLike();
+      setShowHeart(true);
+      setTimeout(() => setShowHeart(false), 800);
+      if (navigator.vibrate) navigator.vibrate(50);
+    }
+    lastTapRef.current = now;
+  }, [short.liked, onLike]);
+
+  const emoji = CARD_EMOJIS[index % CARD_EMOJIS.length];
+
+  return (
+    <div className="absolute inset-0" style={getCardStyle(index)} onClick={handleTap}>
+      {/* Decorative pattern overlay */}
+      <div className="absolute inset-0 opacity-10"
+        style={{
+          backgroundImage: "radial-gradient(circle at 25% 25%, white 1px, transparent 1px), radial-gradient(circle at 75% 75%, white 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+        }}
+      />
+
+      {/* Double-tap heart animation */}
+      {showHeart && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+          <div className="text-7xl opacity-90" style={{ animation: "heartBurst 0.8s ease-out forwards" }}>
+            ❤️
+          </div>
+        </div>
+      )}
+
+      {/* Center content */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-8 z-10">
+        <div className="text-6xl mb-4" style={{ animation: isActive ? "float 3s ease-in-out infinite" : "none" }}>
+          {emoji}
+        </div>
+        <h2 className="text-white font-black text-xl text-center leading-tight mb-3 drop-shadow-lg">
+          {short.title}
+        </h2>
+        {short.description && (
+          <p className="text-white/80 text-sm text-center leading-relaxed max-w-[280px] drop-shadow">
+            {short.description}
+          </p>
+        )}
+        {short.tags && short.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-3 justify-center">
+            {short.tags.slice(0, 5).map((tag) => (
+              <span key={tag} className="text-[11px] text-white/90 bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full font-medium">
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Bottom info */}
+      <div className="absolute bottom-16 left-4 right-16 z-20">
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center text-xs font-bold text-white">
+            {short.nickname[0]}
+          </div>
+          <span className="text-white font-bold text-sm drop-shadow-lg">@{short.nickname}</span>
+        </div>
+      </div>
+
+      {/* Right side action buttons */}
+      <div className="absolute right-3 bottom-28 flex flex-col items-center gap-5 z-20">
+        {/* Like */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            short.liked ? onUnlike() : onLike();
+          }}
+          className="flex flex-col items-center gap-1"
+        >
+          <div className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 ${
+            short.liked ? "bg-red-500/40 scale-110" : "bg-black/30 backdrop-blur-sm"
+          }`}>
+            <span className={`text-xl transition-transform duration-200 ${short.liked ? "scale-125" : ""}`}>
+              {short.liked ? "❤️" : "🤍"}
+            </span>
+          </div>
+          <span className="text-white/80 text-[10px] font-bold tabular-nums">{formatCount(short.likes)}</span>
+        </button>
+
+        {/* Comment */}
+        <button onClick={(e) => { e.stopPropagation(); onComment(); }} className="flex flex-col items-center gap-1">
+          <div className="w-11 h-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
+            <span className="text-xl">💬</span>
+          </div>
+          <span className="text-white/80 text-[10px] font-bold tabular-nums">{formatCount(short.comment_count)}</span>
+        </button>
+
+        {/* Share */}
+        <button onClick={(e) => { e.stopPropagation(); onShare(); }} className="flex flex-col items-center gap-1">
+          <div className="w-11 h-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
+            <span className="text-xl">🔗</span>
+          </div>
+          <span className="text-white/80 text-[10px] font-bold">공유</span>
+        </button>
+
+        {/* Gift */}
+        {!short.is_mine && (
+          <button onClick={(e) => { e.stopPropagation(); onGift(); }} className="flex flex-col items-center gap-1">
+            <div className="w-11 h-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
+              <span className="text-xl">🎁</span>
+            </div>
+            <span className="text-white/80 text-[10px] font-bold">선물</span>
+          </button>
+        )}
+
+        {/* Views */}
+        <div className="flex flex-col items-center gap-1">
+          <div className="w-11 h-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
+            <span className="text-xl">👁️</span>
+          </div>
+          <span className="text-white/80 text-[10px] font-bold tabular-nums">{formatCount(short.views)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Main ShortsPage ─────────────────────────────────────────────────────── */
+
 export default function ShortsPage({ onClose, embedded }: { onClose: () => void; embedded?: boolean }) {
-  const { species } = useGameStore();
+  const token = useAuthStore((s) => s.accessToken);
+  const { shorts, hasMore, loading, fetchFeed, likeShort, unlikeShort, viewShort } = useShortsStore();
+
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [liked, setLiked] = useState<Set<string>>(new Set());
   const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [transitioning, setTransitioning] = useState(false);
+  const [swiping, setSwiping] = useState(false);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+
+  const [showUpload, setShowUpload] = useState(false);
+  const [commentShortId, setCommentShortId] = useState<string | null>(null);
+  const [giftShortId, setGiftShortId] = useState<string | null>(null);
+
   const containerRef = useRef<HTMLDivElement>(null);
+  const [loadTimeout, setLoadTimeout] = useState(false);
 
-  const currentShort = SHORTS_DATA[currentIndex];
+  // Initial feed load
+  useEffect(() => {
+    if (token) {
+      fetchFeed(token, true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
-  const goNext = useCallback(() => {
-    if (transitioning || currentIndex >= SHORTS_DATA.length - 1) return;
-    setTransitioning(true);
-    setTimeout(() => {
-      setCurrentIndex((i) => Math.min(i + 1, SHORTS_DATA.length - 1));
-      setTransitioning(false);
-    }, 200);
-  }, [currentIndex, transitioning]);
+  // Loading timeout — if loading takes >5s, show empty state
+  useEffect(() => {
+    if (loading && shorts.length === 0) {
+      const timer = setTimeout(() => setLoadTimeout(true), 5000);
+      return () => clearTimeout(timer);
+    }
+    setLoadTimeout(false);
+  }, [loading, shorts.length]);
 
-  const goPrev = useCallback(() => {
-    if (transitioning || currentIndex <= 0) return;
-    setTransitioning(true);
-    setTimeout(() => {
-      setCurrentIndex((i) => Math.max(i - 1, 0));
-      setTransitioning(false);
-    }, 200);
-  }, [currentIndex, transitioning]);
+  // Prefetch more when near end
+  useEffect(() => {
+    if (token && currentIndex >= shorts.length - 3 && hasMore && !loading) {
+      fetchFeed(token);
+    }
+  }, [currentIndex, shorts.length, hasMore, loading, token, fetchFeed]);
 
+  const currentShort = shorts[currentIndex];
+
+  const goTo = useCallback((index: number) => {
+    if (index < 0 || index >= shorts.length) return;
+    setCurrentIndex(index);
+  }, [shorts.length]);
+
+  const goNext = useCallback(() => goTo(currentIndex + 1), [currentIndex, goTo]);
+  const goPrev = useCallback(() => goTo(currentIndex - 1), [currentIndex, goTo]);
+
+  // Share via Web Share API or clipboard
+  const handleShare = useCallback(async () => {
+    if (!currentShort) return;
+    const shareUrl = `${window.location.origin}/shorts/${currentShort.id}`;
+    const shareData = {
+      title: currentShort.title,
+      text: `${currentShort.title} - SlimeTopia Shorts`,
+      url: shareUrl,
+    };
+
+    try {
+      if (navigator.share && navigator.canShare?.(shareData)) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toastSuccess("링크가 복사되었어요!");
+      }
+    } catch {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        toastSuccess("링크가 복사되었어요!");
+      } catch {
+        // ignore
+      }
+    }
+  }, [currentShort]);
+
+  // Optimistic like/unlike
+  const handleLike = useCallback(() => {
+    if (!token || !currentShort) return;
+    useShortsStore.setState((s) => ({
+      shorts: s.shorts.map((sh) =>
+        sh.id === currentShort.id ? { ...sh, liked: true, likes: sh.likes + 1 } : sh
+      ),
+    }));
+    likeShort(token, currentShort.id).catch(() => {
+      useShortsStore.setState((s) => ({
+        shorts: s.shorts.map((sh) =>
+          sh.id === currentShort.id ? { ...sh, liked: false, likes: Math.max(0, sh.likes - 1) } : sh
+        ),
+      }));
+    });
+  }, [token, currentShort, likeShort]);
+
+  const handleUnlike = useCallback(() => {
+    if (!token || !currentShort) return;
+    useShortsStore.setState((s) => ({
+      shorts: s.shorts.map((sh) =>
+        sh.id === currentShort.id ? { ...sh, liked: false, likes: Math.max(0, sh.likes - 1) } : sh
+      ),
+    }));
+    unlikeShort(token, currentShort.id).catch(() => {
+      useShortsStore.setState((s) => ({
+        shorts: s.shorts.map((sh) =>
+          sh.id === currentShort.id ? { ...sh, liked: true, likes: sh.likes + 1 } : sh
+        ),
+      }));
+    });
+  }, [token, currentShort, unlikeShort]);
+
+  // Touch swipe — improved scrolling
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (commentShortId || giftShortId || showUpload) return;
     setTouchStart(e.touches[0].clientY);
+    setSwiping(true);
+    setSwipeOffset(0);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStart === null || !swiping) return;
+    const diff = touchStart - e.touches[0].clientY;
+    // Apply resistance at edges
+    const atTop = currentIndex === 0 && diff < 0;
+    const atBottom = currentIndex === shorts.length - 1 && diff > 0;
+    const resistance = (atTop || atBottom) ? 0.2 : 0.5;
+    setSwipeOffset(-diff * resistance);
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (touchStart === null) return;
     const diff = touchStart - e.changedTouches[0].clientY;
-    if (Math.abs(diff) > 50) {
+    setSwiping(false);
+    setSwipeOffset(0);
+    setTouchStart(null);
+    if (Math.abs(diff) > 60) {
       if (diff > 0) goNext();
       else goPrev();
     }
-    setTouchStart(null);
   };
+
+  // Mouse wheel navigation
+  const wheelTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    if (wheelTimeoutRef.current) return;
+    if (Math.abs(e.deltaY) > 30) {
+      if (e.deltaY > 0) goNext();
+      else goPrev();
+      wheelTimeoutRef.current = setTimeout(() => {
+        wheelTimeoutRef.current = null;
+      }, 400);
+    }
+  }, [goNext, goPrev]);
 
   // Keyboard navigation
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "ArrowDown" || e.key === " ") goNext();
-      else if (e.key === "ArrowUp") goPrev();
+      if (commentShortId || giftShortId || showUpload) return;
+      if (e.key === "ArrowDown" || e.key === " ") { e.preventDefault(); goNext(); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); goPrev(); }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [goNext, goPrev]);
+  }, [goNext, goPrev, commentShortId, giftShortId, showUpload]);
 
-  const toggleLike = (id: string) => {
-    setLiked((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
+  // Skeleton loading state
+  if (loading && shorts.length === 0 && !loadTimeout) {
+    return (
+      <div className="h-full flex flex-col bg-[#0a0a1a]">
+        {!embedded && (
+          <div className="absolute top-0 left-0 right-0 z-20 flex items-center gap-3 px-4 py-3"
+            style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)" }}>
+            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl bg-black/40 backdrop-blur-sm">
+              <span className="text-white/80 text-sm">←</span>
+            </button>
+            <h1 className="text-white font-bold text-lg">쇼츠</h1>
+          </div>
+        )}
+        <ShortsSkeleton />
+      </div>
+    );
+  }
 
-  const typeLabels: Record<string, { label: string; color: string }> = {
-    tip: { label: "꿀팁", color: "#FFEAA7" },
-    showcase: { label: "자랑", color: "#A29BFE" },
-    recipe: { label: "레시피", color: "#55EFC4" },
-    fact: { label: "상식", color: "#74B9FF" },
-    quiz: { label: "퀴즈", color: "#FD79A8" },
-  };
+  // Empty state
+  if (shorts.length === 0) {
+    return (
+      <div className="h-full flex flex-col bg-[#0a0a1a]">
+        {!embedded && (
+          <div className="absolute top-0 left-0 right-0 z-20 flex items-center gap-3 px-4 py-3"
+            style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)" }}>
+            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl bg-black/40 backdrop-blur-sm">
+              <span className="text-white/80 text-sm">←</span>
+            </button>
+            <h1 className="text-white font-bold text-lg">쇼츠</h1>
+          </div>
+        )}
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6">
+          <div className="text-6xl">🎬</div>
+          <p className="text-white/50 text-center">
+            아직 쇼츠가 없어요<br/>
+            첫 번째 쇼츠를 올려보세요!
+          </p>
+          <button onClick={() => setShowUpload(true)}
+            className="px-6 py-2.5 rounded-full text-white font-bold text-sm"
+            style={{ background: "linear-gradient(135deg, #55EFC4, #00B894)" }}>
+            업로드
+          </button>
+        </div>
+        {showUpload && <ShortsUploadModal onClose={() => setShowUpload(false)} />}
+      </div>
+    );
+  }
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Header — hidden in embedded mode */}
+    <div className="h-full flex flex-col bg-black">
+      {/* Header */}
       {!embedded && (
-        <div className="absolute top-0 left-0 right-0 z-20 flex items-center gap-3 px-4 py-3"
+        <div className="absolute top-0 left-0 right-0 z-30 flex items-center gap-3 px-4 py-3"
           style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)" }}>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl bg-black/40 backdrop-blur-sm">
             <span className="text-white/80 text-sm">←</span>
           </button>
           <h1 className="text-white font-bold text-lg drop-shadow-lg">쇼츠</h1>
-          <div className="ml-auto text-[10px] text-white/50 bg-black/30 backdrop-blur-sm px-2 py-1 rounded-full">
-            {currentIndex + 1}/{SHORTS_DATA.length}
+          <div className="ml-auto text-[10px] text-white/50 bg-black/30 backdrop-blur-sm px-2 py-1 rounded-full tabular-nums">
+            {currentIndex + 1}/{shorts.length}
           </div>
         </div>
       )}
 
-      {/* Main content */}
+      {/* Scrollable card container */}
       <div
         ref={containerRef}
         className="flex-1 relative overflow-hidden"
         onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onWheel={handleWheel}
       >
+        {/* Current card */}
         <div
-          className={`absolute inset-0 flex flex-col transition-opacity duration-200 ${transitioning ? "opacity-0" : "opacity-100"}`}
-          style={{ background: currentShort.gradient }}
+          className="absolute inset-0 transition-transform ease-out"
+          style={{
+            transform: `translateY(${swipeOffset}px)`,
+            transitionDuration: swiping ? "0ms" : "300ms",
+          }}
         >
-          {/* Background pattern */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute -right-10 top-20 text-[120px] opacity-[0.08] rotate-12">
-              {currentShort.icon}
-            </div>
-            <div className="absolute -left-5 bottom-32 text-[80px] opacity-[0.05] -rotate-12">
-              {currentShort.icon}
-            </div>
-          </div>
-
-          {/* Content area */}
-          <div className="flex-1 flex flex-col justify-center px-6 py-20 relative z-10">
-            {/* Type badge */}
-            <div className="mb-4">
-              <span
-                className="px-3 py-1 rounded-full text-xs font-bold"
-                style={{
-                  background: `${typeLabels[currentShort.type]?.color}22`,
-                  color: typeLabels[currentShort.type]?.color,
-                  border: `1px solid ${typeLabels[currentShort.type]?.color}44`,
-                }}
-              >
-                {typeLabels[currentShort.type]?.label}
-              </span>
-            </div>
-
-            {/* Title */}
-            <h2 className="text-2xl font-black text-white mb-4 drop-shadow-lg leading-tight">
-              {currentShort.title}
-            </h2>
-
-            {/* Slime illustration if applicable */}
-            {currentShort.element && (
-              <div className="mb-4 flex items-center gap-3">
-                <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                  style={{ background: "rgba(0,0,0,0.2)", backdropFilter: "blur(10px)" }}>
-                  <img src={generateSlimeIconSvg(currentShort.element, 48, currentShort.grade || "common")} alt="" className="w-12 h-12" draggable={false} />
-                </div>
-                <div>
-                  <p className="text-white/90 text-sm font-bold">
-                    {elementNames[currentShort.element]} 속성
-                  </p>
-                  <p className="text-white/60 text-xs">
-                    {gradeNames[currentShort.grade || "common"]} 등급
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Content text */}
-            <div className="rounded-2xl p-4" style={{ background: "rgba(0,0,0,0.25)", backdropFilter: "blur(10px)" }}>
-              <p className="text-white/90 text-sm leading-relaxed whitespace-pre-line">
-                {currentShort.content}
-              </p>
-            </div>
-
-            {/* Author */}
-            <div className="mt-4 flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-xs">
-                👤
-              </div>
-              <span className="text-white/70 text-sm font-bold">@{currentShort.author}</span>
-            </div>
-          </div>
-
-          {/* Right side action buttons */}
-          <div className="absolute right-4 bottom-24 flex flex-col items-center gap-5 z-20">
-            {/* Like */}
-            <button onClick={() => toggleLike(currentShort.id)} className="flex flex-col items-center gap-1">
-              <div className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${
-                liked.has(currentShort.id) ? "bg-red-500/30 scale-110" : "bg-black/30 backdrop-blur-sm"
-              }`}>
-                <span className="text-xl">{liked.has(currentShort.id) ? "❤️" : "🤍"}</span>
-              </div>
-              <span className="text-white/80 text-[10px] font-bold">
-                {formatCount(currentShort.likes + (liked.has(currentShort.id) ? 1 : 0))}
-              </span>
-            </button>
-
-            {/* Comment */}
-            <button className="flex flex-col items-center gap-1">
-              <div className="w-11 h-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
-                <span className="text-xl">💬</span>
-              </div>
-              <span className="text-white/80 text-[10px] font-bold">
-                {formatCount(currentShort.comments)}
-              </span>
-            </button>
-
-            {/* Share */}
-            <button className="flex flex-col items-center gap-1">
-              <div className="w-11 h-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
-                <span className="text-xl">↗️</span>
-              </div>
-              <span className="text-white/80 text-[10px] font-bold">
-                {formatCount(currentShort.shares)}
-              </span>
-            </button>
-          </div>
-
-          {/* Bottom swipe indicator */}
-          <div className="absolute bottom-4 left-0 right-0 flex justify-center z-20 pointer-events-none">
-            <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-black/30 backdrop-blur-sm">
-              {SHORTS_DATA.map((_, i) => (
-                <div
-                  key={i}
-                  className="rounded-full transition-all duration-300"
-                  style={{
-                    width: i === currentIndex ? 16 : 4,
-                    height: 4,
-                    background: i === currentIndex ? "white" : "rgba(255,255,255,0.3)",
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Navigation hints */}
-          {currentIndex > 0 && (
-            <button onClick={goPrev} className="absolute top-24 left-1/2 -translate-x-1/2 z-20">
-              <div className="text-white/30 text-xs animate-bounce">▲ 이전</div>
-            </button>
-          )}
-          {currentIndex < SHORTS_DATA.length - 1 && (
-            <button onClick={goNext} className="absolute bottom-14 left-1/2 -translate-x-1/2 z-20">
-              <div className="text-white/30 text-xs animate-bounce">▼ 다음</div>
-            </button>
+          {currentShort && (
+            <ShortsCard
+              key={currentShort.id}
+              short={currentShort}
+              index={currentIndex}
+              isActive={true}
+              onLike={handleLike}
+              onUnlike={handleUnlike}
+              onComment={() => setCommentShortId(currentShort.id)}
+              onGift={() => setGiftShortId(currentShort.id)}
+              onShare={handleShare}
+              onView={() => token && viewShort(token, currentShort.id)}
+            />
           )}
         </div>
+
+        {/* Loading for next page */}
+        {loading && shorts.length > 0 && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+            <div className="w-6 h-6 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+          </div>
+        )}
+
+        {/* Navigation hints */}
+        {currentIndex > 0 && (
+          <button onClick={goPrev} className="absolute top-24 left-1/2 -translate-x-1/2 z-20">
+            <div className="text-white/40 text-xs animate-bounce">▲ 이전</div>
+          </button>
+        )}
+        {currentIndex < shorts.length - 1 && (
+          <button onClick={goNext} className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
+            <div className="text-white/40 text-xs animate-bounce">▼ 다음</div>
+          </button>
+        )}
+
+        {/* Bottom dots indicator */}
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 flex gap-1">
+          {shorts.slice(Math.max(0, currentIndex - 3), currentIndex + 4).map((s, i) => {
+            const realIdx = Math.max(0, currentIndex - 3) + i;
+            return (
+              <div key={s.id}
+                className="rounded-full transition-all duration-200"
+                style={{
+                  width: realIdx === currentIndex ? 16 : 4,
+                  height: 4,
+                  background: realIdx === currentIndex ? "white" : "rgba(255,255,255,0.3)",
+                }}
+              />
+            );
+          })}
+        </div>
       </div>
+
+      {/* Upload FAB */}
+      <button
+        onClick={() => setShowUpload(true)}
+        className="absolute bottom-20 right-4 z-30 w-12 h-12 rounded-full flex items-center justify-center shadow-lg"
+        style={{ background: "linear-gradient(135deg, #55EFC4, #00B894)", boxShadow: "0 4px 16px rgba(85,239,196,0.3)" }}
+      >
+        <span className="text-[#0a0a1a] text-2xl leading-none font-bold">+</span>
+      </button>
+
+      {/* Modals */}
+      {showUpload && <ShortsUploadModal onClose={() => setShowUpload(false)} />}
+      {commentShortId && (
+        <ShortsCommentSheet shortId={commentShortId} onClose={() => setCommentShortId(null)} />
+      )}
+      {giftShortId && (
+        <ShortsGiftSheet shortId={giftShortId} onClose={() => setGiftShortId(null)} />
+      )}
+
+      <style jsx global>{`
+        @keyframes heartBurst {
+          0% { transform: scale(0); opacity: 0; }
+          30% { transform: scale(1.3); opacity: 1; }
+          60% { transform: scale(1); opacity: 0.8; }
+          100% { transform: scale(1.5); opacity: 0; }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
+        }
+      `}</style>
     </div>
   );
 }

@@ -1,0 +1,115 @@
+{{define "boss.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+{{if eq .Message "created"}}
+<div class="msg-success">월드보스가 생성되었습니다.</div>
+{{else if eq .Message "required"}}
+<div class="msg-error">이름, 원소, HP를 입력해주세요.</div>
+{{else if eq .Message "error"}}
+<div class="msg-error">오류가 발생했습니다.</div>
+{{end}}
+
+<!-- Create Boss Form -->
+<div class="stat-card" style="margin-bottom: 24px;">
+  <div class="label" style="margin-bottom: 16px; font-size: 14px; color: #ff6b6b;">새 월드보스 생성</div>
+  <form method="POST" action="/admin/boss/create">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+      <div class="form-row">
+        <label style="min-width: 80px;">이름</label>
+        <input type="text" name="name" placeholder="보스 이름..." style="flex: 1;" required />
+      </div>
+      <div class="form-row">
+        <label style="min-width: 80px;">원소</label>
+        <select name="element" style="flex: 1;" required>
+          <option value="fire">fire</option>
+          <option value="water">water</option>
+          <option value="grass">grass</option>
+          <option value="light">light</option>
+          <option value="dark">dark</option>
+          <option value="ice">ice</option>
+          <option value="electric">electric</option>
+          <option value="poison">poison</option>
+          <option value="earth">earth</option>
+          <option value="wind">wind</option>
+          <option value="celestial">celestial</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label style="min-width: 80px;">최대 HP</label>
+        <input type="number" name="max_hp" value="100000" min="1" style="flex: 1;" required />
+      </div>
+      <div class="form-row">
+        <label style="min-width: 80px;">기간</label>
+        <select name="expires_in" style="flex: 1;">
+          <option value="24h">24시간</option>
+          <option value="48h">48시간</option>
+          <option value="72h">72시간</option>
+          <option value="custom">직접 입력</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label style="min-width: 80px;">골드 보상</label>
+        <input type="number" name="reward_gold" value="500" min="0" style="flex: 1;" />
+      </div>
+      <div class="form-row">
+        <label style="min-width: 80px;">젬 보상</label>
+        <input type="number" name="reward_gems" value="5" min="0" style="flex: 1;" />
+      </div>
+      <div class="form-row">
+        <label style="min-width: 80px;">만료일</label>
+        <input type="datetime-local" name="custom_expiry" style="flex: 1;" />
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary" style="margin-top: 12px;" onclick="return confirm('새 월드보스를 생성하시겠습니까?')">보스 생성</button>
+  </form>
+</div>
+
+<!-- Current Bosses -->
+<h2 style="font-size: 16px; margin-bottom: 12px;">최근 보스 목록</h2>
+{{range .Bosses}}
+<div class="stat-card" style="margin-bottom: 16px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+    <div>
+      <span style="color: #ff6b6b; font-weight: 700; font-size: 18px;">{{.Name}}</span>
+      <span class="badge" style="background: rgba(116,185,255,0.15); color: #74b9ff; margin-left: 8px;">{{.Element}}</span>
+      <span style="color: #636e72; font-size: 12px; margin-left: 8px;">Stage {{.Stage}}</span>
+    </div>
+    <div style="font-size: 12px; color: #636e72;">
+      만료: {{.ExpiresAt.Format "2006-01-02 15:04"}}
+    </div>
+  </div>
+  <div style="margin-bottom: 8px;">
+    <span style="color: #ff6b6b; font-weight: 700;">HP: {{.CurrentHP}} / {{.MaxHP}}</span>
+    <span style="color: #636e72; margin-left: 12px;">보상: <span style="color: #ffeaa7;">{{.RewardGold}}G</span> + <span style="color: #a29bfe;">{{.RewardGems}}Gem</span></span>
+  </div>
+  <div style="background: rgba(255,255,255,0.06); border-radius: 4px; height: 8px; overflow: hidden;">
+    {{if gt .MaxHP 0}}
+    <div style="height: 100%; background: linear-gradient(90deg, #ff6b6b, #e17055); width: {{percentage .CurrentHP .MaxHP}}%;"></div>
+    {{end}}
+  </div>
+</div>
+{{else}}
+<div class="stat-card"><p style="text-align:center; color:#636e72;">보스 없음</p></div>
+{{end}}
+
+<!-- Attack Ranking -->
+{{if .AttackRanking}}
+<h2 style="font-size: 16px; margin-bottom: 12px; margin-top: 24px;">공격 랭킹 Top 20</h2>
+<table>
+  <thead>
+    <tr><th>#</th><th>닉네임</th><th>총 데미지</th></tr>
+  </thead>
+  <tbody>
+    {{range .AttackRanking}}
+    <tr>
+      <td style="color: #636e72;">{{.Rank}}</td>
+      <td style="color: #55efc4;">{{.Nickname}}</td>
+      <td style="color: #ff6b6b; font-weight: 700;">{{.Damage}}</td>
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}
+{{end}}

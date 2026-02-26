@@ -1,0 +1,42 @@
+{{define "logs_community.html"}}
+{{template "layout.html" .}}
+{{end}}
+
+{{define "content"}}
+<div class="tab-bar">
+  <a href="/admin/logs/community?tab=posts" class="{{if eq .Tab "posts"}}active{{end}}">게시글</a>
+  <a href="/admin/logs/community?tab=replies" class="{{if eq .Tab "replies"}}active{{end}}">댓글</a>
+</div>
+
+<form class="filter-bar" method="GET" action="/admin/logs/community">
+  <input type="hidden" name="tab" value="{{.Tab}}">
+  <input type="text" name="search" placeholder="닉네임/내용 검색..." value="{{.Search}}" style="width:220px;">
+  <button type="submit" class="btn btn-primary btn-sm">검색</button>
+  <span style="color:#636e72; font-size:12px; margin-left:8px;">총 {{.TotalCount}}건</span>
+</form>
+
+<table>
+  <thead>
+    <tr><th>시간</th><th>닉네임</th><th>타입</th><th>내용</th><th>좋아요</th></tr>
+  </thead>
+  <tbody>
+    {{range .Logs}}
+    <tr>
+      <td style="font-size:11px; color:#636e72;">{{formatDate .CreatedAt}}</td>
+      <td>{{.Nickname}}</td>
+      <td><span class="badge badge-uncommon">{{.Type}}</span></td>
+      <td style="font-size:12px; max-width:400px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{truncate .Content 100}}</td>
+      <td>{{.Likes}}</td>
+    </tr>
+    {{else}}
+    <tr><td colspan="5" style="text-align:center; color:#636e72;">데이터 없음</td></tr>
+    {{end}}
+  </tbody>
+</table>
+
+<div class="pagination">
+  {{if .HasPrev}}<a href="?tab={{.Tab}}&page={{.PrevPage}}&search={{.Search}}">이전</a>{{end}}
+  <span class="current">{{.Page}} / {{.TotalPages}}</span>
+  {{if .HasNext}}<a href="?tab={{.Tab}}&page={{.NextPage}}&search={{.Search}}">다음</a>{{end}}
+</div>
+{{end}}

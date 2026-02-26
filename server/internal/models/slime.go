@@ -30,6 +30,7 @@ type Slime struct {
 	PositionX   *int        `json:"position_x"`
 	PositionY   *int        `json:"position_y"`
 	Accessories []byte      `json:"accessories"` // JSONB
+	IsSick      bool        `json:"is_sick"`
 	CreatedAt   time.Time   `json:"created_at"`
 	UpdatedAt   time.Time   `json:"updated_at"`
 }
@@ -46,11 +47,17 @@ const (
 
 // Element constants
 const (
-	ElementWater = "water"
-	ElementFire  = "fire"
-	ElementGrass = "grass"
-	ElementLight = "light"
-	ElementDark  = "dark"
+	ElementWater     = "water"
+	ElementFire      = "fire"
+	ElementGrass     = "grass"
+	ElementLight     = "light"
+	ElementDark      = "dark"
+	ElementIce       = "ice"
+	ElementElectric  = "electric"
+	ElementPoison    = "poison"
+	ElementEarth     = "earth"
+	ElementWind      = "wind"
+	ElementCelestial = "celestial"
 )
 
 // Personality constants

@@ -1,0 +1,60 @@
+{
+  "seasons": [
+    {
+      "id": 1,
+      "name": "봄꽃 축제",
+      "name_en": "Spring Blossom Festival",
+      "start": "2026-03-01",
+      "end": "2026-05-31",
+      "limited_species": [24],
+      "special_shop_items": [
+        { "id": 101, "name": "봄꽃 알", "name_en": "Blossom Egg", "type": "egg", "cost": { "gold": 500, "gems": 0 }, "icon": "blossom_egg.png", "description": "풀 원소 슬라임이 태어날 수 있는 봄 한정 알", "species_pool": [3, 15, 24] }
+      ],
+      "banner_color": "#FFB8D0",
+      "description": "봄의 기운이 가득한 축제! 한정 꽃향기 슬라임을 만나보세요.",
+      "buffs": { "grass": 1.2, "light": 1.1 }
+    },
+    {
+      "id": 2,
+      "name": "여름 파도 축제",
+      "name_en": "Summer Tide Festival",
+      "start": "2026-07-01",
+      "end": "2026-08-31",
+      "limited_species": [32],
+      "special_shop_items": [
+        { "id": 102, "name": "파도 알", "name_en": "Tide Egg", "type": "egg", "cost": { "gold": 500, "gems": 0 }, "icon": "tide_egg.png", "description": "물 원소 슬라임이 태어날 수 있는 여름 한정 알", "species_pool": [1, 13, 22] }
+      ],
+      "banner_color": "#74B9FF",
+      "description": "시원한 파도와 함께하는 여름 축제! 한정 항해 슬라임을 만나보세요.",
+      "buffs": { "water": 1.2, "electric": 1.1 }
+    },
+    {
+      "id": 3,
+      "name": "가을 수확 축제",
+      "name_en": "Autumn Harvest Festival",
+      "start": "2026-09-01",
+      "end": "2026-11-30",
+      "limited_species": [],
+      "special_shop_items": [
+        { "id": 103, "name": "수확 알", "name_en": "Harvest Egg", "type": "egg", "cost": { "gold": 400, "gems": 0 }, "icon": "harvest_egg.png", "description": "대지와 바람의 슬라임이 태어날 수 있는 알", "species_pool": [9, 10, 20] }
+      ],
+      "banner_color": "#E17055",
+      "description": "풍성한 가을! 탐험 보상이 1.5배 증가합니다.",
+      "buffs": { "earth": 1.3, "wind": 1.2, "poison": 1.1 }
+    },
+    {
+      "id": 4,
+      "name": "겨울 결정 축제",
+      "name_en": "Winter Crystal Festival",
+      "start": "2026-12-01",
+      "end": "2027-02-28",
+      "limited_species": [],
+      "special_shop_items": [
+        { "id": 104, "name": "결정 알", "name_en": "Crystal Egg", "type": "egg", "cost": { "gold": 600, "gems": 0 }, "icon": "crystal_egg.png", "description": "얼음과 천체의 슬라임이 태어날 수 있는 알", "species_pool": [6, 17, 11] }
+      ],
+      "banner_color": "#81ECEC",
+      "description": "겨울 결정 축제! 한정 얼음 & 천체 슬라임을 만나보세요.",
+      "buffs": { "ice": 1.3, "celestial": 1.2, "dark": 1.1 }
+    }
+  ]
+}

@@ -22,6 +22,7 @@ interface TrainingSlot {
   grade: string;
   elapsed_mins: number;
   pending_exp: number;
+  multiplier: number;
 }
 
 interface TrainingData {
@@ -38,6 +39,17 @@ const GRADE_NAMES: Record<string, string> = {
   common: "일반", uncommon: "고급", rare: "희귀",
   epic: "영웅", legendary: "전설", mythic: "신화",
 };
+
+const GRADE_MULTIPLIER: Record<string, number> = {
+  common: 1.0, uncommon: 1.2, rare: 1.5,
+  epic: 1.8, legendary: 2.2, mythic: 3.0,
+};
+
+const GRADE_PRIORITY: Record<string, number> = {
+  common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 4, mythic: 5,
+};
+
+type SortMode = "grade" | "level" | "name";
 
 function formatDuration(mins: number): string {
   if (mins < 1) return "방금 시작";
@@ -64,20 +76,24 @@ function drawTrainingBanner(
   ctx: CanvasRenderingContext2D, w: number, h: number, t: number,
   particles: BannerParticle[], slotCount: number, totalExp: number,
 ) {
-  // Background gradient
+  // Background gradient — leather brown tones
   const bg = ctx.createLinearGradient(0, 0, w, h);
-  bg.addColorStop(0, "#0f0f2a"); bg.addColorStop(0.5, "#141430"); bg.addColorStop(1, "#0f0f2a");
+  bg.addColorStop(0, "#1A0E08"); bg.addColorStop(0.5, "#2C1810"); bg.addColorStop(1, "#1A0E08");
   ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
+
+  // Subtle parchment texture overlay
+  ctx.fillStyle = "rgba(245,230,200,0.03)";
+  ctx.fillRect(0, 0, w, h);
 
   // Floor line
   const floorY = h * 0.82;
   ctx.beginPath(); ctx.moveTo(0, floorY);
   ctx.lineTo(w, floorY);
-  ctx.strokeStyle = "rgba(162,155,254,0.15)"; ctx.lineWidth = 1; ctx.stroke();
+  ctx.strokeStyle = "rgba(201,168,76,0.2)"; ctx.lineWidth = 1; ctx.stroke();
 
   // Floor glow
   const fg = ctx.createLinearGradient(0, floorY, 0, h);
-  fg.addColorStop(0, "rgba(162,155,254,0.06)"); fg.addColorStop(1, "transparent");
+  fg.addColorStop(0, "rgba(201,168,76,0.08)"); fg.addColorStop(1, "transparent");
   ctx.fillStyle = fg; ctx.fillRect(0, floorY, w, h - floorY);
 
   // === Animated Slime ===
@@ -104,9 +120,9 @@ function drawTrainingBanner(
   ctx.bezierCurveTo(sz * 0.9, -sz, sz * 1.1, 0, sz, sz * 0.7);
   ctx.bezierCurveTo(sz * 0.7, sz, -sz * 0.7, sz, -sz, sz * 0.7); ctx.closePath();
   const slimeG = ctx.createLinearGradient(0, -sz, 0, sz);
-  slimeG.addColorStop(0, "#A29BFE"); slimeG.addColorStop(1, "#6C5CE7");
+  slimeG.addColorStop(0, "#D4AF37"); slimeG.addColorStop(1, "#8B6914");
   ctx.fillStyle = slimeG; ctx.fill();
-  ctx.strokeStyle = "rgba(162,155,254,0.4)"; ctx.lineWidth = 1; ctx.stroke();
+  ctx.strokeStyle = "rgba(201,168,76,0.5)"; ctx.lineWidth = 1; ctx.stroke();
 
   // Highlight
   ctx.beginPath(); ctx.ellipse(-sz * 0.3, -sz * 0.5, sz * 0.25, sz * 0.12, -0.4, 0, Math.PI * 2);
@@ -117,7 +133,7 @@ function drawTrainingBanner(
     ctx.beginPath(); ctx.arc(s * sz * 0.3, -sz * 0.1, sz * 0.12, 0, Math.PI * 2);
     ctx.fillStyle = "#fff"; ctx.fill();
     ctx.beginPath(); ctx.arc(s * sz * 0.32, -sz * 0.1, sz * 0.07, 0, Math.PI * 2);
-    ctx.fillStyle = "#2D3436"; ctx.fill();
+    ctx.fillStyle = "#2C1810"; ctx.fill();
   }
   // Determined mouth
   ctx.beginPath(); ctx.moveTo(-sz * 0.15, sz * 0.2); ctx.lineTo(sz * 0.15, sz * 0.15);
@@ -126,11 +142,11 @@ function drawTrainingBanner(
   // Headband
   ctx.beginPath();
   ctx.moveTo(-sz * 0.9, -sz * 0.55); ctx.quadraticCurveTo(0, -sz * 0.9, sz * 0.9, -sz * 0.55);
-  ctx.strokeStyle = "#FF6B6B"; ctx.lineWidth = 2.5; ctx.lineCap = "round"; ctx.stroke();
+  ctx.strokeStyle = "#C9A84C"; ctx.lineWidth = 2.5; ctx.lineCap = "round"; ctx.stroke();
   // Headband tail
   ctx.beginPath(); ctx.moveTo(sz * 0.9, -sz * 0.55);
   ctx.quadraticCurveTo(sz * 1.3, -sz * 0.4 + Math.sin(t * 5) * 3, sz * 1.5, -sz * 0.7 + Math.sin(t * 4) * 4);
-  ctx.strokeStyle = "#FF6B6B"; ctx.lineWidth = 2; ctx.stroke();
+  ctx.strokeStyle = "#C9A84C"; ctx.lineWidth = 2; ctx.stroke();
 
   ctx.restore();
 
@@ -148,26 +164,26 @@ function drawTrainingBanner(
   ctx.save(); ctx.translate(dbX, dbY);
   // Bar
   ctx.beginPath(); ctx.roundRect(-18, -2, 36, 4, 2);
-  ctx.fillStyle = "rgba(255,255,255,0.15)"; ctx.fill();
+  ctx.fillStyle = "rgba(201,168,76,0.2)"; ctx.fill();
   // Weights
   for (const s of [-1, 1]) {
     ctx.beginPath(); ctx.roundRect(s * 15, -6, 8 * s, 12, 2);
-    ctx.fillStyle = "rgba(162,155,254,0.3)"; ctx.fill();
-    ctx.strokeStyle = "rgba(162,155,254,0.2)"; ctx.lineWidth = 0.5; ctx.stroke();
+    ctx.fillStyle = "rgba(201,168,76,0.25)"; ctx.fill();
+    ctx.strokeStyle = "rgba(201,168,76,0.15)"; ctx.lineWidth = 0.5; ctx.stroke();
   }
   ctx.restore();
 
   // === EXP Rate indicator ===
   const rateX = w * 0.72, rateY = h * 0.35;
   ctx.save();
-  ctx.font = "bold 11px sans-serif"; ctx.textAlign = "center";
-  ctx.fillStyle = rgba("#A29BFE", 0.5 + Math.sin(t * 2) * 0.15);
+  ctx.font = "bold 11px Georgia, 'Times New Roman', serif"; ctx.textAlign = "center";
+  ctx.fillStyle = rgba("#C9A84C", 0.5 + Math.sin(t * 2) * 0.15);
   ctx.fillText("120 EXP/h", rateX, rateY);
   // Upward arrow
   ctx.beginPath();
   ctx.moveTo(rateX, rateY - 18); ctx.lineTo(rateX - 5, rateY - 12); ctx.moveTo(rateX, rateY - 18);
   ctx.lineTo(rateX + 5, rateY - 12);
-  ctx.strokeStyle = rgba("#A29BFE", 0.3 + Math.sin(t * 3) * 0.1);
+  ctx.strokeStyle = rgba("#C9A84C", 0.3 + Math.sin(t * 3) * 0.1);
   ctx.lineWidth = 1.5; ctx.lineCap = "round"; ctx.stroke();
   ctx.restore();
 
@@ -176,27 +192,27 @@ function drawTrainingBanner(
   for (let i = 0; i < 3; i++) {
     const cx2 = circX + (i - 1) * 16;
     ctx.beginPath(); ctx.arc(cx2, circY, 5, 0, Math.PI * 2);
-    ctx.fillStyle = i < slotCount ? rgba("#A29BFE", 0.6) : "rgba(255,255,255,0.08)";
+    ctx.fillStyle = i < slotCount ? rgba("#C9A84C", 0.6) : "rgba(245,230,200,0.08)";
     ctx.fill();
     if (i < slotCount) {
       const glow = ctx.createRadialGradient(cx2, circY, 0, cx2, circY, 8);
-      glow.addColorStop(0, rgba("#A29BFE", 0.2)); glow.addColorStop(1, "transparent");
+      glow.addColorStop(0, rgba("#C9A84C", 0.2)); glow.addColorStop(1, "transparent");
       ctx.fillStyle = glow; ctx.fillRect(cx2 - 8, circY - 8, 16, 16);
     }
   }
-  ctx.font = "9px sans-serif"; ctx.textAlign = "center";
-  ctx.fillStyle = "rgba(255,255,255,0.25)";
+  ctx.font = "9px Georgia, 'Times New Roman', serif"; ctx.textAlign = "center";
+  ctx.fillStyle = "rgba(245,230,200,0.3)";
   ctx.fillText(`${slotCount}/3 슬롯`, circX, circY + 14);
 
   // === Total EXP (right side) ===
   if (totalExp > 0) {
     const expX = w * 0.9, expY = h * 0.5;
     ctx.save();
-    ctx.font = "bold 14px sans-serif"; ctx.textAlign = "center";
-    ctx.fillStyle = "#FFEAA7"; ctx.shadowColor = "#FFEAA7"; ctx.shadowBlur = 8;
+    ctx.font = "bold 14px Georgia, 'Times New Roman', serif"; ctx.textAlign = "center";
+    ctx.fillStyle = "#D4AF37"; ctx.shadowColor = "#D4AF37"; ctx.shadowBlur = 8;
     ctx.fillText(`+${totalExp}`, expX, expY);
     ctx.shadowBlur = 0;
-    ctx.font = "9px sans-serif"; ctx.fillStyle = "rgba(255,234,167,0.5)";
+    ctx.font = "9px Georgia, 'Times New Roman', serif"; ctx.fillStyle = "rgba(212,175,55,0.5)";
     ctx.fillText("EXP", expX, expY + 13);
     ctx.restore();
   }
@@ -231,6 +247,8 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
   const [collecting, setCollecting] = useState<string | null>(null);
   const [collectingAll, setCollectingAll] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [sortMode, setSortMode] = useState<SortMode>("grade");
+  const [lastCollectedSlot, setLastCollectedSlot] = useState<string | null>(null);
 
   // Canvas refs
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -298,16 +316,16 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
         if (p.type === "sweat") {
           p.vy += 0.05 * dt * 60;
           ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(116,185,255,${a * 0.6})`; ctx.fill();
+          ctx.fillStyle = `rgba(212,175,55,${a * 0.5})`; ctx.fill();
         } else if (p.type === "sparkle") {
           const twinkle = Math.sin(t * 8 + p.x) > 0.3 ? 1 : 0.3;
           ctx.beginPath(); ctx.arc(p.x, p.y, p.size * twinkle, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(162,155,254,${a * 0.4 * twinkle})`; ctx.fill();
+          ctx.fillStyle = `rgba(201,168,76,${a * 0.4 * twinkle})`; ctx.fill();
         } else if (p.type === "exp") {
           ctx.save();
-          ctx.font = "bold 9px sans-serif"; ctx.textAlign = "center";
+          ctx.font = "bold 9px Georgia, 'Times New Roman', serif"; ctx.textAlign = "center";
           ctx.globalAlpha = a * 0.6;
-          ctx.fillStyle = "#A29BFE"; ctx.fillText(p.text || "+1", p.x, p.y);
+          ctx.fillStyle = "#C9A84C"; ctx.fillText(p.text || "+1", p.x, p.y);
           ctx.restore();
         }
         return true;
@@ -341,8 +359,9 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
     setStarting(false);
   };
 
-  const collectTraining = async (slotId: string) => {
+  const collectTraining = async (slotId: string, keepTraining?: boolean) => {
     if (!token) return;
+    const slot = data?.slots.find(s => s.id === slotId);
     setCollecting(slotId);
     try {
       const res = await authApi<{ exp_gained: number; new_level: number; level_up: boolean }>(
@@ -351,8 +370,19 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
       let msg = `EXP +${res.exp_gained} 획득!`;
       if (res.level_up) msg += ` Lv.${res.new_level} 달성!`;
       toastReward(msg, "🏋️");
-      fetchTraining();
+      await fetchTraining();
       if (token) fetchSlimes(token);
+
+      // If keep training, immediately restart training for the same slime
+      if (keepTraining && slot) {
+        try {
+          await authApi("/api/training/start", token, { method: "POST", body: { slime_id: slot.slime_id } });
+          toastReward("훈련을 다시 시작합니다!", "🔄");
+          fetchTraining();
+        } catch {
+          // Slot might be full now, silently ignore
+        }
+      }
     } catch {
       toastError("수령 실패");
     }
@@ -392,14 +422,22 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
   const hasCollectable = (data?.slots.length || 0) > 0 && totalPendingExp > 0;
 
   return (
-    <div className="absolute inset-0 z-50 bg-[#0a0a1a] flex flex-col" style={{ bottom: 76 }}>
+    <div className="absolute inset-0 z-50 flex flex-col" style={{ bottom: 76, background: "linear-gradient(180deg, #1A0E08 0%, #2C1810 50%, #1A0E08 100%)" }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-black/30 shrink-0 overlay-header">
+      <div className="flex items-center justify-between px-4 py-2.5 shrink-0 overlay-header" style={{
+        background: "linear-gradient(135deg, #3D2017 0%, #4A2515 50%, #3D2017 100%)",
+        borderBottom: "2px solid #C9A84C",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(201,168,76,0.15)",
+      }}>
         <div className="flex items-center gap-2.5">
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/15 flex items-center justify-center text-white/60 hover:text-white text-sm transition">{"←"}</button>
+          <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center text-sm transition" style={{
+            background: "linear-gradient(135deg, #4A2515, #3D2017)",
+            border: "1px solid rgba(201,168,76,0.3)",
+            color: "#C9A84C",
+          }}>{"←"}</button>
           <div>
-            <h2 className="text-white font-bold text-sm">{"🏋️"} 훈련장</h2>
-            <span className="text-white/30 text-[9px]">{filledSlots}/{maxSlots} 사용 중</span>
+            <h2 className="font-bold text-sm" style={{ color: "#C9A84C", fontFamily: "Georgia, 'Times New Roman', serif", letterSpacing: "0.05em" }}>TRAINING GROUNDS</h2>
+            <span className="text-[9px]" style={{ color: "rgba(245,230,200,0.4)" }}>{filledSlots}/{maxSlots} 사용 중</span>
           </div>
         </div>
         {/* Collect All button */}
@@ -409,18 +447,19 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
             disabled={collectingAll}
             className="px-3 py-1.5 rounded-lg text-[10px] font-bold transition active:scale-[0.97]"
             style={{
-              background: "linear-gradient(135deg, rgba(255,234,167,0.15), rgba(253,203,110,0.15))",
-              color: "#FFEAA7",
-              border: "1px solid rgba(255,234,167,0.2)",
+              background: "linear-gradient(135deg, rgba(201,168,76,0.2), rgba(212,175,55,0.15))",
+              color: "#D4AF37",
+              border: "1px solid rgba(201,168,76,0.35)",
+              fontFamily: "Georgia, 'Times New Roman', serif",
             }}
           >
-            {collectingAll ? "수령 중..." : `✨ 전체 수령 (+${totalPendingExp})`}
+            {collectingAll ? "수령 중..." : `전체 수령 (+${totalPendingExp})`}
           </button>
         )}
       </div>
 
       {/* Animated Banner Canvas */}
-      <div ref={ctrRef} className="shrink-0" style={{ height: 100 }}>
+      <div ref={ctrRef} className="shrink-0" style={{ height: 100, borderBottom: "1px solid rgba(201,168,76,0.15)" }}>
         <canvas ref={canvasRef} className="w-full h-full" />
       </div>
 
@@ -435,11 +474,13 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
           return (
             <div key={slot.id} className="rounded-2xl overflow-hidden" style={{
               background: isCapped
-                ? "linear-gradient(180deg, rgba(255,234,167,0.05) 0%, rgba(255,234,167,0.02) 100%)"
-                : "linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)",
-              border: isCapped ? "1px solid rgba(255,234,167,0.15)" : "1px solid rgba(255,255,255,0.06)",
+                ? "linear-gradient(180deg, #3D2017 0%, #2C1810 100%)"
+                : "linear-gradient(180deg, #2C1810 0%, #1A0E08 100%)",
+              border: isCapped ? "1.5px solid rgba(201,168,76,0.4)" : "1.5px solid rgba(201,168,76,0.15)",
               animation: `stagger-slide-in 0.3s ease-out ${idx * 80}ms both`,
-              boxShadow: isCapped ? "0 0 20px rgba(255,234,167,0.08)" : "none",
+              boxShadow: isCapped
+                ? "0 0 20px rgba(201,168,76,0.1), inset 0 1px 0 rgba(245,230,200,0.05)"
+                : "inset 0 1px 0 rgba(245,230,200,0.03)",
             }}>
               <div className="p-4">
                 <div className="flex items-center gap-3">
@@ -447,21 +488,24 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
                   <div className="relative w-14 h-14 shrink-0">
                     {/* Progress ring (SVG overlay) */}
                     <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 56 56">
-                      <circle cx="28" cy="28" r="26" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="2" />
+                      <circle cx="28" cy="28" r="26" fill="none" stroke="rgba(201,168,76,0.12)" strokeWidth="2" />
                       <circle cx="28" cy="28" r="26" fill="none"
-                        stroke={isCapped ? "#FFEAA7" : "#A29BFE"}
+                        stroke={isCapped ? "#D4AF37" : "#C9A84C"}
                         strokeWidth="2" strokeLinecap="round"
                         strokeDasharray={`${progressAngle * 26} ${Math.PI * 2 * 26}`}
-                        style={{ filter: isCapped ? "drop-shadow(0 0 4px rgba(255,234,167,0.4))" : "none" }}
+                        style={{ filter: isCapped ? "drop-shadow(0 0 4px rgba(212,175,55,0.5))" : "none" }}
                       />
                     </svg>
                     <div className="absolute inset-[3px] rounded-full flex items-center justify-center" style={{
-                      background: `${gradeCol}10`, border: `1px solid ${gradeCol}20`,
+                      background: "rgba(245,230,200,0.06)", border: "1px solid rgba(201,168,76,0.15)",
                     }}>
-                      <div dangerouslySetInnerHTML={{ __html: generateSlimeIconSvg(slot.element, 36) }} />
+                      <div dangerouslySetInnerHTML={{ __html: generateSlimeIconSvg(slot.element, 36, undefined, undefined, slot.species_id) }} />
                     </div>
                     {isCapped && (
-                      <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#FFEAA7] flex items-center justify-center" style={{ boxShadow: "0 0 8px rgba(255,234,167,0.5)" }}>
+                      <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center" style={{
+                        background: "linear-gradient(135deg, #D4AF37, #C9A84C)",
+                        boxShadow: "0 0 8px rgba(212,175,55,0.5)",
+                      }}>
                         <span className="text-[9px]">{"✨"}</span>
                       </div>
                     )}
@@ -470,7 +514,7 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-white text-[13px] font-bold truncate">{slot.name}</span>
+                      <span className="text-[13px] font-bold truncate" style={{ color: "#F5E6C8", fontFamily: "Georgia, 'Times New Roman', serif" }}>{slot.name}</span>
                       <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold" style={{
                         background: `${gradeCol}20`, color: gradeCol,
                       }}>
@@ -478,24 +522,26 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-[10px]">
-                      <span className="text-white/40">Lv.{slot.level}</span>
-                      <span className="text-white/15">|</span>
-                      <span className="text-white/40">{elementNames[slot.element] || slot.element}</span>
-                      <span className="text-white/15">|</span>
-                      <span className="text-white/40">{formatDuration(slot.elapsed_mins)}</span>
+                      <span style={{ color: "rgba(245,230,200,0.45)" }}>Lv.{slot.level}</span>
+                      <span style={{ color: "rgba(201,168,76,0.2)" }}>|</span>
+                      <span style={{ color: "rgba(245,230,200,0.45)" }}>{elementNames[slot.element] || slot.element}</span>
+                      <span style={{ color: "rgba(201,168,76,0.2)" }}>|</span>
+                      <span style={{ color: "rgba(245,230,200,0.45)" }}>{formatDuration(slot.elapsed_mins)}</span>
                     </div>
                     {/* Progress bar */}
                     <div className="mt-2">
-                      <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+                      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(201,168,76,0.1)" }}>
                         <div className="h-full rounded-full transition-all duration-1000" style={{
                           width: `${progressPercent}%`,
-                          background: isCapped ? "linear-gradient(90deg, #FFEAA7, #FDCB6E)" : "linear-gradient(90deg, #A29BFE, #6C5CE7)",
-                          boxShadow: isCapped ? "0 0 6px rgba(255,234,167,0.4)" : "none",
+                          background: isCapped
+                            ? "linear-gradient(90deg, #D4AF37, #C9A84C)"
+                            : "linear-gradient(90deg, #8B6914, #C9A84C)",
+                          boxShadow: isCapped ? "0 0 6px rgba(212,175,55,0.5)" : "none",
                         }} />
                       </div>
                       <div className="flex justify-between mt-0.5">
-                        <span className="text-white/20 text-[8px]">{formatDuration(slot.elapsed_mins)}</span>
-                        <span className={`text-[8px] font-bold ${isCapped ? "text-[#FFEAA7]" : "text-white/25"}`}>
+                        <span className="text-[8px]" style={{ color: "rgba(245,230,200,0.25)" }}>{formatDuration(slot.elapsed_mins)}</span>
+                        <span className={`text-[8px] font-bold`} style={{ color: isCapped ? "#D4AF37" : "rgba(245,230,200,0.3)" }}>
                           {isCapped ? "최대!" : "8시간"}
                         </span>
                       </div>
@@ -504,27 +550,54 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
 
                   {/* EXP badge */}
                   <div className="text-right shrink-0">
-                    <div className={`text-[16px] font-bold tabular-nums ${isCapped ? "text-[#FFEAA7]" : "text-[#A29BFE]"}`} style={{
-                      textShadow: isCapped ? "0 0 10px rgba(255,234,167,0.3)" : "none",
+                    <div className="text-[16px] font-bold tabular-nums" style={{
+                      color: isCapped ? "#D4AF37" : "#C9A84C",
+                      textShadow: isCapped ? "0 0 10px rgba(212,175,55,0.3)" : "none",
+                      fontFamily: "Georgia, 'Times New Roman', serif",
                     }}>+{slot.pending_exp}</div>
-                    <div className="text-white/25 text-[9px]">EXP</div>
+                    <div className="text-[9px]" style={{ color: "rgba(245,230,200,0.3)" }}>EXP</div>
+                    {slot.multiplier > 1 && (
+                      <div className="text-[8px] font-bold mt-0.5 px-1 rounded" style={{
+                        color: "#D4AF37",
+                        background: "rgba(201,168,76,0.12)",
+                        border: "1px solid rgba(201,168,76,0.2)",
+                      }}>x{slot.multiplier.toFixed(1)}</div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Collect button */}
-              <button
-                onClick={() => collectTraining(slot.id)}
-                disabled={collecting === slot.id}
-                className={`w-full py-2.5 text-[12px] font-bold transition border-t active:scale-[0.98] ${isCapped ? "animate-heartbeat" : ""}`}
-                style={{
-                  borderColor: isCapped ? "rgba(255,234,167,0.1)" : "rgba(255,255,255,0.06)",
-                  background: isCapped ? "linear-gradient(135deg, rgba(255,234,167,0.12), rgba(253,203,110,0.08))" : "linear-gradient(135deg, rgba(162,155,254,0.08), rgba(108,92,231,0.05))",
-                  color: isCapped ? "#FFEAA7" : "#A29BFE",
-                }}
-              >
-                {collecting === slot.id ? "수령 중..." : `✨ EXP 수령 (+${slot.pending_exp})`}
-              </button>
+              {/* Action buttons */}
+              <div className="flex border-t" style={{ borderColor: isCapped ? "rgba(201,168,76,0.2)" : "rgba(201,168,76,0.1)" }}>
+                <button
+                  onClick={() => collectTraining(slot.id)}
+                  disabled={collecting === slot.id}
+                  className={`flex-1 py-2.5 text-[12px] font-bold transition active:scale-[0.98] ${isCapped ? "animate-heartbeat" : ""}`}
+                  style={{
+                    background: isCapped
+                      ? "linear-gradient(135deg, rgba(212,175,55,0.15), rgba(201,168,76,0.1))"
+                      : "linear-gradient(135deg, rgba(201,168,76,0.08), rgba(139,105,20,0.05))",
+                    color: isCapped ? "#D4AF37" : "#C9A84C",
+                    fontFamily: "Georgia, 'Times New Roman', serif",
+                  }}
+                >
+                  {collecting === slot.id ? "수령 중..." : `EXP 수령 (+${slot.pending_exp})`}
+                </button>
+                <button
+                  onClick={() => collectTraining(slot.id, true)}
+                  disabled={collecting === slot.id}
+                  className="px-3 py-2.5 text-[10px] font-bold transition active:scale-[0.98] border-l"
+                  style={{
+                    borderColor: isCapped ? "rgba(201,168,76,0.2)" : "rgba(201,168,76,0.1)",
+                    background: "rgba(245,230,200,0.05)",
+                    color: "#E8D5B0",
+                    fontFamily: "Georgia, 'Times New Roman', serif",
+                  }}
+                  title="수령 후 바로 다시 훈련 시작"
+                >
+                  {"🔄 계속"}
+                </button>
+              </div>
             </div>
           );
         })}
@@ -534,80 +607,161 @@ export default function TrainingPage({ onClose }: { onClose: () => void }) {
           <button
             key={`empty-${i}`}
             onClick={() => setShowSelect(true)}
-            className="w-full rounded-2xl border-2 border-dashed border-white/[0.08] p-6 text-center hover:border-[#A29BFE]/30 hover:bg-[#A29BFE]/[0.03] transition group"
-            style={{ animation: `stagger-slide-in 0.3s ease-out ${(filledSlots + i) * 80}ms both` }}
+            className="w-full rounded-2xl border-2 border-dashed p-6 text-center transition group"
+            style={{
+              borderColor: "rgba(201,168,76,0.15)",
+              background: "rgba(44,24,16,0.5)",
+              animation: `stagger-slide-in 0.3s ease-out ${(filledSlots + i) * 80}ms both`,
+            }}
           >
-            <div className="w-10 h-10 mx-auto rounded-full bg-white/[0.04] flex items-center justify-center mb-2 group-hover:bg-[#A29BFE]/10 transition">
-              <span className="text-white/20 text-xl group-hover:text-[#A29BFE]/50 transition">+</span>
+            <div className="w-10 h-10 mx-auto rounded-full flex items-center justify-center mb-2 transition" style={{
+              background: "rgba(201,168,76,0.06)",
+              border: "1px solid rgba(201,168,76,0.1)",
+            }}>
+              <span className="text-xl transition" style={{ color: "rgba(201,168,76,0.3)" }}>+</span>
             </div>
-            <div className="text-white/25 text-[11px] group-hover:text-white/40 transition">슬라임을 배치하세요</div>
+            <div className="text-[11px] transition" style={{ color: "rgba(245,230,200,0.3)", fontFamily: "Georgia, 'Times New Roman', serif" }}>슬라임을 배치하세요</div>
           </button>
         ))}
 
         {/* Loading */}
         {!data && (
-          <div className="text-center py-12 text-white/30 text-sm animate-pulse">불러오는 중...</div>
+          <div className="text-center py-12 text-sm animate-pulse" style={{ color: "rgba(245,230,200,0.35)", fontFamily: "Georgia, 'Times New Roman', serif" }}>불러오는 중...</div>
         )}
 
-        {/* Info: EXP rate */}
+        {/* Info: EXP rate & grade bonuses */}
         {data && (
-          <div className="rounded-xl p-3 border border-white/[0.04] bg-white/[0.02] flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-[#A29BFE] text-xs">{"💡"}</span>
-              <span className="text-white/30 text-[10px]">시간당 120 EXP / 최대 8시간(960 EXP)</span>
+          <div className="space-y-2">
+            {/* Gold gradient divider */}
+            <div className="h-px mx-4 my-1" style={{ background: "linear-gradient(90deg, transparent, rgba(201,168,76,0.3), transparent)" }} />
+
+            <div className="rounded-xl p-3 flex items-center justify-between" style={{
+              background: "rgba(44,24,16,0.6)",
+              border: "1px solid rgba(201,168,76,0.12)",
+            }}>
+              <div className="flex items-center gap-2">
+                <span className="text-xs" style={{ color: "#C9A84C" }}>{"💡"}</span>
+                <span className="text-[10px]" style={{ color: "rgba(245,230,200,0.4)" }}>기본 시간당 120 EXP / 최대 8시간</span>
+              </div>
+              {filledSlots > 0 && (
+                <span className="text-[10px] font-bold tabular-nums" style={{ color: "rgba(201,168,76,0.6)", fontFamily: "Georgia, 'Times New Roman', serif" }}>
+                  합계 +{totalPendingExp} EXP
+                </span>
+              )}
             </div>
-            {filledSlots > 0 && (
-              <span className="text-[#A29BFE]/60 text-[10px] font-bold tabular-nums">
-                합계 +{totalPendingExp} EXP
-              </span>
-            )}
+            {/* Grade bonus info */}
+            <div className="rounded-xl p-3" style={{
+              background: "rgba(44,24,16,0.6)",
+              border: "1px solid rgba(201,168,76,0.12)",
+            }}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs" style={{ color: "#D4AF37" }}>{"⭐"}</span>
+                <span className="text-[10px] font-bold" style={{ color: "rgba(245,230,200,0.5)", fontFamily: "Georgia, 'Times New Roman', serif" }}>등급별 훈련 보너스</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5">
+                {Object.entries(GRADE_MULTIPLIER).filter(([,v]) => v > 1).map(([grade, mult]) => (
+                  <div key={grade} className="flex items-center gap-1 px-1.5 py-1 rounded-lg" style={{
+                    background: "rgba(201,168,76,0.06)",
+                    border: "1px solid rgba(201,168,76,0.08)",
+                  }}>
+                    <span className="text-[9px] font-bold" style={{ color: GRADE_COLORS[grade] }}>{GRADE_NAMES[grade]}</span>
+                    <span className="text-[9px]" style={{ color: "rgba(245,230,200,0.35)" }}>x{mult.toFixed(1)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </div>
 
       {/* Slime selector bottom sheet */}
       {showSelect && (
-        <div className="absolute inset-0 z-10 bg-black/60 backdrop-blur-sm flex flex-col justify-end" onClick={() => setShowSelect(false)}>
-          <div className="bg-[#121220] rounded-t-2xl border-t border-white/10 max-h-[70%] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="px-4 py-3 border-b border-white/[0.06] flex items-center justify-between shrink-0">
-              <div>
-                <span className="text-white font-bold text-sm">훈련할 슬라임 선택</span>
-                <span className="text-white/30 text-[10px] ml-2">{availableSlimes.length}마리 가능</span>
+        <div className="absolute inset-0 z-10 backdrop-blur-sm flex flex-col justify-end" style={{ background: "rgba(26,14,8,0.7)" }} onClick={() => setShowSelect(false)}>
+          <div className="rounded-t-2xl max-h-[70%] flex flex-col" style={{
+            background: "linear-gradient(180deg, #2C1810 0%, #1A0E08 100%)",
+            borderTop: "2px solid #C9A84C",
+            boxShadow: "0 -4px 20px rgba(0,0,0,0.5)",
+          }} onClick={(e) => e.stopPropagation()}>
+            <div className="px-4 py-3 shrink-0" style={{ borderBottom: "1px solid rgba(201,168,76,0.15)" }}>
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <span className="font-bold text-sm" style={{ color: "#F5E6C8", fontFamily: "Georgia, 'Times New Roman', serif" }}>훈련할 슬라임 선택</span>
+                  <span className="text-[10px] ml-2" style={{ color: "rgba(201,168,76,0.5)" }}>{availableSlimes.length}마리 가능</span>
+                </div>
+                <button onClick={() => setShowSelect(false)} className="text-xs transition" style={{ color: "rgba(245,230,200,0.4)" }}>닫기</button>
               </div>
-              <button onClick={() => setShowSelect(false)} className="text-white/40 hover:text-white/70 text-xs transition">닫기</button>
+              {/* Sort buttons */}
+              <div className="flex gap-2">
+                {([["grade", "등급순"], ["level", "레벨순"], ["name", "이름순"]] as [SortMode, string][]).map(([mode, label]) => (
+                  <button key={mode} onClick={() => setSortMode(mode)}
+                    className="px-2 py-1 rounded-lg text-[10px] font-bold transition"
+                    style={{
+                      background: sortMode === mode ? "rgba(201,168,76,0.15)" : "rgba(245,230,200,0.05)",
+                      color: sortMode === mode ? "#C9A84C" : "rgba(245,230,200,0.4)",
+                      border: sortMode === mode ? "1px solid rgba(201,168,76,0.3)" : "1px solid transparent",
+                      fontFamily: "Georgia, 'Times New Roman', serif",
+                    }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="flex-1 overflow-y-auto">
               {availableSlimes.length === 0 ? (
                 <div className="px-4 py-12 text-center">
                   <div className="text-3xl mb-2">{"😴"}</div>
-                  <div className="text-white/30 text-[12px]">배치 가능한 슬라임이 없습니다</div>
-                  <div className="text-white/20 text-[10px] mt-1">탐험 중이거나 이미 훈련 중인 슬라임은 제외됩니다</div>
+                  <div className="text-[12px]" style={{ color: "rgba(245,230,200,0.35)" }}>배치 가능한 슬라임이 없습니다</div>
+                  <div className="text-[10px] mt-1" style={{ color: "rgba(245,230,200,0.2)" }}>탐험 중이거나 이미 훈련 중인 슬라임은 제외됩니다</div>
                 </div>
               ) : (
-                availableSlimes.map((s) => {
+                [...availableSlimes].sort((a, b) => {
+                  const spA = species.find(sp => sp.id === a.species_id);
+                  const spB = species.find(sp => sp.id === b.species_id);
+                  if (sortMode === "grade") {
+                    return (GRADE_PRIORITY[spB?.grade || "common"] || 0) - (GRADE_PRIORITY[spA?.grade || "common"] || 0);
+                  } else if (sortMode === "level") {
+                    return (b.level || 0) - (a.level || 0);
+                  } else {
+                    const nameA = a.name || spA?.name || "";
+                    const nameB = b.name || spB?.name || "";
+                    return nameA.localeCompare(nameB, "ko");
+                  }
+                }).map((s) => {
                   const sp = species.find((sp) => sp.id === s.species_id);
                   const displayName = s.name || sp?.name || "슬라임";
                   const grade = sp?.grade || "common";
+                  const mult = GRADE_MULTIPLIER[grade] || 1;
                   return (
                     <button key={s.id} onClick={() => startTraining(s.id)} disabled={starting}
-                      className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/5 active:bg-white/8 transition text-left border-b border-white/[0.04] last:border-0">
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${GRADE_COLORS[grade] || "#888"}10` }}>
-                        <div dangerouslySetInnerHTML={{ __html: generateSlimeIconSvg(s.element, 32) }} />
+                      className="w-full px-4 py-3 flex items-center gap-3 transition text-left border-b last:border-0"
+                      style={{ borderColor: "rgba(201,168,76,0.08)" }}
+                    >
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{
+                        background: "rgba(245,230,200,0.06)",
+                        border: "1px solid rgba(201,168,76,0.1)",
+                      }}>
+                        <div dangerouslySetInnerHTML={{ __html: generateSlimeIconSvg(s.element, 32, undefined, undefined, s.species_id) }} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-white/80 text-[12px] font-bold truncate">{displayName}</span>
+                          <span className="text-[12px] font-bold truncate" style={{ color: "#F5E6C8", fontFamily: "Georgia, 'Times New Roman', serif" }}>{displayName}</span>
                           <span className="text-[8px] px-1 py-0.5 rounded font-bold" style={{ background: `${GRADE_COLORS[grade]}20`, color: GRADE_COLORS[grade] }}>
                             {GRADE_NAMES[grade]}
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-white/30 text-[10px]">Lv.{s.level}</span>
-                          <span className="text-white/15 text-[10px]">{"·"}</span>
-                          <span className="text-white/30 text-[10px]">{elementNames[s.element] || s.element}</span>
+                          <span className="text-[10px]" style={{ color: "rgba(245,230,200,0.35)" }}>Lv.{s.level}</span>
+                          <span className="text-[10px]" style={{ color: "rgba(201,168,76,0.2)" }}>{"·"}</span>
+                          <span className="text-[10px]" style={{ color: "rgba(245,230,200,0.35)" }}>{elementNames[s.element] || s.element}</span>
+                          {mult > 1 && (
+                            <>
+                              <span className="text-[10px]" style={{ color: "rgba(201,168,76,0.2)" }}>{"·"}</span>
+                              <span className="text-[10px] font-bold" style={{ color: "#C9A84C" }}>x{mult.toFixed(1)} EXP</span>
+                            </>
+                          )}
                         </div>
                       </div>
-                      <span className="text-[#A29BFE]/50 text-[10px]">{"배치 →"}</span>
+                      <span className="text-[10px]" style={{ color: "rgba(201,168,76,0.45)", fontFamily: "Georgia, 'Times New Roman', serif" }}>{"배치 →"}</span>
                     </button>
                   );
                 })
