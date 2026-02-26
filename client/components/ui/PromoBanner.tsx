@@ -2,15 +2,16 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useGameStore } from "@/lib/store/gameStore";
+import { useLocaleStore } from "@/lib/store/localeStore";
 
 interface Promo {
   id: string;
-  title: string;
-  subtitle: string;
+  titleKey: string;
+  subtitleKey: string;
   gradient: string;
   emoji: string;
   action: () => void;
-  actionLabel: string;
+  actionLabelKey: string;
   accentColor: string;
 }
 
@@ -18,6 +19,7 @@ const AUTO_PLAY_INTERVAL = 5000;
 
 export default function PromoBanner() {
   const { setActivePanel, setShowWheel, setShowRace } = useGameStore();
+  const t = useLocaleStore((s) => s.t);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [paused, setPaused] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -31,42 +33,42 @@ export default function PromoBanner() {
   const promos: Promo[] = [
     {
       id: "ten-pull",
-      title: "10연차 소환 OPEN!",
-      subtitle: "10개를 한번에! 10% 할인 적용",
+      titleKey: "promo_ten_pull_title",
+      subtitleKey: "promo_ten_pull_subtitle",
       gradient: "linear-gradient(135deg, rgba(255,234,167,0.12), rgba(255,159,243,0.08))",
-      emoji: "🥚",
+      emoji: "\uD83E\uDD5A",
       action: () => setActivePanel("shop"),
-      actionLabel: "상점",
+      actionLabelKey: "promo_ten_pull_btn",
       accentColor: "#FFEAA7",
     },
     {
       id: "daily-wheel",
-      title: "매일 무료 룰렛!",
-      subtitle: "오늘의 행운을 시험해 보세요",
+      titleKey: "promo_wheel_title",
+      subtitleKey: "promo_wheel_subtitle",
       gradient: "linear-gradient(135deg, rgba(255,107,107,0.12), rgba(201,168,76,0.08))",
-      emoji: "🎰",
+      emoji: "\uD83C\uDFB0",
       action: () => setShowWheel(true),
-      actionLabel: "스핀",
+      actionLabelKey: "promo_wheel_btn",
       accentColor: "#FF6B6B",
     },
     {
       id: "race",
-      title: "슬라임 레이스!",
-      subtitle: "점수를 올려 리더보드에 도전",
+      titleKey: "promo_race_title",
+      subtitleKey: "promo_race_subtitle",
       gradient: "linear-gradient(135deg, rgba(201,168,76,0.12), rgba(116,185,255,0.08))",
-      emoji: "🏃",
+      emoji: "\uD83C\uDFC3",
       action: () => setShowRace(true),
-      actionLabel: "출발",
+      actionLabelKey: "promo_race_btn",
       accentColor: "#C9A84C",
     },
     {
       id: "booster",
-      title: "부스터로 성장 가속!",
-      subtitle: "EXP 2배 / 골드 2배 / 행운 UP",
+      titleKey: "promo_booster_title",
+      subtitleKey: "promo_booster_subtitle",
       gradient: "linear-gradient(135deg, rgba(212,175,55,0.12), rgba(253,203,110,0.08))",
-      emoji: "⚡",
+      emoji: "\u26A1",
       action: () => setActivePanel("shop"),
-      actionLabel: "구매",
+      actionLabelKey: "promo_booster_btn",
       accentColor: "#D4AF37",
     },
   ];
@@ -159,8 +161,8 @@ export default function PromoBanner() {
 
         {/* Text */}
         <div className="flex-1 min-w-0">
-          <div className="text-white text-[11px] font-bold">{promo.title}</div>
-          <div className="text-white/40 text-[9px] mt-0.5">{promo.subtitle}</div>
+          <div className="text-white text-[11px] font-bold">{t(promo.titleKey)}</div>
+          <div className="text-white/40 text-[9px] mt-0.5">{t(promo.subtitleKey)}</div>
         </div>
 
         {/* Action button */}
@@ -173,7 +175,7 @@ export default function PromoBanner() {
           }}
           onClick={(e) => { e.stopPropagation(); promo.action(); }}
         >
-          {promo.actionLabel} →
+          {t(promo.actionLabelKey)} →
         </button>
       </div>
 

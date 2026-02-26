@@ -1,12 +1,13 @@
 "use client";
 
 import { useGameStore } from "@/lib/store/gameStore";
+import { useLocaleStore } from "@/lib/store/localeStore";
 
 const navItems = [
-  { id: "home" as const, label: "홈", emoji: "🏠" },
-  { id: "community" as const, label: "커뮤니티", emoji: "💬" },
-  { id: "merge" as const, label: "합성", emoji: "⚗️" },
-  { id: "discovery" as const, label: "탐험", emoji: "🧭" },
+  { id: "home" as const, labelKey: "home", emoji: "\uD83C\uDFE0" },
+  { id: "community" as const, labelKey: "community", emoji: "\uD83D\uDCAC" },
+  { id: "merge" as const, labelKey: "merge", emoji: "\u2697\uFE0F" },
+  { id: "discovery" as const, labelKey: "explore", emoji: "\uD83E\uDDED" },
 ] as const;
 
 export default function BottomNav() {
@@ -17,6 +18,7 @@ export default function BottomNav() {
     slimes, explorations, dailyMissions, unreadMailCount,
     showProfile, showCommunity, showShorts, showMiniContents, showCollection,
   } = useGameStore();
+  const t = useLocaleStore((s) => s.t);
 
   const closeOverlays = () => {
     setShowCommunity(false);
@@ -54,9 +56,9 @@ export default function BottomNav() {
   };
 
   const overlayButtons = [
-    { id: "mini", label: "미니게임", emoji: "🎮", active: showMiniContents, action: () => { closeOverlays(); setShowMiniContents(true); } },
-    { id: "collection", label: "컬렉션", emoji: "📖", active: showCollection, action: () => { closeOverlays(); setShowCollection(true); } },
-    { id: "profile", label: "프로필", emoji: "👤", active: showProfile, action: () => { closeOverlays(); setShowProfile(true); } },
+    { id: "mini", labelKey: "nav_mini_games", emoji: "\uD83C\uDFAE", active: showMiniContents, action: () => { closeOverlays(); setShowMiniContents(true); } },
+    { id: "collection", labelKey: "nav_collection", emoji: "\uD83D\uDCD6", active: showCollection, action: () => { closeOverlays(); setShowCollection(true); } },
+    { id: "profile", labelKey: "nav_profile", emoji: "\uD83D\uDC64", active: showProfile, action: () => { closeOverlays(); setShowProfile(true); } },
   ];
 
   const anyOverlay = showCommunity || showProfile || showShorts || showMiniContents || showCollection;
@@ -121,7 +123,7 @@ export default function BottomNav() {
                 color: isActive ? "#D4AF37" : "rgba(201,168,76,0.35)",
                 textShadow: isActive ? "0 0 6px rgba(212,175,55,0.3)" : "none",
                 transition: "all 0.2s ease",
-              }}>{item.label}</span>
+              }}>{t(item.labelKey)}</span>
             </button>
           );
         })}
@@ -157,7 +159,7 @@ export default function BottomNav() {
               color: btn.active ? "#D4AF37" : "rgba(201,168,76,0.35)",
               textShadow: btn.active ? "0 0 6px rgba(212,175,55,0.3)" : "none",
               transition: "all 0.2s ease",
-            }}>{btn.label}</span>
+            }}>{t(btn.labelKey)}</span>
           </button>
         ))}
       </div>

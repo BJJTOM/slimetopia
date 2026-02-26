@@ -5,16 +5,17 @@ import { useAuthStore } from "@/lib/store/authStore";
 import { useGameStore } from "@/lib/store/gameStore";
 import { authApi, resolveMediaUrl } from "@/lib/api/client";
 import { generateSlimeIconSvg } from "@/lib/slimeSvg";
+import { useLocaleStore } from "@/lib/store/localeStore";
 
 interface ActiveBooster {
   type: string;
   remaining_seconds: number;
 }
 
-const boosterConfig: Record<string, { icon: string; label: string; color: string }> = {
-  exp_2x: { icon: "\uD83D\uDCD6", label: "EXP", color: "#D4AF37" },
-  gold_2x: { icon: "\uD83D\uDCB0", label: "\uACE8\uB4DC", color: "#C9A84C" },
-  luck_up: { icon: "\uD83C\uDF40", label: "\uD589\uC6B4", color: "#8B6914" },
+const boosterConfig: Record<string, { icon: string; labelKey: string; color: string }> = {
+  exp_2x: { icon: "\uD83D\uDCD6", labelKey: "exp", color: "#D4AF37" },
+  gold_2x: { icon: "\uD83D\uDCB0", labelKey: "booster_gold", color: "#C9A84C" },
+  luck_up: { icon: "\uD83C\uDF40", labelKey: "booster_luck", color: "#8B6914" },
 };
 
 const GRADE_PRIORITY: Record<string, number> = {
@@ -36,6 +37,8 @@ export default function TopBar() {
   const slimes = useGameStore((s) => s.slimes);
   const species = useGameStore((s) => s.species);
   const equippedAccessories = useGameStore((s) => s.equippedAccessories);
+
+  const t = useLocaleStore((s) => s.t);
 
   const { bestSlime } = useMemo(() => {
     let hg = "common";
@@ -167,7 +170,7 @@ export default function TopBar() {
             {/* Boosters — gold leather style */}
             <div className="flex items-center gap-1 flex-wrap">
               {boosters.filter(b => (liveBoosterSeconds[b.type] ?? b.remaining_seconds) > 0).map((b) => {
-                const config = boosterConfig[b.type] || { icon: "\u26A1", label: "\uBD80\uC2A4\uD2B8", color: "#C9A84C" };
+                const config = boosterConfig[b.type] || { icon: "\u26A1", labelKey: "booster_default", color: "#C9A84C" };
                 const secs = liveBoosterSeconds[b.type] ?? b.remaining_seconds;
                 const isLow = secs < 300;
                 return (

@@ -2,88 +2,89 @@
 
 import { useState, useMemo } from "react";
 import { useGameStore } from "@/lib/store/gameStore";
+import { useLocaleStore } from "@/lib/store/localeStore";
 
 // ─── 10 Home Background Themes ────────────────────────────────────────────
 export const HOME_BACKGROUNDS = [
   {
     id: "default",
-    name: "기본",
+    nameKey: "bg_default",
     css: "linear-gradient(180deg, #080816 0%, #0f0f2a 100%)",
     price: 0,
     currency: "gold" as const,
-    icon: "🌑",
+    icon: "\uD83C\uDF11",
   },
   {
     id: "sunset_meadow",
-    name: "노을 초원",
+    nameKey: "bg_sunset_meadow",
     css: "linear-gradient(180deg, #2D1B4E 0%, #FF6B35 30%, #F7C948 60%, #2D5016 80%, #1A3A0A 100%)",
     price: 500,
     currency: "gold" as const,
-    icon: "🌅",
+    icon: "\uD83C\uDF05",
   },
   {
     id: "deep_ocean",
-    name: "심해",
+    nameKey: "bg_deep_ocean",
     css: "linear-gradient(180deg, #000428 0%, #004E92 40%, #002040 70%, #001020 100%)",
     price: 500,
     currency: "gold" as const,
-    icon: "🌊",
+    icon: "\uD83C\uDF0A",
   },
   {
     id: "cherry_blossom",
-    name: "벚꽃 정원",
+    nameKey: "bg_cherry_blossom",
     css: "linear-gradient(180deg, #FFB7C5 0%, #FF69B4 20%, #DB7093 40%, #8B4513 70%, #2F1B0E 100%)",
     price: 800,
     currency: "gold" as const,
-    icon: "🌸",
+    icon: "\uD83C\uDF38",
   },
   {
     id: "aurora",
-    name: "오로라",
+    nameKey: "bg_aurora",
     css: "linear-gradient(180deg, #0B0B2B 0%, #1B4332 25%, #2D6A4F 40%, #40916C 55%, #081C15 80%, #040D08 100%)",
     price: 800,
     currency: "gold" as const,
-    icon: "🌌",
+    icon: "\uD83C\uDF0C",
   },
   {
     id: "lava_cave",
-    name: "용암 동굴",
+    nameKey: "bg_lava_cave",
     css: "linear-gradient(180deg, #1A0A00 0%, #4A1C0A 30%, #8B2500 50%, #4A1C0A 70%, #1A0A00 100%)",
     price: 1000,
     currency: "gold" as const,
-    icon: "🌋",
+    icon: "\uD83C\uDF0B",
   },
   {
     id: "crystal_cave",
-    name: "수정 동굴",
+    nameKey: "bg_crystal_cave",
     css: "linear-gradient(180deg, #0A0A2E 0%, #1A1A4E 25%, #2828A0 45%, #4040D0 55%, #1A1A4E 75%, #0A0A2E 100%)",
     price: 1000,
     currency: "gold" as const,
-    icon: "💎",
+    icon: "\uD83D\uDC8E",
   },
   {
     id: "starlight",
-    name: "별빛 하늘",
+    nameKey: "bg_starlight",
     css: "radial-gradient(ellipse at 50% 20%, #1B2735 0%, #090A0F 80%)",
     price: 3,
     currency: "gems" as const,
-    icon: "⭐",
+    icon: "\u2B50",
   },
   {
     id: "rainbow_field",
-    name: "무지개 들판",
+    nameKey: "bg_rainbow_field",
     css: "linear-gradient(180deg, #667eea 0%, #764ba2 20%, #f093fb 40%, #f5576c 55%, #4facfe 70%, #00f2fe 85%, #1A3A0A 100%)",
     price: 5,
     currency: "gems" as const,
-    icon: "🌈",
+    icon: "\uD83C\uDF08",
   },
   {
     id: "void_realm",
-    name: "혼돈의 영역",
+    nameKey: "bg_void_realm",
     css: "radial-gradient(ellipse at 30% 50%, #2D0053 0%, #0D001A 40%, #1A0033 60%, #000000 100%)",
     price: 10,
     currency: "gems" as const,
-    icon: "🕳️",
+    icon: "\uD83D\uDD73\uFE0F",
   },
 ];
 
@@ -96,6 +97,7 @@ export default function HomePage() {
   const dailyMissions = useGameStore((s) => s.dailyMissions);
   const slimes = useGameStore((s) => s.slimes);
   const unreadMailCount = useGameStore((s) => s.unreadMailCount);
+  const t = useLocaleStore((s) => s.t);
 
   const [showBgPicker, setShowBgPicker] = useState(false);
 
@@ -176,7 +178,7 @@ export default function HomePage() {
           cursor: "pointer",
         }}>
           <span style={{ fontSize: 20, lineHeight: 1 }}>{"\uD83D\uDCC5"}</span>
-          <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>{"\uCD9C\uC11D"}</span>
+          <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>{t("home_attendance")}</span>
         </button>
 
         {/* Mission */}
@@ -190,7 +192,7 @@ export default function HomePage() {
           cursor: "pointer",
         }}>
           <span style={{ fontSize: 20, lineHeight: 1 }}>{"\uD83D\uDCCB"}</span>
-          <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>{"\uBBF8\uC158"}</span>
+          <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>{t("home_mission")}</span>
           {unclaimedCount > 0 && (
             <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full text-[9px] font-bold text-white animate-pulse"
               style={{ background: "linear-gradient(135deg, #D4AF37, #8B6914)", boxShadow: "0 0 6px rgba(212,175,55,0.5)", border: "1px solid rgba(255,235,180,0.3)" }}>
@@ -210,7 +212,7 @@ export default function HomePage() {
           cursor: "pointer",
         }}>
           <span style={{ fontSize: 20, lineHeight: 1 }}>{"\uD83D\uDCEC"}</span>
-          <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>{"\uC6B0\uD3B8"}</span>
+          <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>{t("home_mailbox")}</span>
           {unreadMailCount > 0 && (
             <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full text-[9px] font-bold text-white animate-pulse"
               style={{ background: "linear-gradient(135deg, #D4AF37, #8B6914)", boxShadow: "0 0 6px rgba(212,175,55,0.5)", border: "1px solid rgba(255,235,180,0.3)" }}>
@@ -229,8 +231,8 @@ export default function HomePage() {
           boxShadow: "0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,235,180,0.08)",
           cursor: "pointer",
         }}>
-          <span style={{ fontSize: 20, lineHeight: 1 }}>🎨</span>
-          <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>배경</span>
+          <span style={{ fontSize: 20, lineHeight: 1 }}>{"\uD83C\uDFA8"}</span>
+          <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>{t("home_background")}</span>
         </button>
       </div>
 
@@ -238,13 +240,13 @@ export default function HomePage() {
       <div className="floating-menu-right pointer-events-auto">
         <div className="side-grid-2col">
           {([
-            { panel: "codex" as const, icon: "\uD83D\uDCD6", label: "\uB3C4\uAC10" },
-            { panel: "achievements" as const, icon: "\uD83C\uDFC6", label: "\uC5C5\uC801" },
-            { panel: "leaderboard" as const, icon: "\uD83D\uDC51", label: "\uB7AD\uD0B9" },
-            { panel: "inventory" as const, icon: "\uD83C\uDF92", label: "\uC778\uBCA4\uD1A0\uB9AC" },
-            { panel: "gacha" as const, icon: "\uD83E\uDD5A", label: "\uBF51\uAE30" },
-            { panel: "shop" as const, icon: "\uD83D\uDED2", label: "\uC0C1\uC810" },
-          ] as const).map(({ panel, icon, label }) => (
+            { panel: "codex" as const, icon: "\uD83D\uDCD6", labelKey: "home_codex" },
+            { panel: "achievements" as const, icon: "\uD83C\uDFC6", labelKey: "home_achievements" },
+            { panel: "leaderboard" as const, icon: "\uD83D\uDC51", labelKey: "home_leaderboard" },
+            { panel: "inventory" as const, icon: "\uD83C\uDF92", labelKey: "home_inventory" },
+            { panel: "gacha" as const, icon: "\uD83E\uDD5A", labelKey: "home_gacha" },
+            { panel: "shop" as const, icon: "\uD83D\uDED2", labelKey: "home_shop" },
+          ] as const).map(({ panel, icon, labelKey }) => (
             <button key={panel} onClick={() => setActivePanel(panel)} style={{
               display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2,
               width: 50, height: 50,
@@ -255,7 +257,7 @@ export default function HomePage() {
               cursor: "pointer",
             }}>
               <span style={{ fontSize: 20, lineHeight: 1 }}>{icon}</span>
-              <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>{label}</span>
+              <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>{t(labelKey)}</span>
             </button>
           ))}
         </div>
@@ -281,13 +283,13 @@ export default function HomePage() {
               borderRadius: "16px 16px 0 0",
             }}>
               <div>
-                <h3 style={{ fontFamily: "Georgia, serif", fontWeight: 700, fontSize: 14, color: "#E8D5A3", margin: 0 }}>🎨 배경 변경</h3>
-                <p style={{ fontSize: 10, color: "rgba(232,213,163,0.4)", margin: "2px 0 0 0" }}>배경을 선택하세요</p>
+                <h3 style={{ fontFamily: "Georgia, serif", fontWeight: 700, fontSize: 14, color: "#E8D5A3", margin: 0 }}>{"\uD83C\uDFA8"} {t("home_bg_title")}</h3>
+                <p style={{ fontSize: 10, color: "rgba(232,213,163,0.4)", margin: "2px 0 0 0" }}>{t("home_bg_subtitle")}</p>
               </div>
               <button onClick={() => setShowBgPicker(false)} style={{
                 fontSize: 11, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700,
                 background: "none", border: "none", cursor: "pointer",
-              }}>닫기</button>
+              }}>{t("home_bg_close")}</button>
             </div>
             <div className="flex-1 overflow-y-auto" style={{ padding: 12 }}>
               <div className="grid grid-cols-2 gap-2">
@@ -314,9 +316,9 @@ export default function HomePage() {
                         borderTop: "1px solid rgba(139,105,20,0.15)",
                       }}>
                         <div className="flex items-center justify-between">
-                          <span style={{ fontSize: 11, color: "#E8D5A3", fontFamily: "Georgia, serif", fontWeight: 700 }}>{bg.icon} {bg.name}</span>
+                          <span style={{ fontSize: 11, color: "#E8D5A3", fontFamily: "Georgia, serif", fontWeight: 700 }}>{bg.icon} {t(bg.nameKey)}</span>
                           {owned ? (
-                            <span style={{ fontSize: 9, fontWeight: 700, color: "#D4AF37", fontFamily: "Georgia, serif" }}>{active ? "사용 중" : "보유"}</span>
+                            <span style={{ fontSize: 9, fontWeight: 700, color: "#D4AF37", fontFamily: "Georgia, serif" }}>{active ? t("home_bg_in_use") : t("home_bg_owned")}</span>
                           ) : (
                             <span style={{
                               fontSize: 9, fontWeight: 700, fontFamily: "Georgia, serif",
@@ -325,7 +327,7 @@ export default function HomePage() {
                               padding: "1px 5px", borderRadius: 6,
                               border: "1px solid rgba(139,105,20,0.2)",
                             }}>
-                              {bg.currency === "gems" ? `💎${bg.price}` : `🪙${bg.price}`}
+                              {bg.currency === "gems" ? `\uD83D\uDC8E${bg.price}` : `\uD83E\uDE99${bg.price}`}
                             </span>
                           )}
                         </div>

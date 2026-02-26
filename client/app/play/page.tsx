@@ -32,6 +32,7 @@ import DiscoveryPage from "@/components/ui/DiscoveryPage";
 import MiniContentsPage from "@/components/ui/MiniContentsPage";
 import CollectionPage from "@/components/ui/CollectionPage";
 import GachaPage from "@/components/ui/GachaPage";
+import SplashScreen from "@/components/ui/SplashScreen";
 import { useAndroidBackButton } from "@/lib/useBackButton";
 
 const GameCanvas = dynamic(() => import("@/components/game/GameCanvas"), {
@@ -84,6 +85,8 @@ export default function PlayPage() {
   const showCollection = useGameStore((s) => s.showCollection);
   const setShowCollection = useGameStore((s) => s.setShowCollection);
 
+  const [showSplash, setShowSplash] = useState(true);
+
   useAndroidBackButton();
 
   useEffect(() => {
@@ -112,7 +115,8 @@ export default function PlayPage() {
     }
   }, [accessToken, user, fetchSlimes, fetchSpecies, fetchDailyMissions, fetchAttendance, fetchMailbox, fetchCollectionCount, fetchCollectionEntries, fetchCollectionRequirements, fetchMaterialDefs, fetchMaterialInventory, fetchAllEquippedAccessories]);
 
-  if (!user) return null;
+  if (!user) return <SplashScreen onFinished={() => {}} minDuration={3000} />;
+  if (showSplash) return <SplashScreen onFinished={() => setShowSplash(false)} minDuration={1500} />;
 
   const hasFullOverlay = showCommunity || showProfile || showShorts || showMiniContents || showCollection;
 
