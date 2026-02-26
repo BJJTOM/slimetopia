@@ -1095,7 +1095,7 @@ export function generateSlimeSvg(
     }
   }
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -15 120 120" width="120" height="120" overflow="visible">
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -15 120 120" width="240" height="240" overflow="visible">
   <defs>
     <!-- 4-stop radial gradient: light → body → dark → deeper -->
     <radialGradient id="bg_${uid}" cx="38%" cy="30%" r="62%" fx="35%" fy="28%">
@@ -1385,7 +1385,7 @@ export function generateSlimeIconSvg(
   // Icon body shape varies per variant
   const { iconBody, iconInner } = getIconBodyPaths(variant);
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-5 -8 60 62" width="${size}" height="${size}" overflow="visible">
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-5 -8 60 62" width="${size * 2}" height="${size * 2}" overflow="visible">
   <defs>
     <radialGradient id="${uid}" cx="38%" cy="30%" r="60%" fx="35%" fy="28%">
       <stop offset="0%" stop-color="${colors.light}"/>

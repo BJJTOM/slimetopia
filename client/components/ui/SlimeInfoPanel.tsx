@@ -120,11 +120,10 @@ export default function SlimeInfoPanel() {
 
   return (
     <div className="absolute bottom-[84px] left-1/2 -translate-x-1/2 z-[60] w-[340px] max-w-[calc(100%-24px)] animate-fade-in-up pointer-events-auto">
-      <div className="frosted-card rounded-2xl relative overflow-hidden" style={{
-        borderColor: `${gradeColor}20`,
-        boxShadow: `0 16px 48px rgba(0,0,0,0.5), 0 0 40px ${gradeColor}10, inset 0 1px 0 rgba(255,255,255,0.06)`,
-        backdropFilter: "blur(24px) saturate(1.4)",
-        WebkitBackdropFilter: "blur(24px) saturate(1.4)",
+      <div className="rounded-2xl relative overflow-hidden" style={{
+        background: "linear-gradient(180deg, #2C1810 0%, #1A0E08 100%)",
+        border: "2px solid #8B6914",
+        boxShadow: `0 16px 48px rgba(0,0,0,0.6), 0 0 30px rgba(201,168,76,0.08), inset 0 1px 0 rgba(245,230,200,0.05)`,
       }}>
       <div className="p-4 max-h-[calc(100vh-180px)] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.1) transparent" }}>
         {/* Sick alert banner */}
@@ -153,7 +152,8 @@ export default function SlimeInfoPanel() {
         {/* Close button */}
         <button
           onClick={() => selectSlime(null)}
-          className="absolute top-3 right-3 w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-[#B2BEC3] hover:text-white text-sm transition"
+          className="absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center text-sm transition"
+          style={{ background: "linear-gradient(135deg, #3D2017, #2C1810)", border: "1px solid rgba(139,105,20,0.3)", color: "#C9A84C" }}
         >
           {"\u2715"}
         </button>
@@ -163,9 +163,9 @@ export default function SlimeInfoPanel() {
           <div
             className="w-16 h-16 rounded-2xl flex items-center justify-center relative"
             style={{
-              background: `linear-gradient(145deg, ${color}20 0%, ${gradeColor}10 100%)`,
-              border: `1px solid ${gradeColor}25`,
-              boxShadow: `0 0 20px ${color}15, inset 0 0 16px ${color}08`,
+              background: `linear-gradient(145deg, #3D2017 0%, #2C1810 100%)`,
+              border: `2px solid ${gradeColor}50`,
+              boxShadow: `0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(245,230,200,0.05)`,
             }}
           >
             <img
@@ -191,11 +191,12 @@ export default function SlimeInfoPanel() {
                 }}
                 onBlur={handleRenameSubmit}
                 maxLength={20}
-                className="bg-white/10 text-white font-bold text-base rounded-lg px-2 py-0.5 w-full outline-none border border-[#55EFC4]/30 focus:border-[#55EFC4]/60"
+                className="bg-white/10 text-white font-bold text-base rounded-lg px-2 py-0.5 w-full outline-none border border-[#C9A84C]/30 focus:border-[#D4AF37]/60"
               />
             ) : (
               <h3
-                className="text-white font-bold text-base truncate cursor-pointer group flex items-center gap-1"
+                className="font-bold text-base truncate cursor-pointer group flex items-center gap-1"
+                style={{ color: "#F5E6C8", fontFamily: "Georgia, serif" }}
                 onClick={handleRenameStart}
               >
                 {slime.name || sp?.name || "???"}
@@ -232,7 +233,7 @@ export default function SlimeInfoPanel() {
         </div>
 
         {/* Stats */}
-        <div className="space-y-2 mb-3 p-2.5 rounded-xl" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+        <div className="space-y-2 mb-3 p-2.5 rounded-xl" style={{ background: "linear-gradient(135deg, rgba(61,32,23,0.4), rgba(44,24,16,0.3))", border: "1px solid rgba(139,105,20,0.15)" }}>
           <StatBar label="친밀도" value={slime.affection} color="#FF6B6B" icon={"\u2764\uFE0F"} warn={slime.affection < 20} warnText="외로워해요!" />
           <StatBar label="만복도" value={slime.hunger} color="#FFEAA7" icon={"\uD83C\uDF56"} warn={slime.hunger < 20} warnText="배고파요!" />
           <StatBar label="컨디션" value={slime.condition} color="#55EFC4" icon={"\u2728"} warn={slime.condition < 20} warnText="컨디션 나빠요!" />
@@ -241,7 +242,7 @@ export default function SlimeInfoPanel() {
         {/* EXP bar */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] text-[#B2BEC3] flex items-center gap-1">
+            <span className="text-[10px] flex items-center gap-1" style={{ color: "#C9A84C", fontFamily: "Georgia, serif", fontWeight: 700 }}>
               <span>{"\u2B50"}</span> EXP
             </span>
             <span className="text-[10px] font-medium" style={{ color: slime.is_sick ? "#6C5CE7" : color }}>
@@ -268,15 +269,15 @@ export default function SlimeInfoPanel() {
         {/* Equipped accessories row */}
         {equipped.length > 0 && (
           <div className="flex items-center gap-1.5 mb-3 p-2 rounded-xl" style={{
-            background: "linear-gradient(135deg, rgba(162,155,254,0.06), rgba(255,159,243,0.03))",
-            border: "1px solid rgba(162,155,254,0.08)",
+            background: "linear-gradient(135deg, rgba(201,168,76,0.06), rgba(139,105,20,0.04))",
+            border: "1px solid rgba(139,105,20,0.15)",
           }}>
             <span className="text-[10px] text-white/40 font-medium">장착:</span>
             {equipped.map((eq) => (
               <div key={eq.slot} className="flex items-center gap-1 px-1.5 py-0.5 rounded-full"
                 style={{
-                  background: "linear-gradient(135deg, rgba(162,155,254,0.12), rgba(255,159,243,0.12))",
-                  border: "1px solid rgba(162,155,254,0.12)",
+                  background: "linear-gradient(135deg, rgba(201,168,76,0.12), rgba(139,105,20,0.08))",
+                  border: "1px solid rgba(139,105,20,0.2)",
                 }}>
                 <span className="text-xs">{eq.icon || "\uD83C\uDF80"}</span>
                 <span className="text-[8px] text-white/50 font-medium">{eq.name}</span>
@@ -330,7 +331,8 @@ export default function SlimeInfoPanel() {
           />
           <button
             onClick={() => setShowAccessoryPanel(true)}
-            className="btn-icon-pixel bg-white/[0.04] border border-white/[0.08]"
+            className="btn-icon-pixel"
+            style={{ background: "linear-gradient(135deg, rgba(61,32,23,0.5), rgba(44,24,16,0.3))", border: "1px solid rgba(139,105,20,0.2)" }}
           >
             <span className="text-xl">{"\uD83C\uDF80"}</span>
             <div className="text-[10px] font-semibold text-[#B2BEC3]">꾸미기</div>
@@ -612,7 +614,7 @@ function StatBar({
       <div className="flex items-center gap-2">
         <span className={`text-xs w-4 text-center ${warn ? "animate-pulse" : ""}`}>{icon}</span>
         <span className={`text-[10px] w-10 ${warn ? "text-[#FF6B6B] font-bold" : "text-[#B2BEC3]"}`}>{label}</span>
-        <div className="flex-1 h-[7px] rounded-full overflow-hidden relative" style={{ background: "rgba(255,255,255,0.06)", boxShadow: "inset 0 1px 2px rgba(0,0,0,0.3)" }}>
+        <div className="flex-1 h-[7px] rounded-full overflow-hidden relative" style={{ background: "rgba(26,14,8,0.8)", border: "1px solid rgba(139,105,20,0.12)", boxShadow: "inset 0 1px 2px rgba(0,0,0,0.4)" }}>
           <div
             className="h-full rounded-full transition-all duration-500"
             style={{

@@ -125,6 +125,7 @@ export default function HomePage() {
       // Already owned, just equip
       setCurrentBg(bg.id);
       localStorage.setItem("home_background", bg.id);
+      window.dispatchEvent(new Event("bg-change"));
       return;
     }
     // Buy it (client-side for now — price deduction via shop later)
@@ -133,6 +134,7 @@ export default function HomePage() {
     localStorage.setItem("owned_backgrounds", JSON.stringify(newOwned));
     setCurrentBg(bg.id);
     localStorage.setItem("home_background", bg.id);
+    window.dispatchEvent(new Event("bg-change"));
   };
 
   return (
@@ -141,10 +143,16 @@ export default function HomePage() {
       {/* ===== LEFT SIDE — Info badges + Daily buttons ===== */}
       <div className="floating-menu-left pointer-events-auto">
         {/* Slime count + care alert */}
-        <div className="side-badge relative">
+        <div className="relative" style={{
+          display: "flex", alignItems: "center", gap: 6,
+          background: "linear-gradient(145deg, #3D2017, #2C1810)",
+          border: "1.5px solid rgba(139,105,20,0.35)",
+          borderRadius: 14, padding: "6px 10px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,235,180,0.08)",
+        }}>
           <span className="text-lg leading-none">{"\uD83D\uDC3E"}</span>
-          <span className="text-[11px] text-white/80 font-bold tabular-nums">
-            {slimeCount}<span className="text-white/30">/30</span>
+          <span style={{ fontSize: 11, color: "#E8D5A3", fontFamily: "Georgia, serif", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
+            {slimeCount}<span style={{ color: "rgba(232,213,163,0.3)" }}>/30</span>
           </span>
           {needsCareCount > 0 && (
             <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full text-[9px] font-bold text-white animate-pulse"
@@ -155,94 +163,164 @@ export default function HomePage() {
         </div>
 
         {/* Attendance */}
-        <button onClick={() => setShowAttendanceModal(true)} className="side-icon-btn">
-          <span className="text-xl leading-none">{"\uD83D\uDCC5"}</span>
-          <span className="side-icon-label">{"\uCD9C\uC11D"}</span>
+        <button onClick={() => setShowAttendanceModal(true)} style={{
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2,
+          width: 50, height: 50,
+          background: "linear-gradient(145deg, #3D2017, #2C1810)",
+          border: "1.5px solid rgba(139,105,20,0.3)",
+          borderRadius: 14,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,235,180,0.08)",
+          cursor: "pointer",
+        }}>
+          <span style={{ fontSize: 20, lineHeight: 1 }}>{"\uD83D\uDCC5"}</span>
+          <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>{"\uCD9C\uC11D"}</span>
         </button>
 
         {/* Mission */}
-        <button onClick={() => setShowMissionModal(true)} className="side-icon-btn relative">
-          <span className="text-xl leading-none">{"\uD83D\uDCCB"}</span>
-          <span className="side-icon-label">{"\uBBF8\uC158"}</span>
+        <button onClick={() => setShowMissionModal(true)} className="relative" style={{
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2,
+          width: 50, height: 50,
+          background: "linear-gradient(145deg, #3D2017, #2C1810)",
+          border: "1.5px solid rgba(139,105,20,0.3)",
+          borderRadius: 14,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,235,180,0.08)",
+          cursor: "pointer",
+        }}>
+          <span style={{ fontSize: 20, lineHeight: 1 }}>{"\uD83D\uDCCB"}</span>
+          <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>{"\uBBF8\uC158"}</span>
           {unclaimedCount > 0 && (
-            <span className="side-badge-count">{unclaimedCount}</span>
+            <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full text-[9px] font-bold text-white animate-pulse"
+              style={{ background: "linear-gradient(135deg, #D4AF37, #8B6914)", boxShadow: "0 0 6px rgba(212,175,55,0.5)", border: "1px solid rgba(255,235,180,0.3)" }}>
+              {unclaimedCount}
+            </span>
           )}
         </button>
 
         {/* Mailbox */}
-        <button onClick={() => setShowMailbox(true)} className="side-icon-btn relative">
-          <span className="text-xl leading-none">{"\uD83D\uDCEC"}</span>
-          <span className="side-icon-label">{"\uC6B0\uD3B8"}</span>
+        <button onClick={() => setShowMailbox(true)} className="relative" style={{
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2,
+          width: 50, height: 50,
+          background: "linear-gradient(145deg, #3D2017, #2C1810)",
+          border: "1.5px solid rgba(139,105,20,0.3)",
+          borderRadius: 14,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,235,180,0.08)",
+          cursor: "pointer",
+        }}>
+          <span style={{ fontSize: 20, lineHeight: 1 }}>{"\uD83D\uDCEC"}</span>
+          <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>{"\uC6B0\uD3B8"}</span>
           {unreadMailCount > 0 && (
-            <span className="side-badge-count">{unreadMailCount}</span>
+            <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full text-[9px] font-bold text-white animate-pulse"
+              style={{ background: "linear-gradient(135deg, #D4AF37, #8B6914)", boxShadow: "0 0 6px rgba(212,175,55,0.5)", border: "1px solid rgba(255,235,180,0.3)" }}>
+              {unreadMailCount}
+            </span>
           )}
         </button>
 
         {/* Background changer */}
-        <button onClick={() => setShowBgPicker(!showBgPicker)} className="side-icon-btn">
-          <span className="text-xl leading-none">🎨</span>
-          <span className="side-icon-label">배경</span>
+        <button onClick={() => setShowBgPicker(!showBgPicker)} style={{
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2,
+          width: 50, height: 50,
+          background: "linear-gradient(145deg, #3D2017, #2C1810)",
+          border: "1.5px solid rgba(139,105,20,0.3)",
+          borderRadius: 14,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,235,180,0.08)",
+          cursor: "pointer",
+        }}>
+          <span style={{ fontSize: 20, lineHeight: 1 }}>🎨</span>
+          <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>배경</span>
         </button>
       </div>
 
       {/* ===== RIGHT SIDE — 2-column grid ===== */}
       <div className="floating-menu-right pointer-events-auto">
         <div className="side-grid-2col">
-          <button onClick={() => setActivePanel("codex")} className="side-icon-btn">
-            <span className="text-xl leading-none">{"\uD83D\uDCD6"}</span>
-            <span className="side-icon-label">{"\uB3C4\uAC10"}</span>
-          </button>
-          <button onClick={() => setActivePanel("achievements")} className="side-icon-btn">
-            <span className="text-xl leading-none">{"\uD83C\uDFC6"}</span>
-            <span className="side-icon-label">{"\uC5C5\uC801"}</span>
-          </button>
-          <button onClick={() => setActivePanel("leaderboard")} className="side-icon-btn">
-            <span className="text-xl leading-none">{"\uD83D\uDC51"}</span>
-            <span className="side-icon-label">{"\uB7AD\uD0B9"}</span>
-          </button>
-          <button onClick={() => setActivePanel("inventory")} className="side-icon-btn">
-            <span className="text-xl leading-none">{"\uD83C\uDF92"}</span>
-            <span className="side-icon-label">{"\uBCF4\uAD00\uD568"}</span>
-          </button>
-          <button onClick={() => setActivePanel("shop")} className="side-icon-btn">
-            <span className="text-xl leading-none">{"\uD83D\uDED2"}</span>
-            <span className="side-icon-label">{"\uC0C1\uC810"}</span>
-          </button>
+          {([
+            { panel: "codex" as const, icon: "\uD83D\uDCD6", label: "\uB3C4\uAC10" },
+            { panel: "achievements" as const, icon: "\uD83C\uDFC6", label: "\uC5C5\uC801" },
+            { panel: "leaderboard" as const, icon: "\uD83D\uDC51", label: "\uB7AD\uD0B9" },
+            { panel: "inventory" as const, icon: "\uD83C\uDF92", label: "\uBCF4\uAD00\uD568" },
+            { panel: "shop" as const, icon: "\uD83D\uDED2", label: "\uC0C1\uC810" },
+          ] as const).map(({ panel, icon, label }) => (
+            <button key={panel} onClick={() => setActivePanel(panel)} style={{
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2,
+              width: 50, height: 50,
+              background: "linear-gradient(145deg, #3D2017, #2C1810)",
+              border: "1.5px solid rgba(139,105,20,0.3)",
+              borderRadius: 14,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,235,180,0.08)",
+              cursor: "pointer",
+            }}>
+              <span style={{ fontSize: 20, lineHeight: 1 }}>{icon}</span>
+              <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>{label}</span>
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Background Picker Bottom Sheet */}
       {showBgPicker && (
         <div className="absolute inset-0 z-20 pointer-events-auto" onClick={() => setShowBgPicker(false)}>
-          <div className="absolute bottom-0 left-0 right-0 bg-[#0a0a1a]/95 backdrop-blur-lg border-t border-white/10 rounded-t-2xl max-h-[60%] flex flex-col"
+          <div className="absolute bottom-0 left-0 right-0 rounded-t-2xl max-h-[60%] flex flex-col"
+            style={{
+              background: "linear-gradient(180deg, #2C1810 0%, #1A0E08 100%)",
+              backdropFilter: "blur(16px)",
+              border: "1.5px solid rgba(139,105,20,0.3)",
+              borderBottom: "none",
+              boxShadow: "0 -4px 24px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,235,180,0.06)",
+            }}
             onClick={e => e.stopPropagation()}>
-            <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between shrink-0">
+            <div className="shrink-0" style={{
+              padding: "12px 16px",
+              background: "linear-gradient(145deg, #3D2017, #2C1810)",
+              borderBottom: "1.5px solid rgba(139,105,20,0.35)",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              borderRadius: "16px 16px 0 0",
+            }}>
               <div>
-                <h3 className="text-white font-bold text-sm">🎨 배경 변경</h3>
-                <p className="text-white/30 text-[10px]">배경을 선택하세요</p>
+                <h3 style={{ fontFamily: "Georgia, serif", fontWeight: 700, fontSize: 14, color: "#E8D5A3", margin: 0 }}>🎨 배경 변경</h3>
+                <p style={{ fontSize: 10, color: "rgba(232,213,163,0.4)", margin: "2px 0 0 0" }}>배경을 선택하세요</p>
               </div>
-              <button onClick={() => setShowBgPicker(false)} className="text-white/40 text-xs">닫기</button>
+              <button onClick={() => setShowBgPicker(false)} style={{
+                fontSize: 11, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700,
+                background: "none", border: "none", cursor: "pointer",
+              }}>닫기</button>
             </div>
-            <div className="flex-1 overflow-y-auto p-3">
+            <div className="flex-1 overflow-y-auto" style={{ padding: 12 }}>
               <div className="grid grid-cols-2 gap-2">
                 {HOME_BACKGROUNDS.map(bg => {
                   const owned = ownedBgs.includes(bg.id);
                   const active = currentBg === bg.id;
                   return (
                     <button key={bg.id} onClick={() => handleBuyBg(bg)}
-                      className="relative rounded-xl overflow-hidden transition-all active:scale-[0.97]"
+                      className="transition-all active:scale-[0.97]"
                       style={{
-                        border: active ? "2px solid #D4AF37" : "2px solid rgba(255,255,255,0.08)",
-                        boxShadow: active ? "0 0 12px rgba(212,175,55,0.3)" : "none",
+                        display: "block", width: "100%", textAlign: "left",
+                        borderRadius: 12, overflow: "hidden",
+                        border: active ? "2px solid #D4AF37" : "2px solid rgba(139,105,20,0.25)",
+                        boxShadow: active
+                          ? "0 0 12px rgba(212,175,55,0.35), inset 0 1px 0 rgba(255,235,180,0.1)"
+                          : "0 2px 6px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,235,180,0.04)",
+                        background: "linear-gradient(145deg, #3D2017, #2C1810)",
+                        cursor: "pointer",
                       }}>
-                      <div className="h-20 w-full" style={{ background: bg.css }} />
-                      <div className="px-2 py-1.5 bg-black/60">
+                      <div style={{ height: 80, width: "100%", background: bg.css }} />
+                      <div style={{
+                        padding: "6px 8px",
+                        background: "linear-gradient(145deg, rgba(44,24,16,0.9), rgba(26,14,8,0.95))",
+                        borderTop: "1px solid rgba(139,105,20,0.15)",
+                      }}>
                         <div className="flex items-center justify-between">
-                          <span className="text-white text-[11px] font-bold">{bg.icon} {bg.name}</span>
+                          <span style={{ fontSize: 11, color: "#E8D5A3", fontFamily: "Georgia, serif", fontWeight: 700 }}>{bg.icon} {bg.name}</span>
                           {owned ? (
-                            <span className="text-[9px] font-bold text-[#D4AF37]">{active ? "사용 중" : "보유"}</span>
+                            <span style={{ fontSize: 9, fontWeight: 700, color: "#D4AF37", fontFamily: "Georgia, serif" }}>{active ? "사용 중" : "보유"}</span>
                           ) : (
-                            <span className="text-[9px] font-bold" style={{ color: bg.currency === "gems" ? "#C9A84C" : "#FFEAA7" }}>
+                            <span style={{
+                              fontSize: 9, fontWeight: 700, fontFamily: "Georgia, serif",
+                              color: bg.currency === "gems" ? "#C9A84C" : "#D4AF37",
+                              background: "rgba(139,105,20,0.15)",
+                              padding: "1px 5px", borderRadius: 6,
+                              border: "1px solid rgba(139,105,20,0.2)",
+                            }}>
                               {bg.currency === "gems" ? `💎${bg.price}` : `🪙${bg.price}`}
                             </span>
                           )}

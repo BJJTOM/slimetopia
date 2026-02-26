@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useAuthStore } from "@/lib/store/authStore";
 import { useGameStore } from "@/lib/store/gameStore";
 import { authApi, resolveMediaUrl } from "@/lib/api/client";
-import { gradeColors } from "@/lib/constants";
 import { generateSlimeIconSvg } from "@/lib/slimeSvg";
 
 interface ActiveBooster {
@@ -13,9 +12,9 @@ interface ActiveBooster {
 }
 
 const boosterConfig: Record<string, { icon: string; label: string; color: string }> = {
-  exp_2x: { icon: "📖", label: "EXP", color: "#74B9FF" },
-  gold_2x: { icon: "💰", label: "골드", color: "#FFEAA7" },
-  luck_up: { icon: "🍀", label: "행운", color: "#C9A84C" },
+  exp_2x: { icon: "\uD83D\uDCD6", label: "EXP", color: "#D4AF37" },
+  gold_2x: { icon: "\uD83D\uDCB0", label: "\uACE8\uB4DC", color: "#C9A84C" },
+  luck_up: { icon: "\uD83C\uDF40", label: "\uD589\uC6B4", color: "#8B6914" },
 };
 
 const GRADE_PRIORITY: Record<string, number> = {
@@ -38,7 +37,7 @@ export default function TopBar() {
   const species = useGameStore((s) => s.species);
   const equippedAccessories = useGameStore((s) => s.equippedAccessories);
 
-  const { bestSlime, highestGrade } = useMemo(() => {
+  const { bestSlime } = useMemo(() => {
     let hg = "common";
     let bs = slimes[0];
     for (const sl of slimes) {
@@ -48,10 +47,9 @@ export default function TopBar() {
         bs = sl;
       }
     }
-    return { bestSlime: bs, highestGrade: hg };
+    return { bestSlime: bs };
   }, [slimes, species]);
 
-  const glowColor = gradeColors[highestGrade] || gradeColors.common;
   const bestSpecies = bestSlime ? species.find(s => s.id === bestSlime.species_id) : undefined;
 
   const token = useAuthStore((s) => s.accessToken);
@@ -104,21 +102,25 @@ export default function TopBar() {
   return (
     <div className="top-hud">
       <div className="flex items-center justify-between w-full gap-2">
-        {/* Left: Avatar + Name */}
+        {/* Left: Avatar + Name — Leather-framed gold collection style */}
         <div className="profile-section pointer-events-auto shrink-0">
           <div className="relative">
+            {/* Leather-bordered gold frame with decorative corner accents */}
             <div
-              className="w-[48px] h-[48px] rounded-2xl flex items-center justify-center overflow-hidden"
+              className="w-[50px] h-[50px] rounded-xl flex items-center justify-center overflow-hidden relative"
               style={{
-                background: highestGrade !== "common"
-                  ? `linear-gradient(135deg, ${glowColor}40, ${glowColor}18)`
-                  : "linear-gradient(135deg, rgba(201,168,76,0.25), rgba(255,234,167,0.15))",
-                border: `2px solid ${highestGrade !== "common" ? glowColor + "60" : "rgba(255,255,255,0.12)"}`,
-                boxShadow: highestGrade !== "common"
-                  ? `0 4px 20px ${glowColor}25`
-                  : "0 4px 16px rgba(0,0,0,0.3)",
+                background: "#2C1810",
+                border: "2.5px solid #8B6914",
+                boxShadow:
+                  `0 0 0 1px #1A0E08, 0 4px 16px rgba(0,0,0,0.5), inset 0 1px 2px rgba(139,105,20,0.3)`,
               }}
             >
+              {/* Corner accents */}
+              <div className="absolute top-0 left-0 w-[6px] h-[6px] border-t-2 border-l-2 rounded-tl-md" style={{ borderColor: "#D4AF37" }} />
+              <div className="absolute top-0 right-0 w-[6px] h-[6px] border-t-2 border-r-2 rounded-tr-md" style={{ borderColor: "#D4AF37" }} />
+              <div className="absolute bottom-0 left-0 w-[6px] h-[6px] border-b-2 border-l-2 rounded-bl-md" style={{ borderColor: "#D4AF37" }} />
+              <div className="absolute bottom-0 right-0 w-[6px] h-[6px] border-b-2 border-r-2 rounded-br-md" style={{ borderColor: "#D4AF37" }} />
+
               {user.profile_image_url ? (
                 <img
                   src={resolveMediaUrl(user.profile_image_url)}
@@ -130,37 +132,62 @@ export default function TopBar() {
                   alt="" className="w-[36px] h-[36px] drop-shadow-lg" draggable={false}
                 />
               ) : (
-                <span className="text-lg font-bold text-[#D4AF37]">{user.nickname[0]}</span>
+                <span className="text-lg font-bold" style={{ color: "#D4AF37", fontFamily: "Georgia, 'Times New Roman', serif" }}>
+                  {user.nickname[0]}
+                </span>
               )}
             </div>
+            {/* Level badge — gold medallion */}
             <div
-              className="absolute -bottom-1 -right-1 rounded-lg w-[20px] h-[20px] flex items-center justify-center"
+              className="absolute -bottom-1.5 -right-1.5 rounded-full w-[22px] h-[22px] flex items-center justify-center"
               style={{
-                background: `linear-gradient(135deg, ${glowColor}, ${glowColor}CC)`,
-                border: "2px solid rgba(10,8,20,0.9)",
-                boxShadow: `0 2px 6px ${glowColor}40`,
+                background: "linear-gradient(135deg, #D4AF37 0%, #C9A84C 40%, #8B6914 100%)",
+                border: "2px solid #2C1810",
+                boxShadow: "0 2px 8px rgba(139,105,20,0.5), inset 0 1px 0 rgba(255,234,167,0.4)",
               }}
             >
-              <span className="text-[8px] text-[#0a0814] font-black">{user.level}</span>
+              <span className="text-[8px] font-black" style={{ color: "#2C1810", textShadow: "0 0.5px 0 rgba(255,234,167,0.3)" }}>
+                {user.level}
+              </span>
             </div>
           </div>
 
           <div className="min-w-0 flex flex-col justify-center gap-0.5">
-            <span className="text-white font-extrabold text-[12px] truncate max-w-[70px] leading-tight">
+            {/* Nickname — Georgia serif, parchment color */}
+            <span
+              className="font-extrabold text-[13px] truncate max-w-[75px] leading-tight"
+              style={{
+                color: "#F5E6C8",
+                fontFamily: "Georgia, 'Times New Roman', serif",
+                textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+              }}
+            >
               {user.nickname}
             </span>
-            {/* Boosters */}
+            {/* Boosters — gold leather style */}
             <div className="flex items-center gap-1 flex-wrap">
               {boosters.filter(b => (liveBoosterSeconds[b.type] ?? b.remaining_seconds) > 0).map((b) => {
-                const config = boosterConfig[b.type] || { icon: "⚡", label: "부스트", color: "#C9A84C" };
+                const config = boosterConfig[b.type] || { icon: "\u26A1", label: "\uBD80\uC2A4\uD2B8", color: "#C9A84C" };
                 const secs = liveBoosterSeconds[b.type] ?? b.remaining_seconds;
                 const isLow = secs < 300;
                 return (
-                  <div key={b.type} className="rounded-md px-1 py-[1px] flex items-center gap-0.5"
-                    style={{ background: `${config.color}12`, border: `1px solid ${isLow ? "#FF6B6B30" : config.color + "20"}` }}>
+                  <div
+                    key={b.type}
+                    className="rounded-md px-1.5 py-[2px] flex items-center gap-0.5"
+                    style={{
+                      background: "linear-gradient(135deg, #2C1810, #1A0E08)",
+                      border: `1px solid ${isLow ? "rgba(255,107,107,0.4)" : "#8B691440"}`,
+                      boxShadow: "inset 0 1px 2px rgba(0,0,0,0.3)",
+                    }}
+                  >
                     <span className="text-[7px]">{config.icon}</span>
-                    <span className={`text-[7px] font-bold tabular-nums ${isLow ? "animate-pulse" : ""}`}
-                      style={{ color: isLow ? "#FF6B6B" : config.color }}>
+                    <span
+                      className={`text-[7px] font-bold tabular-nums ${isLow ? "animate-pulse" : ""}`}
+                      style={{
+                        color: isLow ? "#FF6B6B" : "#D4AF37",
+                        fontFamily: "Georgia, 'Times New Roman', serif",
+                      }}
+                    >
                       {formatBoosterTime(secs)}
                     </span>
                   </div>
@@ -170,46 +197,70 @@ export default function TopBar() {
           </div>
         </div>
 
-        {/* Center: EXP bar — pastel pixel-art style */}
-        <div className="pointer-events-auto flex-1 min-w-0 flex flex-col justify-center">
+        {/* Center: EXP bar — premium leather track with gold ornamental edges */}
+        <div className="pointer-events-auto flex-1 min-w-0 flex flex-col justify-center mx-1">
           <div className="flex items-center justify-between mb-[2px]">
-            <span className="text-[10px] font-black tracking-wider"
-              style={{ color: glowColor, textShadow: `0 0 6px ${glowColor}40` }}>
+            <span
+              className="text-[10px] font-black tracking-wider"
+              style={{
+                color: "#D4AF37",
+                fontFamily: "Georgia, 'Times New Roman', serif",
+                textShadow: "0 0 6px rgba(212,175,55,0.4)",
+              }}
+            >
               Lv.{user.level}
             </span>
-            <span className="text-[10px] font-bold tabular-nums text-white/50">
+            <span
+              className="text-[10px] font-bold tabular-nums"
+              style={{
+                color: "#F5E6C880",
+                fontFamily: "Georgia, 'Times New Roman', serif",
+              }}
+            >
               {Math.floor(levelProgress)}%
             </span>
           </div>
           <div className="relative">
+            {/* Gold ornamental edge — top */}
             <div
-              className="w-full h-[10px] rounded-lg overflow-hidden"
+              className="absolute -top-[1px] left-1 right-1 h-[1px]"
+              style={{ background: "linear-gradient(90deg, transparent, #8B691460, #D4AF3740, #8B691460, transparent)" }}
+            />
+            {/* Leather track */}
+            <div
+              className="w-full h-[12px] rounded-lg overflow-hidden"
               style={{
-                background: "linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 100%)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                boxShadow: "inset 0 2px 4px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.04)",
+                background: "linear-gradient(180deg, #1A0E08 0%, #2C1810 40%, #1A0E08 100%)",
+                border: "1.5px solid #8B691440",
+                boxShadow: "inset 0 2px 4px rgba(0,0,0,0.6), 0 1px 0 rgba(139,105,20,0.1)",
               }}
             >
+              {/* Gold fill */}
               <div
                 className="h-full rounded-md transition-all duration-700 relative overflow-hidden"
                 style={{
                   width: `${levelProgress}%`,
-                  background: `linear-gradient(180deg, ${glowColor}DD 0%, ${glowColor}88 100%)`,
-                  boxShadow: `0 0 8px ${glowColor}40, inset 0 1px 0 rgba(255,255,255,0.3)`,
+                  background: "linear-gradient(180deg, #D4AF37 0%, #C9A84C 50%, #8B6914 100%)",
+                  boxShadow: "0 0 8px rgba(212,175,55,0.4), inset 0 1px 0 rgba(255,234,167,0.4), inset 0 -1px 0 rgba(0,0,0,0.2)",
                 }}
               >
-                {/* Pixel shine effect */}
+                {/* Gold shine sweep */}
                 <div className="absolute inset-0"
                   style={{
-                    background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%)",
+                    background: "linear-gradient(90deg, transparent 0%, rgba(255,234,167,0.25) 50%, transparent 100%)",
                     animation: "exp-shine 3s ease-in-out infinite",
                   }} />
               </div>
             </div>
+            {/* Gold ornamental edge — bottom */}
+            <div
+              className="absolute -bottom-[1px] left-1 right-1 h-[1px]"
+              style={{ background: "linear-gradient(90deg, transparent, #8B691440, #D4AF3740, #8B691460, transparent)" }}
+            />
           </div>
         </div>
 
-        {/* Right: Currency — pixel-art pastel style */}
+        {/* Right: Currency — elegant leather pouch style */}
         <div className="flex flex-col gap-1.5 pointer-events-auto shrink-0">
           <CurrencyPill type="gold" value={user.gold} />
           <CurrencyPill type="gem" value={user.gems} />
@@ -268,37 +319,41 @@ function CurrencyPill({ type, value }: { type: "gold" | "gem"; value: number }) 
     <div
       className="relative flex items-center gap-1.5 rounded-xl px-2 py-[4px]"
       style={{
-        background: isGold
-          ? "linear-gradient(135deg, rgba(255,234,167,0.12) 0%, rgba(249,202,36,0.06) 100%)"
-          : "linear-gradient(135deg, rgba(116,185,255,0.12) 0%, rgba(116,185,255,0.06) 100%)",
+        background: "linear-gradient(135deg, #2C1810, #1A0E08)",
         border: isGold
-          ? "1.5px solid rgba(255,234,167,0.2)"
-          : "1.5px solid rgba(116,185,255,0.2)",
+          ? "1.5px solid rgba(139,105,20,0.5)"
+          : "1.5px solid rgba(90,120,180,0.4)",
         boxShadow: isGold
-          ? "0 2px 8px rgba(249,202,36,0.1), inset 0 1px 0 rgba(255,255,255,0.06)"
-          : "0 2px 8px rgba(116,185,255,0.1), inset 0 1px 0 rgba(255,255,255,0.06)",
+          ? "0 2px 8px rgba(0,0,0,0.4), inset 0 1px 2px rgba(139,105,20,0.15)"
+          : "0 2px 8px rgba(0,0,0,0.4), inset 0 1px 2px rgba(90,120,180,0.15)",
         minWidth: 90,
       }}
     >
-      {/* Pixel-art icon */}
+      {/* Icon */}
       <div
-        className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 ${bumping ? "animate-squish" : ""}`}
+        className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${bumping ? "animate-squish" : ""}`}
         style={{
           background: isGold
-            ? "linear-gradient(180deg, #FFE69C 0%, #F9CA24 50%, #D4A017 100%)"
-            : "linear-gradient(180deg, #89CFF0 0%, #74B9FF 50%, #5BA4E6 100%)",
+            ? "linear-gradient(135deg, #D4AF37 0%, #C9A84C 50%, #8B6914 100%)"
+            : "linear-gradient(135deg, #7BA4D9 0%, #5A8DC4 50%, #3D6FA0 100%)",
           boxShadow: isGold
-            ? "0 1px 4px rgba(249,202,36,0.4), inset 0 -1px 0 rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.4)"
-            : "0 1px 4px rgba(116,185,255,0.4), inset 0 -1px 0 rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.4)",
+            ? "0 1px 4px rgba(139,105,20,0.5), inset 0 1px 0 rgba(255,234,167,0.4)"
+            : "0 1px 4px rgba(90,120,180,0.5), inset 0 1px 0 rgba(180,210,255,0.4)",
         }}
       >
-        <span className="text-[9px] font-black" style={{ color: isGold ? "#5a4200" : "#1a3a5c", textShadow: "0 1px 0 rgba(255,255,255,0.3)" }}>
-          {isGold ? "G" : "D"}
+        <span className="text-[10px]" style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.3))" }}>
+          {isGold ? "\uD83E\uDE99" : "\uD83D\uDC8E"}
         </span>
       </div>
       <span
         className={`${fontSize} font-extrabold tabular-nums whitespace-nowrap ${bumping ? "animate-currency-bump" : ""}`}
-        style={{ color: isGold ? "#FFEAA7" : "#74B9FF" }}
+        style={{
+          color: "#F5E6C8",
+          fontFamily: "Georgia, 'Times New Roman', serif",
+          textShadow: isGold
+            ? "0 0 4px rgba(212,175,55,0.3)"
+            : "0 0 4px rgba(90,120,180,0.3)",
+        }}
       >
         {displayValue}
       </span>
@@ -307,6 +362,7 @@ function CurrencyPill({ type, value }: { type: "gold" | "gem"; value: number }) 
           className="absolute -top-3 right-1 text-[9px] font-black tabular-nums pointer-events-none"
           style={{
             color: delta > 0 ? "#D4AF37" : "#FF6B6B",
+            fontFamily: "Georgia, 'Times New Roman', serif",
             animation: "currency-delta-float 1.2s ease-out forwards",
             textShadow: `0 0 6px ${delta > 0 ? "rgba(212,175,55,0.5)" : "rgba(255,107,107,0.5)"}`,
           }}

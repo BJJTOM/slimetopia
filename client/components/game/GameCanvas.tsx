@@ -1675,8 +1675,8 @@ export default function GameCanvas() {
       container.sortableChildren = true;
 
       const grade = sp?.grade || "common";
-      const sizeScale = maxSlimes > 12 ? 0.75 : maxSlimes > 6 ? 0.85 : 1;
-      const baseSize = Math.min(80 + (slime.level - 1) * 2.5, 120) * sizeScale;
+      const sizeScale = maxSlimes > 12 ? 0.8 : maxSlimes > 6 ? 0.9 : 1;
+      const baseSize = Math.min(100 + (slime.level - 1) * 3, 150) * sizeScale;
 
       const slimeAccs = equippedAccessories[slime.id] || [];
       const accOverlays = slimeAccs.map((e) => e.svg_overlay).filter(Boolean);
@@ -1729,35 +1729,51 @@ export default function GameCanvas() {
       container.addChildAt(shadow, 0);
 
       const nameStr = slime.name || sp?.name || "???";
+      const displayLabel = `${nameStr}  Lv.${slime.level}`;
+      const nameW = displayLabel.length * 7 + 20;
+
       const nameBg = new PIXI.Graphics();
-      const nameW = nameStr.length * 7 + 16;
-      nameBg.roundRect(-nameW / 2, 8, nameW, 16, 8);
-      nameBg.fill({ color: 0x000000, alpha: 0.45 });
+      nameBg.roundRect(-nameW / 2, 10, nameW, 20, 10);
+      nameBg.fill({ color: 0x1A0E08, alpha: 0.85 });
+      nameBg.stroke({ color: 0x8B6914, width: 1, alpha: 0.5 });
       container.addChild(nameBg);
 
       const nameText = new PIXI.Text({
         text: nameStr,
         style: new PIXI.TextStyle({
-          fontSize: 10,
-          fill: "#ffffff",
-          fontWeight: "600",
+          fontSize: 13,
+          fill: "#F5E6C8",
+          fontWeight: "700",
+          fontFamily: "Georgia, serif",
+          dropShadow: {
+            color: "#000000",
+            blur: 2,
+            distance: 1,
+          },
         }),
+        resolution: 2,
       });
       nameText.anchor.set(0.5);
-      nameText.y = 16;
+      nameText.y = 20;
       container.addChild(nameText);
-
-      const lvlBg = new PIXI.Graphics();
-      lvlBg.roundRect(-12, 24, 24, 13, 6);
-      lvlBg.fill({ color: 0x000000, alpha: 0.35 });
-      container.addChild(lvlBg);
 
       const lvlText = new PIXI.Text({
         text: `Lv.${slime.level}`,
-        style: new PIXI.TextStyle({ fontSize: 8, fill: "#B2BEC3" }),
+        style: new PIXI.TextStyle({
+          fontSize: 10,
+          fill: "#C9A84C",
+          fontWeight: "700",
+          fontFamily: "Georgia, serif",
+          dropShadow: {
+            color: "#000000",
+            blur: 2,
+            distance: 1,
+          },
+        }),
+        resolution: 2,
       });
       lvlText.anchor.set(0.5);
-      lvlText.y = 30.5;
+      lvlText.y = 36;
       container.addChild(lvlText);
 
       const pos = slimePositions[idx];
