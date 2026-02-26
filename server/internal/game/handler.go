@@ -195,6 +195,8 @@ func RegisterRoutes(router fiber.Router, h *Handler) {
 	router.Get("/collection/entries", h.GetCollectionEntries)
 	router.Get("/collection/requirements", h.GetCollectionRequirements)
 	router.Post("/collection/submit", h.SubmitToCollection)
+	router.Get("/collection/milestones", h.GetCollectionMilestones)
+	router.Post("/collection/claim-milestone", h.ClaimCollectionMilestone)
 
 	// Idle/Offline rewards
 	idle := router.Group("/idle")
@@ -229,6 +231,7 @@ func RegisterRoutes(router fiber.Router, h *Handler) {
 	food.Get("/inventory", h.GetFoodInventory)
 	food.Post("/apply", h.ApplyFood)
 	food.Post("/apply-batch", h.ApplyFoodBatch)
+	food.Post("/apply-all", h.ApplyFoodToAll)
 
 	// World Boss
 	boss := router.Group("/boss")
@@ -248,20 +251,30 @@ func RegisterRoutes(router fiber.Router, h *Handler) {
 	community := router.Group("/community")
 	community.Get("/posts", h.GetCommunityPosts)
 	community.Post("/posts", h.CreateCommunityPost)
+	community.Get("/posts/trending", h.GetTrendingPosts)
 	community.Post("/posts/:id/like", h.LikeCommunityPost)
 	community.Post("/posts/:id/unlike", h.UnlikeCommunityPost)
 	community.Post("/posts/:id/view", h.ViewCommunityPost)
+	community.Post("/posts/:id/react", h.ReactCommunityPost)
+	community.Delete("/posts/:id/react", h.UnreactCommunityPost)
+	community.Post("/posts/:id/bookmark", h.BookmarkPost)
+	community.Delete("/posts/:id/bookmark", h.UnbookmarkPost)
 	community.Get("/posts/:id/replies", h.GetCommunityReplies)
 	community.Post("/posts/:id/replies", h.CreateCommunityReply)
+	community.Get("/posts/:id/poll", h.GetPoll)
+	community.Post("/posts/:id/vote", h.VotePoll)
 	community.Delete("/posts/:id", h.DeleteCommunityPost)
 	community.Post("/posts/:id/report", h.ReportCommunityPost)
 	community.Post("/replies/:id/report", h.ReportCommunityReply)
+	community.Delete("/replies/:id", h.DeleteCommunityReply)
 	community.Post("/replies/:id/like", h.LikeCommunityReply)
 	community.Post("/replies/:id/unlike", h.UnlikeCommunityReply)
 	community.Post("/users/:id/report", h.ReportCommunityUser)
 	community.Post("/users/:id/block", h.BlockUser)
 	community.Delete("/users/:id/block", h.UnblockUser)
 	community.Get("/blocks", h.GetBlockedUsers)
+	community.Get("/bookmarks", h.GetBookmarks)
+	community.Get("/tags/trending", h.GetTrendingTags)
 
 	// Shorts
 	shorts := router.Group("/shorts")

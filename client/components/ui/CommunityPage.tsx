@@ -6,7 +6,7 @@ import { authApi, uploadApi, resolveMediaUrl } from "@/lib/api/client";
 import { toastError, toastSuccess } from "@/components/ui/Toast";
 import ShortsPage from "@/components/ui/ShortsPage";
 
-type CommunityTab = "board" | "shorts" | "updates";
+type CommunityTab = "board" | "shorts" | "saved" | "updates";
 
 const UPDATE_NOTES = [
   {
@@ -72,6 +72,12 @@ interface Post {
   created_at: string;
   liked: boolean;
   is_mine: boolean;
+  reaction_counts?: Record<string, number>;
+  my_reaction?: string;
+  bookmark_count?: number;
+  bookmarked?: boolean;
+  rank?: number;
+  score?: number;
 }
 
 interface Reply {
@@ -88,7 +94,18 @@ interface Reply {
   parent_id?: string;
 }
 
+interface PollData {
+  id: string;
+  options: { option: string; votes: number; percent: number }[];
+  total_votes: number;
+  my_vote: number | null;
+  expires_at: string;
+  expired: boolean;
+}
+
 type SortMode = "new" | "hot";
+
+const REACTION_EMOJIS = ["❤️", "😂", "😮", "😢", "🔥", "👏"] as const;
 
 const POST_TYPES = [
   { value: "", label: "전체", icon: "📋", color: "#B2BEC3" },
@@ -172,14 +189,88 @@ function Avatar({ nickname, profileImageUrl, size = "md", gradient }: {
   );
 }
 
+/* ===== Reaction Bar ===== */
+function ReactionBar({ post, onReact, onUnreact }: {
+  post: Post;
+  onReact: (postId: string, emoji: string) => void;
+  onUnreact: (postId: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const counts = post.reaction_counts || {};
+  const totalReactions = Object.values(counts).reduce((a, b) => a + b, 0);
+
+  return (
+    <div className="flex items-center gap-1">
+      {/* Collapsed: show summary */}
+      {!expanded && (
+        <button
+          onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
+          className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-lg transition hover:bg-white/5"
+          style={{ color: post.my_reaction ? "#C9A84C" : "rgba(245,230,200,0.25)" }}
+        >
+          {totalReactions > 0 ? (
+            <>
+              {Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([emoji]) => (
+                <span key={emoji} className="text-[11px]">{emoji}</span>
+              ))}
+              <span className="tabular-nums ml-0.5">{totalReactions}</span>
+            </>
+          ) : (
+            <span>😊+</span>
+          )}
+        </button>
+      )}
+
+      {/* Expanded: show all emoji options */}
+      {expanded && (
+        <div className="flex items-center gap-0.5 px-1 py-0.5 rounded-xl"
+          style={{ background: "rgba(44,24,16,0.95)", border: "1px solid rgba(139,105,20,0.2)" }}
+          onClick={(e) => e.stopPropagation()}>
+          {REACTION_EMOJIS.map((emoji) => (
+            <button
+              key={emoji}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (post.my_reaction === emoji) {
+                  onUnreact(post.id);
+                } else {
+                  onReact(post.id, emoji);
+                }
+                setExpanded(false);
+              }}
+              className="w-7 h-7 flex items-center justify-center rounded-full transition hover:bg-white/10"
+              style={{
+                background: post.my_reaction === emoji ? "rgba(201,168,76,0.2)" : "transparent",
+                transform: post.my_reaction === emoji ? "scale(1.15)" : "scale(1)",
+              }}
+            >
+              <span className="text-[14px]">{emoji}</span>
+            </button>
+          ))}
+          <button
+            onClick={(e) => { e.stopPropagation(); setExpanded(false); }}
+            className="w-5 h-5 flex items-center justify-center rounded-full text-[10px] hover:bg-white/10 transition"
+            style={{ color: "rgba(245,230,200,0.3)" }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ===== Memoized PostCard — prevents re-render when other posts change ===== */
-const PostCard = memo(function PostCard({ post, idx, onOpen, onDelete, onReport, onBlock }: {
+const PostCard = memo(function PostCard({ post, idx, onOpen, onDelete, onReport, onBlock, onReact, onUnreact, onBookmark }: {
   post: Post;
   idx: number;
   onOpen: (post: Post) => void;
   onDelete: (id: string) => void;
   onReport: (target: { type: string; id: string }) => void;
   onBlock: (userId: string, nickname: string) => void;
+  onReact: (postId: string, emoji: string) => void;
+  onUnreact: (postId: string) => void;
+  onBookmark: (postId: string, bookmarked: boolean) => void;
 }) {
   const avatarGrad = getAvatarGradient(post.nickname);
   const isHot = post.likes >= 3;
@@ -218,7 +309,7 @@ const PostCard = memo(function PostCard({ post, idx, onOpen, onDelete, onReport,
       {/* Post content preview */}
       <div className="px-3 py-2">
         <p className="text-[13px] leading-relaxed line-clamp-3 break-words" style={{ color: "rgba(245,230,200,0.75)" }}>
-          {post.content}
+          <HashtagText text={post.content} />
         </p>
         {post.image_urls.length > 0 && (
           <ImageCarousel images={post.image_urls} size="thumb" />
@@ -226,21 +317,51 @@ const PostCard = memo(function PostCard({ post, idx, onOpen, onDelete, onReport,
       </div>
 
       {/* Post footer */}
-      <div className="px-3 pb-2.5 flex items-center gap-4">
-        <span className={`flex items-center gap-1 text-[11px] ${post.liked ? "text-pink-400" : ""}`}
-          style={post.liked ? {} : { color: "rgba(245,230,200,0.25)" }}>
-          {post.liked ? "❤️" : "🤍"} <span className="tabular-nums">{post.likes > 0 ? post.likes : ""}</span>
-        </span>
+      <div className="px-3 pb-2.5 flex items-center gap-2">
+        <ReactionBar post={post} onReact={onReact} onUnreact={onUnreact} />
         <span className="flex items-center gap-1 text-[11px]" style={{ color: "rgba(245,230,200,0.25)" }}>
           💬 <span className="tabular-nums">{post.reply_count > 0 ? post.reply_count : "답글"}</span>
         </span>
         <span className="flex items-center gap-1 text-[11px] ml-auto" style={{ color: "rgba(245,230,200,0.4)" }}>
           👁 <span className="tabular-nums">{post.view_count}</span>
         </span>
+        <button
+          onClick={(e) => { e.stopPropagation(); onBookmark(post.id, !!post.bookmarked); }}
+          className="text-[12px] transition"
+          style={{ color: post.bookmarked ? "#C9A84C" : "rgba(245,230,200,0.2)" }}
+        >
+          {post.bookmarked ? "🔖" : "🏷️"}
+        </button>
       </div>
     </button>
   );
 });
+
+/* ===== Hashtag Text Renderer ===== */
+function HashtagText({ text, onTagClick }: { text: string; onTagClick?: (tag: string) => void }) {
+  const parts = text.split(/(#[^\s#]+)/g);
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.startsWith("#") ? (
+          <span
+            key={i}
+            className="cursor-pointer font-bold transition hover:underline"
+            style={{ color: "#C9A84C" }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onTagClick?.(part.slice(1));
+            }}
+          >
+            {part}
+          </span>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </>
+  );
+}
 
 function PostSkeleton() {
   return (
@@ -393,6 +514,159 @@ function ReportModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (re
   );
 }
 
+/* ===== Delete Confirm Modal (Bug fix #5) ===== */
+function DeleteConfirmModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: () => void }) {
+  return (
+    <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+      <div className="rounded-2xl p-5 w-full max-w-[300px]"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          animation: "report-pop 0.2s ease-out",
+          background: "linear-gradient(180deg, #2C1810, #1A0E08)",
+          border: "1px solid rgba(139,105,20,0.25)",
+        }}>
+        <h3 className="font-bold text-sm mb-2" style={{ color: "#F5E6C8", fontFamily: "Georgia, 'Times New Roman', serif" }}>삭제 확인</h3>
+        <p className="text-[12px] mb-4" style={{ color: "rgba(245,230,200,0.6)" }}>
+          이 게시글을 삭제하시겠습니까? 삭제 후 복구할 수 없습니다.
+        </p>
+        <div className="flex gap-2">
+          <button onClick={onClose}
+            className="flex-1 py-2 rounded-lg text-[12px] font-bold transition"
+            style={{ background: "rgba(245,230,200,0.04)", color: "rgba(245,230,200,0.4)", border: "1px solid rgba(139,105,20,0.1)" }}>
+            취소
+          </button>
+          <button onClick={onConfirm}
+            className="flex-1 py-2 rounded-lg text-[12px] font-bold transition"
+            style={{ background: "linear-gradient(135deg, #FF6B6B, #E17055)", color: "#fff" }}>
+            삭제
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ===== Poll Component ===== */
+function PollView({ postId, token }: { postId: string; token: string }) {
+  const [poll, setPoll] = useState<PollData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [voting, setVoting] = useState(false);
+
+  useEffect(() => {
+    authApi<{ poll: PollData | null }>(`/api/community/posts/${postId}/poll`, token)
+      .then((res) => setPoll(res.poll))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [postId, token]);
+
+  if (loading || !poll) return null;
+
+  const vote = async (idx: number) => {
+    if (voting || poll.expired) return;
+    setVoting(true);
+    try {
+      await authApi(`/api/community/posts/${postId}/vote`, token, {
+        method: "POST",
+        body: { option_index: idx },
+      });
+      // Refetch poll
+      const res = await authApi<{ poll: PollData }>(`/api/community/posts/${postId}/poll`, token);
+      setPoll(res.poll);
+    } catch {
+      toastError("투표에 실패했습니다");
+    }
+    setVoting(false);
+  };
+
+  const hasVoted = poll.my_vote !== null;
+  const remainMs = new Date(poll.expires_at).getTime() - Date.now();
+  const remainH = Math.max(0, Math.ceil(remainMs / 3600000));
+
+  return (
+    <div className="mt-3 rounded-xl p-3" style={{ background: "rgba(245,230,200,0.03)", border: "1px solid rgba(139,105,20,0.12)" }}>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[10px] font-bold" style={{ color: "#C9A84C" }}>📊 투표</span>
+        <span className="text-[9px]" style={{ color: poll.expired ? "rgba(255,107,107,0.6)" : "rgba(245,230,200,0.3)" }}>
+          {poll.expired ? "마감됨" : `${remainH}시간 남음`}
+        </span>
+      </div>
+      <div className="space-y-1.5">
+        {poll.options.map((opt, i) => (
+          <button
+            key={i}
+            onClick={() => vote(i)}
+            disabled={poll.expired || voting}
+            className="w-full text-left rounded-lg px-3 py-2 relative overflow-hidden transition disabled:cursor-default"
+            style={{
+              border: poll.my_vote === i ? "1px solid rgba(201,168,76,0.3)" : "1px solid rgba(139,105,20,0.1)",
+              background: "rgba(245,230,200,0.02)",
+            }}
+          >
+            {/* Percent bar */}
+            {hasVoted && (
+              <div
+                className="absolute left-0 top-0 bottom-0 rounded-lg transition-all duration-500"
+                style={{
+                  width: `${opt.percent}%`,
+                  background: poll.my_vote === i ? "rgba(201,168,76,0.12)" : "rgba(245,230,200,0.04)",
+                }}
+              />
+            )}
+            <div className="relative flex items-center justify-between">
+              <span className="text-[12px]" style={{ color: poll.my_vote === i ? "#C9A84C" : "rgba(245,230,200,0.7)" }}>
+                {poll.my_vote === i && "✓ "}{opt.option}
+              </span>
+              {hasVoted && (
+                <span className="text-[10px] tabular-nums font-bold" style={{ color: "rgba(245,230,200,0.4)" }}>
+                  {opt.percent}%
+                </span>
+              )}
+            </div>
+          </button>
+        ))}
+      </div>
+      <div className="text-[9px] mt-2 text-right" style={{ color: "rgba(245,230,200,0.2)" }}>
+        {poll.total_votes}명 투표
+      </div>
+    </div>
+  );
+}
+
+/* ===== Trending Card ===== */
+function TrendingCard({ post, onOpen }: { post: Post; onOpen: (post: Post) => void }) {
+  const isFirst = post.rank === 1;
+  return (
+    <button
+      onClick={() => onOpen(post)}
+      className="flex-shrink-0 w-[220px] rounded-xl p-3 transition active:scale-[0.98]"
+      style={{
+        background: isFirst
+          ? "linear-gradient(135deg, rgba(212,175,55,0.12), rgba(201,168,76,0.04))"
+          : "linear-gradient(135deg, rgba(245,230,200,0.05), rgba(245,230,200,0.02))",
+        border: isFirst
+          ? "1px solid rgba(212,175,55,0.3)"
+          : "1px solid rgba(139,105,20,0.15)",
+      }}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-[14px] font-bold" style={{ color: isFirst ? "#D4AF37" : "rgba(245,230,200,0.5)" }}>
+          #{post.rank}
+        </span>
+        <Avatar nickname={post.nickname} profileImageUrl={post.profile_image_url} size="sm" gradient={getAvatarGradient(post.nickname)} />
+        <span className="text-[10px] font-bold truncate" style={{ color: "rgba(245,230,200,0.8)" }}>{post.nickname}</span>
+      </div>
+      <p className="text-[11px] leading-relaxed line-clamp-2 break-words mb-2" style={{ color: "rgba(245,230,200,0.65)" }}>
+        {post.content}
+      </p>
+      <div className="flex items-center gap-3 text-[9px]" style={{ color: "rgba(245,230,200,0.3)" }}>
+        <span>💬 {post.reply_count}</span>
+        <span>👁 {post.view_count}</span>
+        {isFirst && <span className="ml-auto text-[8px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: "rgba(212,175,55,0.2)", color: "#D4AF37" }}>🏆 Best</span>}
+      </div>
+    </button>
+  );
+}
+
 /* ===== More Menu (3-dot) ===== */
 function MoreMenu({ isMine, onDelete, onReport, onBlock }: {
   isMine: boolean;
@@ -447,6 +721,72 @@ function MoreMenu({ isMine, onDelete, onReport, onBlock }: {
   );
 }
 
+/* ===== Search Bar ===== */
+function SearchBar({ onSearch, onTagClick }: { onSearch: (q: string) => void; onTagClick: (tag: string) => void }) {
+  const [query, setQuery] = useState("");
+  const [trendingTags, setTrendingTags] = useState<{ tag: string; count: number }[]>([]);
+  const token = useAuthStore((s) => s.accessToken);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => {
+    if (!token) return;
+    authApi<{ tags: { tag: string; count: number }[] }>("/api/community/tags/trending", token)
+      .then((res) => setTrendingTags(res.tags || []))
+      .catch(() => {});
+  }, [token]);
+
+  const handleChange = (val: string) => {
+    setQuery(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      onSearch(val.trim());
+    }, 400);
+  };
+
+  return (
+    <div className="mb-2">
+      <div className="relative">
+        <input
+          value={query}
+          onChange={(e) => handleChange(e.target.value)}
+          placeholder="🔍 검색 (키워드 or #태그)"
+          className="w-full text-[12px] rounded-xl px-4 py-2 pl-3 focus:outline-none"
+          style={{
+            background: "rgba(245,230,200,0.04)",
+            color: "#F5E6C8",
+            border: "1px solid rgba(139,105,20,0.12)",
+          }}
+          onFocus={(e) => { (e.target as HTMLInputElement).style.borderColor = "rgba(201,168,76,0.3)"; }}
+          onBlur={(e) => { (e.target as HTMLInputElement).style.borderColor = "rgba(139,105,20,0.12)"; }}
+        />
+        {query && (
+          <button
+            onClick={() => { setQuery(""); onSearch(""); }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] w-5 h-5 rounded-full flex items-center justify-center"
+            style={{ color: "rgba(245,230,200,0.3)" }}
+          >
+            ✕
+          </button>
+        )}
+      </div>
+      {trendingTags.length > 0 && !query && (
+        <div className="flex gap-1.5 mt-1.5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+          {trendingTags.slice(0, 6).map((t) => (
+            <button
+              key={t.tag}
+              onClick={() => { setQuery(`#${t.tag}`); onTagClick(t.tag); }}
+              className="text-[9px] px-2 py-1 rounded-full whitespace-nowrap transition hover:bg-white/5"
+              style={{ background: "rgba(201,168,76,0.08)", color: "#C9A84C", border: "1px solid rgba(201,168,76,0.12)" }}
+            >
+              #{t.tag} <span className="opacity-50">{t.count}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ===== Main Component ===== */
 export default function CommunityPage({ onClose }: { onClose?: () => void }) {
   const token = useAuthStore((s) => s.accessToken);
@@ -457,6 +797,10 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Trending
+  const [trendingPosts, setTrendingPosts] = useState<Post[]>([]);
 
   // Compose
   const [showCompose, setShowCompose] = useState(false);
@@ -467,6 +811,8 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
   const [posting, setPosting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [composePollOptions, setComposePollOptions] = useState<string[]>([]);
+  const [showPollCompose, setShowPollCompose] = useState(false);
 
   // Post detail
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
@@ -477,21 +823,32 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
   const [replyingTo, setReplyingTo] = useState<{ id: string; nickname: string } | null>(null);
   const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
 
-  // Report
+  // Report & Delete confirm
   const [reportTarget, setReportTarget] = useState<{ type: string; id: string } | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  const fetchPosts = useCallback(async (pageNum: number, filterType: string, append = false) => {
+  // Fetch trending on mount
+  useEffect(() => {
+    if (!token) return;
+    authApi<{ posts: Post[] }>("/api/community/posts/trending?period=week&limit=3", token)
+      .then((res) => setTrendingPosts(res.posts || []))
+      .catch(() => {});
+  }, [token]);
+
+  const fetchPosts = useCallback(async (pageNum: number, filterType: string, append = false, query = "") => {
     if (!token) return;
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(pageNum) });
       if (filterType) params.set("type", filterType);
+      if (query) params.set("q", query);
       const res = await authApi<{ posts: Post[]; page: number }>(
         `/api/community/posts?${params}`, token
       );
       const newPosts = (res.posts || []).map((p) => ({
         ...p,
         image_urls: p.image_urls || [],
+        reaction_counts: p.reaction_counts || {},
       }));
       if (append) {
         setPosts((prev) => [...prev, ...newPosts]);
@@ -507,13 +864,13 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
 
   useEffect(() => {
     setPage(0);
-    fetchPosts(0, filter);
-  }, [filter, fetchPosts]);
+    fetchPosts(0, filter, false, searchQuery);
+  }, [filter, fetchPosts, searchQuery]);
 
   const loadMore = () => {
     const next = page + 1;
     setPage(next);
-    fetchPosts(next, filter, true);
+    fetchPosts(next, filter, true, searchQuery);
   };
 
   // Sort posts client-side (memoized to avoid O(n log n) on every render)
@@ -563,25 +920,34 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
         formData.append("content", composeText.trim());
         formData.append("post_type", composeType);
         composeImages.forEach((img) => formData.append("images", img));
+        if (composePollOptions.length >= 2) {
+          formData.append("poll_options", JSON.stringify(composePollOptions));
+        }
 
         await uploadApi<{ id: string }>("/api/community/posts", formData, token, (pct) => {
           setUploadProgress(pct);
         });
       } else {
         // JSON body (no images)
+        const body: Record<string, unknown> = { content: composeText.trim(), post_type: composeType };
+        if (composePollOptions.length >= 2) {
+          body.poll_options = composePollOptions;
+        }
         await authApi<{ id: string }>("/api/community/posts", token, {
           method: "POST",
-          body: { content: composeText.trim(), post_type: composeType },
+          body,
         });
       }
       setComposeText("");
       setComposeImages([]);
+      setComposePollOptions([]);
+      setShowPollCompose(false);
       // Revoke blob URLs before clearing
       composeImagePreviews.forEach((url) => { if (url.startsWith("blob:")) URL.revokeObjectURL(url); });
       setComposeImagePreviews([]);
       setShowCompose(false);
       toastSuccess("게시글이 등록되었습니다!", "📝");
-      fetchPosts(0, filter);
+      fetchPosts(0, filter, false, searchQuery);
       setPage(0);
     } catch (err: unknown) {
       const apiMsg = (err as { data?: { error?: string } })?.data?.error;
@@ -613,6 +979,8 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
     try {
       await authApi(`/api/community/posts/${postId}/${endpoint}`, token, { method: "POST" });
     } catch {
+      // Bug fix #6: toast on like failure
+      toastError("좋아요 처리에 실패했습니다");
       // Rollback
       const rollback = (p: Post) =>
         p.id === postId ? { ...p, liked, likes: p.likes + (liked ? 1 : -1) } : p;
@@ -621,6 +989,108 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
         setSelectedPost((prev) => prev ? rollback(prev) : null);
       }
     }
+  };
+
+  // ===== Reactions =====
+  const reactToPost = async (postId: string, emoji: string) => {
+    if (!token) return;
+    // Optimistic
+    setPosts((prev) => prev.map((p) => {
+      if (p.id !== postId) return p;
+      const counts = { ...(p.reaction_counts || {}) };
+      if (p.my_reaction && counts[p.my_reaction]) counts[p.my_reaction]--;
+      counts[emoji] = (counts[emoji] || 0) + 1;
+      return { ...p, my_reaction: emoji, reaction_counts: counts };
+    }));
+    if (selectedPost?.id === postId) {
+      setSelectedPost((prev) => {
+        if (!prev) return null;
+        const counts = { ...(prev.reaction_counts || {}) };
+        if (prev.my_reaction && counts[prev.my_reaction]) counts[prev.my_reaction]--;
+        counts[emoji] = (counts[emoji] || 0) + 1;
+        return { ...prev, my_reaction: emoji, reaction_counts: counts };
+      });
+    }
+
+    try {
+      const res = await authApi<{ reaction_counts: Record<string, number>; my_reaction: string }>(
+        `/api/community/posts/${postId}/react`, token, { method: "POST", body: { emoji } }
+      );
+      // Sync server counts
+      const update = (p: Post) => p.id === postId ? { ...p, reaction_counts: res.reaction_counts, my_reaction: res.my_reaction } : p;
+      setPosts((prev) => prev.map(update));
+      if (selectedPost?.id === postId) setSelectedPost((prev) => prev ? update(prev) : null);
+    } catch {
+      toastError("리액션 실패");
+      fetchPosts(0, filter, false, searchQuery);
+    }
+  };
+
+  const unreactFromPost = async (postId: string) => {
+    if (!token) return;
+    // Optimistic
+    setPosts((prev) => prev.map((p) => {
+      if (p.id !== postId) return p;
+      const counts = { ...(p.reaction_counts || {}) };
+      if (p.my_reaction && counts[p.my_reaction]) {
+        counts[p.my_reaction]--;
+        if (counts[p.my_reaction] <= 0) delete counts[p.my_reaction];
+      }
+      return { ...p, my_reaction: undefined, reaction_counts: counts };
+    }));
+    if (selectedPost?.id === postId) {
+      setSelectedPost((prev) => {
+        if (!prev) return null;
+        const counts = { ...(prev.reaction_counts || {}) };
+        if (prev.my_reaction && counts[prev.my_reaction]) {
+          counts[prev.my_reaction]--;
+          if (counts[prev.my_reaction] <= 0) delete counts[prev.my_reaction];
+        }
+        return { ...prev, my_reaction: undefined, reaction_counts: counts };
+      });
+    }
+
+    try {
+      const res = await authApi<{ reaction_counts: Record<string, number> }>(
+        `/api/community/posts/${postId}/react`, token, { method: "DELETE" }
+      );
+      const update = (p: Post) => p.id === postId ? { ...p, reaction_counts: res.reaction_counts, my_reaction: undefined } : p;
+      setPosts((prev) => prev.map(update));
+      if (selectedPost?.id === postId) setSelectedPost((prev) => prev ? update(prev) : null);
+    } catch {
+      toastError("리액션 취소 실패");
+    }
+  };
+
+  // ===== Bookmarks =====
+  const toggleBookmark = async (postId: string, bookmarked: boolean) => {
+    if (!token) return;
+    // Optimistic
+    const update = (p: Post) =>
+      p.id === postId ? { ...p, bookmarked: !bookmarked, bookmark_count: (p.bookmark_count || 0) + (bookmarked ? -1 : 1) } : p;
+    setPosts((prev) => prev.map(update));
+    if (selectedPost?.id === postId) setSelectedPost((prev) => prev ? update(prev) : null);
+
+    try {
+      if (bookmarked) {
+        await authApi(`/api/community/posts/${postId}/bookmark`, token, { method: "DELETE" });
+      } else {
+        await authApi(`/api/community/posts/${postId}/bookmark`, token, { method: "POST" });
+        toastSuccess("저장되었습니다", "🔖");
+      }
+    } catch {
+      toastError("저장 실패");
+      // Rollback
+      const rollback = (p: Post) =>
+        p.id === postId ? { ...p, bookmarked, bookmark_count: (p.bookmark_count || 0) + (bookmarked ? 1 : -1) } : p;
+      setPosts((prev) => prev.map(rollback));
+      if (selectedPost?.id === postId) setSelectedPost((prev) => prev ? rollback(prev) : null);
+    }
+  };
+
+  // Bug fix #5: Delete with confirmation
+  const confirmDelete = (postId: string) => {
+    setDeleteConfirmId(postId);
   };
 
   const deletePost = async (postId: string) => {
@@ -632,6 +1102,25 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
       toastSuccess("삭제되었습니다");
     } catch {
       toastError("삭제 실패");
+    }
+    setDeleteConfirmId(null);
+  };
+
+  const deleteReply = async (replyId: string, postId: string) => {
+    if (!token) return;
+    try {
+      await authApi(`/api/community/replies/${replyId}`, token, { method: "DELETE" });
+      setReplies((prev) => ({
+        ...prev,
+        [postId]: (prev[postId] || []).filter((r) => r.id !== replyId && r.parent_id !== replyId),
+      }));
+      setPosts((prev) => prev.map((p) => p.id === postId ? { ...p, reply_count: Math.max(0, p.reply_count - 1) } : p));
+      if (selectedPost?.id === postId) {
+        setSelectedPost((prev) => prev ? { ...prev, reply_count: Math.max(0, prev.reply_count - 1) } : null);
+      }
+      toastSuccess("답글이 삭제되었습니다");
+    } catch {
+      toastError("답글 삭제 실패");
     }
   };
 
@@ -705,6 +1194,8 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
     try {
       await authApi(`/api/community/replies/${replyId}/${endpoint}`, token, { method: "POST" });
     } catch {
+      // Bug fix #6: toast on like failure
+      toastError("좋아요 처리에 실패했습니다");
       // Rollback
       setReplies((prev) => ({
         ...prev,
@@ -735,7 +1226,7 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
     setReportTarget(null);
   };
 
-  // Block
+  // Bug fix #3: Block user - also filter replies
   const blockUser = async (userId: string, nickname: string) => {
     if (!token) return;
     try {
@@ -744,10 +1235,51 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
       // Remove their posts from feed
       setPosts((prev) => prev.filter((p) => p.user_id !== userId));
       if (selectedPost?.user_id === userId) setSelectedPost(null);
+      // Bug fix #3: Also filter replies from blocked user
+      setReplies((prev) => {
+        const updated: Record<string, Reply[]> = {};
+        for (const [postId, replyList] of Object.entries(prev)) {
+          updated[postId] = replyList.filter((r) => r.user_id !== userId);
+        }
+        return updated;
+      });
     } catch {
       toastError("차단에 실패했습니다");
     }
   };
+
+  // Fetch bookmarked posts for "saved" tab
+  const fetchBookmarks = useCallback(async (pageNum: number) => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const res = await authApi<{ posts: Post[] }>(
+        `/api/community/bookmarks?page=${pageNum}`, token
+      );
+      const newPosts = (res.posts || []).map((p) => ({
+        ...p,
+        image_urls: p.image_urls || [],
+        reaction_counts: p.reaction_counts || {},
+      }));
+      if (pageNum === 0) {
+        setPosts(newPosts);
+      } else {
+        setPosts((prev) => [...prev, ...newPosts]);
+      }
+      setHasMore(newPosts.length >= 20);
+    } catch {
+      toastError("저장한 글을 불러올 수 없습니다");
+    }
+    setLoading(false);
+  }, [token]);
+
+  // Switch to saved tab
+  useEffect(() => {
+    if (communityTab === "saved") {
+      setPage(0);
+      fetchBookmarks(0);
+    }
+  }, [communityTab, fetchBookmarks]);
 
   // ===== Post Detail View =====
   if (selectedPost) {
@@ -791,16 +1323,25 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
                 <span className="font-bold text-[13px]" style={{ color: "#F5E6C8" }}>{selectedPost.nickname}</span>
                 <div className="text-[10px] mt-0.5" style={{ color: "rgba(201,168,76,0.4)" }}>{timeAgo(selectedPost.created_at)}</div>
               </div>
+              <button
+                onClick={() => toggleBookmark(selectedPost.id, !!selectedPost.bookmarked)}
+                className="text-[16px] mr-1 transition"
+              >
+                {selectedPost.bookmarked ? "🔖" : "🏷️"}
+              </button>
               <MoreMenu
                 isMine={selectedPost.is_mine}
-                onDelete={() => deletePost(selectedPost.id)}
+                onDelete={() => confirmDelete(selectedPost.id)}
                 onReport={() => setReportTarget({ type: "post", id: selectedPost.id })}
                 onBlock={() => blockUser(selectedPost.user_id, selectedPost.nickname)}
               />
             </div>
 
             <p className="text-[14px] leading-relaxed whitespace-pre-wrap break-words" style={{ color: "rgba(245,230,200,0.9)" }}>
-              {selectedPost.content}
+              <HashtagText text={selectedPost.content} onTagClick={(tag) => {
+                setSelectedPost(null);
+                setSearchQuery(`#${tag}`);
+              }} />
             </p>
 
             {/* Images carousel */}
@@ -808,15 +1349,18 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
               <ImageCarousel images={selectedPost.image_urls} size="large" />
             )}
 
+            {/* Poll */}
+            {token && <PollView postId={selectedPost.id} token={token} />}
+
             {/* Stats + Actions */}
-            <div className="flex items-center gap-4 pt-3 mt-3" style={{ borderTop: "1px solid rgba(139,105,20,0.08)" }}>
+            <div className="flex items-center gap-3 pt-3 mt-3" style={{ borderTop: "1px solid rgba(139,105,20,0.08)" }}>
+              <ReactionBar post={selectedPost} onReact={reactToPost} onUnreact={unreactFromPost} />
               <button onClick={() => toggleLike(selectedPost.id, selectedPost.liked)}
                 className={`flex items-center gap-1.5 text-[12px] font-bold transition ${
                   selectedPost.liked ? "text-pink-400" : ""
                 }`}
                 style={selectedPost.liked ? {} : { color: "rgba(245,230,200,0.3)" }}>
                 {selectedPost.liked ? "❤️" : "🤍"} <span className="tabular-nums">{selectedPost.likes > 0 ? selectedPost.likes : ""}</span>
-                {selectedPost.likes > 0 ? "명이 좋아합니다" : "좋아요"}
               </button>
               <span className="text-[12px]" style={{ color: "rgba(245,230,200,0.25)" }}>💬 <span className="tabular-nums">{selectedPost.reply_count}</span>개 답글</span>
               <span className="text-[11px] ml-auto" style={{ color: "rgba(245,230,200,0.4)" }}>👁 <span className="tabular-nums">{selectedPost.view_count}</span></span>
@@ -866,6 +1410,7 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
                           <div className="ml-auto">
                             <MoreMenu
                               isMine={r.is_mine}
+                              onDelete={() => deleteReply(r.id, selectedPost.id)}
                               onReport={() => setReportTarget({ type: "reply", id: r.id })}
                               onBlock={() => blockUser(r.user_id, r.nickname)}
                             />
@@ -914,6 +1459,14 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
                                   <div className="flex items-center gap-1.5">
                                     <span className="text-[11px] font-bold" style={{ color: "rgba(245,230,200,0.7)" }}>{sr.nickname}</span>
                                     <span className="text-[8px]" style={{ color: "rgba(201,168,76,0.2)" }}>{timeAgo(sr.created_at)}</span>
+                                    <div className="ml-auto">
+                                      <MoreMenu
+                                        isMine={sr.is_mine}
+                                        onDelete={() => deleteReply(sr.id, selectedPost.id)}
+                                        onReport={() => setReportTarget({ type: "reply", id: sr.id })}
+                                        onBlock={() => blockUser(sr.user_id, sr.nickname)}
+                                      />
+                                    </div>
                                   </div>
                                   <p className="text-[12px] mt-0.5 break-words" style={{ color: "rgba(245,230,200,0.55)" }}>{sr.content}</p>
                                   <div className="flex items-center gap-3 mt-1">
@@ -991,6 +1544,13 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
 
         {/* Report modal */}
         {reportTarget && <ReportModal onClose={() => setReportTarget(null)} onSubmit={submitReport} />}
+        {/* Delete confirm modal */}
+        {deleteConfirmId && (
+          <DeleteConfirmModal
+            onClose={() => setDeleteConfirmId(null)}
+            onConfirm={() => deletePost(deleteConfirmId)}
+          />
+        )}
       </div>
     );
   }
@@ -1023,6 +1583,11 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
               className="flex-1 py-1.5 rounded-lg text-xs font-bold transition"
               style={{ background: "transparent", color: "rgba(245,230,200,0.4)" }}>
               📱 쇼츠
+            </button>
+            <button onClick={() => setCommunityTab("saved")}
+              className="flex-1 py-1.5 rounded-lg text-xs font-bold transition"
+              style={{ background: "transparent", color: "rgba(245,230,200,0.4)" }}>
+              🔖 저장
             </button>
             <button
               className="flex-1 py-1.5 rounded-lg text-xs font-bold transition"
@@ -1096,6 +1661,11 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
               style={{ background: "rgba(201,168,76,0.15)", color: "#C9A84C" }}>
               📱 쇼츠
             </button>
+            <button onClick={() => setCommunityTab("saved")}
+              className="flex-1 py-1.5 rounded-lg text-xs font-bold transition"
+              style={{ background: "transparent", color: "rgba(245,230,200,0.4)" }}>
+              🔖 저장
+            </button>
             <button onClick={() => setCommunityTab("updates")}
               className="flex-1 py-1.5 rounded-lg text-xs font-bold transition"
               style={{ background: "transparent", color: "rgba(245,230,200,0.4)" }}>
@@ -1106,6 +1676,92 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
         <div className="flex-1 overflow-hidden">
           <ShortsPage onClose={() => setCommunityTab("board")} embedded />
         </div>
+      </div>
+    );
+  }
+
+  // ===== Saved tab =====
+  if (communityTab === "saved") {
+    return (
+      <div className="h-full flex flex-col" style={{ background: "#1A0E08" }}>
+        <div className="px-4 pt-3 pb-2 shrink-0 overlay-header" style={{
+          background: "linear-gradient(180deg, #3D2017, #2C1810)",
+          borderBottom: "3px double #8B6914",
+        }}>
+          <div className="flex items-center gap-3 mb-2">
+            {onClose && (
+              <button onClick={onClose}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-sm transition"
+                style={{ background: "rgba(201,168,76,0.15)", color: "#C9A84C" }}>
+                &larr;
+              </button>
+            )}
+            <h2 className="font-bold text-[15px] flex-1" style={{ color: "#F5E6C8", fontFamily: "Georgia, 'Times New Roman', serif" }}>💬 커뮤니티</h2>
+          </div>
+          <div className="flex gap-1 rounded-xl p-1" style={{ background: "rgba(139,105,20,0.08)", border: "1px solid rgba(139,105,20,0.1)" }}>
+            <button onClick={() => setCommunityTab("board")}
+              className="flex-1 py-1.5 rounded-lg text-xs font-bold transition"
+              style={{ background: "transparent", color: "rgba(245,230,200,0.4)" }}>
+              📋 게시판
+            </button>
+            <button onClick={() => setCommunityTab("shorts")}
+              className="flex-1 py-1.5 rounded-lg text-xs font-bold transition"
+              style={{ background: "transparent", color: "rgba(245,230,200,0.4)" }}>
+              📱 쇼츠
+            </button>
+            <button
+              className="flex-1 py-1.5 rounded-lg text-xs font-bold transition"
+              style={{ background: "rgba(201,168,76,0.15)", color: "#C9A84C" }}>
+              🔖 저장
+            </button>
+            <button onClick={() => setCommunityTab("updates")}
+              className="flex-1 py-1.5 rounded-lg text-xs font-bold transition"
+              style={{ background: "transparent", color: "rgba(245,230,200,0.4)" }}>
+              📢 공지
+            </button>
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto px-3 pb-20">
+          {loading && posts.length === 0 && (
+            <div>{Array.from({ length: 3 }).map((_, i) => <PostSkeleton key={i} />)}</div>
+          )}
+          {posts.length === 0 && !loading && (
+            <div className="text-center mt-12">
+              <span className="text-4xl block mb-3 opacity-20">🔖</span>
+              <p className="text-sm" style={{ color: "rgba(245,230,200,0.3)" }}>저장한 게시글이 없습니다</p>
+              <p className="text-[11px] mt-1" style={{ color: "rgba(245,230,200,0.15)" }}>마음에 드는 글을 저장해 보세요!</p>
+            </div>
+          )}
+          {posts.map((post, idx) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              idx={idx}
+              onOpen={openPostDetail}
+              onDelete={confirmDelete}
+              onReport={setReportTarget}
+              onBlock={blockUser}
+              onReact={reactToPost}
+              onUnreact={unreactFromPost}
+              onBookmark={toggleBookmark}
+            />
+          ))}
+          {hasMore && posts.length > 0 && (
+            <button onClick={() => { const next = page + 1; setPage(next); fetchBookmarks(next); }} disabled={loading}
+              className="w-full py-3 text-[12px] transition rounded-xl"
+              style={{ background: "rgba(245,230,200,0.02)", color: "rgba(245,230,200,0.3)", border: "1px solid rgba(139,105,20,0.1)" }}>
+              {loading ? <span className="animate-pulse">로딩 중...</span> : "더 보기"}
+            </button>
+          )}
+        </div>
+        {/* Delete confirm */}
+        {deleteConfirmId && (
+          <DeleteConfirmModal
+            onClose={() => setDeleteConfirmId(null)}
+            onConfirm={() => deletePost(deleteConfirmId)}
+          />
+        )}
+        {reportTarget && <ReportModal onClose={() => setReportTarget(null)} onSubmit={submitReport} />}
       </div>
     );
   }
@@ -1161,12 +1817,22 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
             style={{ background: "transparent", color: "rgba(245,230,200,0.4)" }}>
             📱 쇼츠
           </button>
+          <button onClick={() => setCommunityTab("saved")}
+            className="flex-1 py-1.5 rounded-lg text-xs font-bold transition"
+            style={{ background: "transparent", color: "rgba(245,230,200,0.4)" }}>
+            🔖 저장
+          </button>
           <button onClick={() => setCommunityTab("updates")}
             className="flex-1 py-1.5 rounded-lg text-xs font-bold transition"
             style={{ background: "transparent", color: "rgba(245,230,200,0.4)" }}>
             📢 공지
           </button>
         </div>
+        {/* Search */}
+        <SearchBar
+          onSearch={(q) => setSearchQuery(q)}
+          onTagClick={(tag) => setSearchQuery(`#${tag}`)}
+        />
         {/* Filter tabs */}
         <div className="flex gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
           {POST_TYPES.map((t) => (
@@ -1191,6 +1857,21 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
 
       {/* Posts list */}
       <div className="flex-1 overflow-y-auto px-3 pb-20">
+        {/* Trending section */}
+        {trendingPosts.length > 0 && !searchQuery && (
+          <div className="mb-3 -mx-1">
+            <div className="flex items-center gap-2 px-1 mb-2">
+              <span className="text-[11px] font-bold" style={{ color: "#D4AF37" }}>🏆 Weekly Best</span>
+              <div className="flex-1 h-px" style={{ background: "rgba(212,175,55,0.15)" }} />
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-2 px-1" style={{ scrollbarWidth: "none" }}>
+              {trendingPosts.map((post) => (
+                <TrendingCard key={post.id} post={post} onOpen={openPostDetail} />
+              ))}
+            </div>
+          </div>
+        )}
+
         {loading && posts.length === 0 && (
           <div>
             {Array.from({ length: 4 }).map((_, i) => (
@@ -1202,8 +1883,12 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
         {posts.length === 0 && !loading && (
           <div className="text-center mt-12">
             <span className="text-4xl block mb-3 opacity-20">📝</span>
-            <p className="text-sm" style={{ color: "rgba(245,230,200,0.3)" }}>아직 게시글이 없습니다</p>
-            <p className="text-[11px] mt-1" style={{ color: "rgba(245,230,200,0.15)" }}>첫 번째 게시글을 작성해 보세요!</p>
+            <p className="text-sm" style={{ color: "rgba(245,230,200,0.3)" }}>
+              {searchQuery ? "검색 결과가 없습니다" : "아직 게시글이 없습니다"}
+            </p>
+            <p className="text-[11px] mt-1" style={{ color: "rgba(245,230,200,0.15)" }}>
+              {searchQuery ? "다른 키워드로 검색해 보세요" : "첫 번째 게시글을 작성해 보세요!"}
+            </p>
           </div>
         )}
 
@@ -1213,9 +1898,12 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
             post={post}
             idx={idx}
             onOpen={openPostDetail}
-            onDelete={deletePost}
+            onDelete={confirmDelete}
             onReport={setReportTarget}
             onBlock={blockUser}
+            onReact={reactToPost}
+            onUnreact={unreactFromPost}
+            onBookmark={toggleBookmark}
           />
         ))}
 
@@ -1304,6 +1992,44 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
               </div>
             )}
 
+            {/* Poll compose */}
+            {showPollCompose && (
+              <div className="mt-3 p-3 rounded-xl" style={{ background: "rgba(245,230,200,0.03)", border: "1px solid rgba(139,105,20,0.12)" }}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold" style={{ color: "#C9A84C" }}>📊 투표 추가</span>
+                  <button onClick={() => { setShowPollCompose(false); setComposePollOptions([]); }}
+                    className="text-[10px]" style={{ color: "rgba(245,230,200,0.3)" }}>제거</button>
+                </div>
+                {composePollOptions.map((opt, i) => (
+                  <div key={i} className="flex gap-2 mb-1.5">
+                    <input
+                      value={opt}
+                      onChange={(e) => {
+                        const next = [...composePollOptions];
+                        next[i] = e.target.value;
+                        setComposePollOptions(next);
+                      }}
+                      placeholder={`선택지 ${i + 1}`}
+                      maxLength={50}
+                      className="flex-1 text-[11px] rounded-lg px-3 py-1.5 focus:outline-none"
+                      style={{ background: "rgba(245,230,200,0.05)", color: "#F5E6C8", border: "1px solid rgba(139,105,20,0.1)" }}
+                    />
+                    {composePollOptions.length > 2 && (
+                      <button onClick={() => setComposePollOptions((prev) => prev.filter((_, j) => j !== i))}
+                        className="text-[10px] text-red-400/60">✕</button>
+                    )}
+                  </div>
+                ))}
+                {composePollOptions.length < 4 && (
+                  <button onClick={() => setComposePollOptions((prev) => [...prev, ""])}
+                    className="text-[10px] mt-1 transition"
+                    style={{ color: "#C9A84C" }}>
+                    + 선택지 추가
+                  </button>
+                )}
+              </div>
+            )}
+
             {/* Upload progress */}
             {posting && uploadProgress > 0 && uploadProgress < 100 && (
               <div className="mt-2 h-1 rounded-full overflow-hidden" style={{ background: "rgba(139,105,20,0.1)" }}>
@@ -1313,7 +2039,7 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
             )}
 
             <div className="flex items-center justify-between mt-3">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 {/* Image upload button */}
                 <button
                   onClick={() => fileInputRef.current?.click()}
@@ -1325,9 +2051,19 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
                 <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageSelect}
                   className="hidden" />
 
+                {/* Poll button */}
+                {!showPollCompose && (
+                  <button
+                    onClick={() => { setShowPollCompose(true); setComposePollOptions(["", ""]); }}
+                    className="text-[11px] px-2.5 py-1.5 rounded-lg transition"
+                    style={{ background: "rgba(245,230,200,0.04)", color: "rgba(245,230,200,0.5)", border: "1px solid rgba(139,105,20,0.1)" }}>
+                    📊 투표
+                  </button>
+                )}
+
                 {/* Character count */}
                 <div className="flex items-center gap-2">
-                  <div className="w-16 h-1 rounded-full overflow-hidden" style={{ background: "rgba(139,105,20,0.1)" }}>
+                  <div className="w-12 h-1 rounded-full overflow-hidden" style={{ background: "rgba(139,105,20,0.1)" }}>
                     <div className="h-full rounded-full transition-all duration-300"
                       style={{
                         width: `${(composeText.length / 500) * 100}%`,
@@ -1352,6 +2088,13 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
 
       {/* Report modal */}
       {reportTarget && <ReportModal onClose={() => setReportTarget(null)} onSubmit={submitReport} />}
+      {/* Delete confirm modal */}
+      {deleteConfirmId && (
+        <DeleteConfirmModal
+          onClose={() => setDeleteConfirmId(null)}
+          onConfirm={() => deletePost(deleteConfirmId)}
+        />
+      )}
 
       <style jsx>{`
         @keyframes compose-slide-up {

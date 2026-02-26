@@ -6,12 +6,12 @@ import (
 
 // Grade -> minimum level required for collection submission
 var collectionLevelRequirements = map[string]int{
-	"common":    3,
-	"uncommon":  5,
-	"rare":      10,
-	"epic":      15,
-	"legendary": 20,
-	"mythic":    25,
+	"common":    1,
+	"uncommon":  1,
+	"rare":      3,
+	"epic":      8,
+	"legendary": 15,
+	"mythic":    20,
 }
 
 // SubmitToCollection handles POST /api/collection/submit
@@ -45,7 +45,7 @@ func (h *Handler) SubmitToCollection(c *fiber.Ctx) error {
 	// 3. Check level requirement
 	requiredLevel, ok := collectionLevelRequirements[species.Grade]
 	if !ok {
-		requiredLevel = 3 // fallback
+		requiredLevel = 1 // fallback
 	}
 	if slime.Level < requiredLevel {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -146,4 +146,132 @@ func (h *Handler) GetCollectionEntries(c *fiber.Ctx) error {
 // GetCollectionRequirements handles GET /api/collection/requirements
 func (h *Handler) GetCollectionRequirements(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"requirements": collectionLevelRequirements})
+}
+
+// Collection milestones: count → {gold, gems}
+var collectionMilestones = []struct {
+	Count int `json:"count"`
+	Gold  int `json:"gold"`
+	Gems  int `json:"gems"`
+}{
+	{10, 500, 5},
+	{25, 1000, 10},
+	{50, 2000, 15},
+	{100, 5000, 25},
+	{200, 10000, 50},
+	{500, 25000, 100},
+	{1000, 60000, 200},
+	{1200, 100000, 500},
+}
+
+// GetCollectionMilestones handles GET /api/collection/milestones
+func (h *Handler) GetCollectionMilestones(c *fiber.Ctx) error {
+	userID := c.Locals("user_id").(string)
+	ctx := c.Context()
+	pool := h.slimeRepo.Pool()
+
+	// Get collection count
+	var count int
+	pool.QueryRow(ctx, `SELECT COUNT(*) FROM collection_entries WHERE user_id = $1`, userID).Scan(&count)
+
+	// Get claimed milestones
+	rows, err := pool.Query(ctx, `SELECT milestone FROM collection_milestones WHERE user_id = $1`, userID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to fetch milestones"})
+	}
+	defer rows.Close()
+
+	claimed := make(map[int]bool)
+	for rows.Next() {
+		var m int
+		if rows.Scan(&m) == nil {
+			claimed[m] = true
+		}
+	}
+
+	type MilestoneStatus struct {
+		Count   int  `json:"count"`
+		Gold    int  `json:"gold"`
+		Gems    int  `json:"gems"`
+		Reached bool `json:"reached"`
+		Claimed bool `json:"claimed"`
+	}
+
+	result := make([]MilestoneStatus, 0, len(collectionMilestones))
+	for _, ms := range collectionMilestones {
+		result = append(result, MilestoneStatus{
+			Count:   ms.Count,
+			Gold:    ms.Gold,
+			Gems:    ms.Gems,
+			Reached: count >= ms.Count,
+			Claimed: claimed[ms.Count],
+		})
+	}
+
+	return c.JSON(fiber.Map{"milestones": result, "collection_count": count})
+}
+
+// ClaimCollectionMilestone handles POST /api/collection/claim-milestone
+func (h *Handler) ClaimCollectionMilestone(c *fiber.Ctx) error {
+	userID := c.Locals("user_id").(string)
+
+	var body struct {
+		Milestone int `json:"milestone"`
+	}
+	if err := c.BodyParser(&body); err != nil || body.Milestone == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "milestone required"})
+	}
+
+	// Find milestone reward
+	var gold, gems int
+	found := false
+	for _, ms := range collectionMilestones {
+		if ms.Count == body.Milestone {
+			gold = ms.Gold
+			gems = ms.Gems
+			found = true
+			break
+		}
+	}
+	if !found {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid milestone"})
+	}
+
+	ctx := c.Context()
+	pool := h.slimeRepo.Pool()
+
+	// Check collection count
+	var count int
+	pool.QueryRow(ctx, `SELECT COUNT(*) FROM collection_entries WHERE user_id = $1`, userID).Scan(&count)
+	if count < body.Milestone {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "milestone_not_reached"})
+	}
+
+	// Check if already claimed
+	var exists bool
+	pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM collection_milestones WHERE user_id = $1 AND milestone = $2)`, userID, body.Milestone).Scan(&exists)
+	if exists {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "already_claimed"})
+	}
+
+	// Claim: insert record + grant rewards
+	_, err := pool.Exec(ctx, `INSERT INTO collection_milestones (user_id, milestone) VALUES ($1, $2)`, userID, body.Milestone)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to claim"})
+	}
+
+	// Grant gold + gems
+	pool.Exec(ctx, `UPDATE users SET gold = gold + $1, gems = gems + $2 WHERE id = $3`, gold, gems, userID)
+
+	// Log
+	LogGameAction(pool, userID, "milestone_claim", "collection", int64(gold), gems, 0, map[string]interface{}{
+		"milestone": body.Milestone,
+	})
+
+	return c.JSON(fiber.Map{
+		"success":   true,
+		"milestone": body.Milestone,
+		"gold":      gold,
+		"gems":      gems,
+	})
 }
