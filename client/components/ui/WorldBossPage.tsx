@@ -818,7 +818,7 @@ function AttackResultModal({
           )}
           {defeated && bonusGems > 0 && (
             <div className="flex items-center justify-between">
-              <span className="text-white/40 text-[10px]">{"\uD83D\uDC8E"} \uBCF4\uC11D \uBCF4\uB108\uC2A4</span>
+              <span className="text-[10px]" style={{ color: "rgba(245,230,200,0.4)" }}>{"\uD83D\uDC8E"} 보석 보너스</span>
               <span className="text-[#C9A84C] text-[11px] font-bold">+{bonusGems}</span>
             </div>
           )}
@@ -832,8 +832,8 @@ function AttackResultModal({
 
         <div className="p-4 pt-0">
           <button onClick={onClose}
-            className="w-full py-2.5 rounded-xl text-[12px] font-bold text-white/70 bg-white/5 hover:bg-white/10 transition">
-            \uD655\uC778
+            className="w-full py-2.5 rounded-xl text-[12px] font-bold transition minigame-btn-gold">
+            확인
           </button>
         </div>
       </div>
@@ -1219,8 +1219,8 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
 
   if (!bossState) {
     return (
-      <div className="absolute inset-0 z-50 bg-[#0a0a1a] flex items-center justify-center">
-        <span className="text-white/30 animate-pulse">\uB85C\uB529 \uC911...</span>
+      <div className="absolute inset-0 z-50 minigame-container flex items-center justify-center">
+        <span className="animate-pulse font-serif-game" style={{ color: "rgba(245,230,200,0.35)" }}>로딩 중...</span>
       </div>
     );
   }
