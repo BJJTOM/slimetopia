@@ -193,7 +193,7 @@ export default function ProfilePage({ onClose }: Props) {
   return (
     <div className="h-full flex flex-col bg-[#0a0a1a]">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5">
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 overlay-header">
         <button onClick={handleBack} className="text-white/60 hover:text-white transition text-lg">
           ←
         </button>

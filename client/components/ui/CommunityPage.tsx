@@ -270,7 +270,7 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
     return (
       <div className="h-full flex flex-col bg-[#0a0a1a]">
         {/* Detail header */}
-        <div className="flex items-center gap-3 px-4 py-3 shrink-0 border-b border-white/[0.06]" style={{ background: "rgba(255,255,255,0.02)" }}>
+        <div className="flex items-center gap-3 px-4 py-3 shrink-0 border-b border-white/[0.06] overlay-header" style={{ background: "rgba(255,255,255,0.02)" }}>
           <button onClick={() => setSelectedPost(null)}
             className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/15 flex items-center justify-center text-white/60 text-sm transition">
             ←
@@ -406,7 +406,7 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
     return (
       <div className="h-full flex flex-col bg-[#0a0a1a]">
         {/* Header with tab switcher */}
-        <div className="px-4 pt-3 pb-2 shrink-0">
+        <div className="px-4 pt-3 pb-2 shrink-0 overlay-header">
           <div className="flex items-center gap-3 mb-2">
             {onClose && (
               <button onClick={onClose}
@@ -441,7 +441,7 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
   return (
     <div className="h-full flex flex-col bg-[#0a0a1a]">
       {/* Header */}
-      <div className="px-4 pt-3 pb-2 shrink-0">
+      <div className="px-4 pt-3 pb-2 shrink-0 overlay-header">
         <div className="flex items-center gap-3 mb-2">
           {onClose && (
             <button

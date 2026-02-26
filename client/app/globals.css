@@ -235,6 +235,11 @@ body {
   box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.3);
 }
 
+/* ===== Overlay header safe-area padding ===== */
+.overlay-header {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
+}
+
 /* ===== Full-page content area (between TopBar and BottomNav) ===== */
 .page-content {
   position: absolute;
