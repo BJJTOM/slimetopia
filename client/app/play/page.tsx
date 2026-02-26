@@ -46,41 +46,43 @@ const GameCanvas = dynamic(() => import("@/components/game/GameCanvas"), {
 export default function PlayPage() {
   const router = useRouter();
   const { user, accessToken, fetchUser } = useAuthStore();
-  const {
-    fetchSlimes,
-    fetchSpecies,
-    fetchDailyMissions,
-    fetchAttendance,
-    fetchMailbox,
-    fetchCollectionCount,
-    fetchCollectionEntries,
-    fetchCollectionRequirements,
-    fetchMaterialDefs,
-    fetchMaterialInventory,
-    fetchAllEquippedAccessories,
-    activePanel,
-    selectedSlimeId,
-    showMergeResult,
-    levelUpInfo,
-    showMissionModal,
-    showAttendanceModal,
-    showEvolutionTree,
-    setShowEvolutionTree,
-    showWheel,
-    setShowWheel,
-    showMailbox,
-    setShowMailbox,
-    showCommunity,
-    setShowCommunity,
-    showProfile,
-    setShowProfile,
-    showShorts,
-    setShowShorts,
-    showMiniContents,
-    setShowMiniContents,
-    showCollection,
-    setShowCollection,
-  } = useGameStore();
+
+  // Fetchers — stable references, don't trigger re-renders
+  const fetchSlimes = useGameStore((s) => s.fetchSlimes);
+  const fetchSpecies = useGameStore((s) => s.fetchSpecies);
+  const fetchDailyMissions = useGameStore((s) => s.fetchDailyMissions);
+  const fetchAttendance = useGameStore((s) => s.fetchAttendance);
+  const fetchMailbox = useGameStore((s) => s.fetchMailbox);
+  const fetchCollectionCount = useGameStore((s) => s.fetchCollectionCount);
+  const fetchCollectionEntries = useGameStore((s) => s.fetchCollectionEntries);
+  const fetchCollectionRequirements = useGameStore((s) => s.fetchCollectionRequirements);
+  const fetchMaterialDefs = useGameStore((s) => s.fetchMaterialDefs);
+  const fetchMaterialInventory = useGameStore((s) => s.fetchMaterialInventory);
+  const fetchAllEquippedAccessories = useGameStore((s) => s.fetchAllEquippedAccessories);
+
+  // UI state — individual selectors to avoid cross-property re-renders
+  const activePanel = useGameStore((s) => s.activePanel);
+  const selectedSlimeId = useGameStore((s) => s.selectedSlimeId);
+  const showMergeResult = useGameStore((s) => s.showMergeResult);
+  const levelUpInfo = useGameStore((s) => s.levelUpInfo);
+  const showMissionModal = useGameStore((s) => s.showMissionModal);
+  const showAttendanceModal = useGameStore((s) => s.showAttendanceModal);
+  const showEvolutionTree = useGameStore((s) => s.showEvolutionTree);
+  const setShowEvolutionTree = useGameStore((s) => s.setShowEvolutionTree);
+  const showWheel = useGameStore((s) => s.showWheel);
+  const setShowWheel = useGameStore((s) => s.setShowWheel);
+  const showMailbox = useGameStore((s) => s.showMailbox);
+  const setShowMailbox = useGameStore((s) => s.setShowMailbox);
+  const showCommunity = useGameStore((s) => s.showCommunity);
+  const setShowCommunity = useGameStore((s) => s.setShowCommunity);
+  const showProfile = useGameStore((s) => s.showProfile);
+  const setShowProfile = useGameStore((s) => s.setShowProfile);
+  const showShorts = useGameStore((s) => s.showShorts);
+  const setShowShorts = useGameStore((s) => s.setShowShorts);
+  const showMiniContents = useGameStore((s) => s.showMiniContents);
+  const setShowMiniContents = useGameStore((s) => s.setShowMiniContents);
+  const showCollection = useGameStore((s) => s.showCollection);
+  const setShowCollection = useGameStore((s) => s.setShowCollection);
 
   useAndroidBackButton();
 
@@ -94,17 +96,19 @@ export default function PlayPage() {
 
   useEffect(() => {
     if (accessToken && user) {
-      fetchSlimes(accessToken);
-      fetchSpecies(accessToken);
-      fetchDailyMissions(accessToken);
-      fetchAttendance(accessToken);
-      fetchMailbox(accessToken);
-      fetchCollectionCount(accessToken);
-      fetchCollectionEntries(accessToken);
-      fetchCollectionRequirements(accessToken);
-      fetchMaterialDefs(accessToken);
-      fetchMaterialInventory(accessToken);
-      fetchAllEquippedAccessories(accessToken);
+      Promise.all([
+        fetchSlimes(accessToken),
+        fetchSpecies(accessToken),
+        fetchDailyMissions(accessToken),
+        fetchAttendance(accessToken),
+        fetchMailbox(accessToken),
+        fetchCollectionCount(accessToken),
+        fetchCollectionEntries(accessToken),
+        fetchCollectionRequirements(accessToken),
+        fetchMaterialDefs(accessToken),
+        fetchMaterialInventory(accessToken),
+        fetchAllEquippedAccessories(accessToken),
+      ]);
     }
   }, [accessToken, user, fetchSlimes, fetchSpecies, fetchDailyMissions, fetchAttendance, fetchMailbox, fetchCollectionCount, fetchCollectionEntries, fetchCollectionRequirements, fetchMaterialDefs, fetchMaterialInventory, fetchAllEquippedAccessories]);
 

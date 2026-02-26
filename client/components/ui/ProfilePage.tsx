@@ -187,10 +187,12 @@ export default function ProfilePage({ onClose }: Props) {
     <div className="h-full flex flex-col" style={{ background: PARCHMENT.pageBg }}>
       {/* Header — leather texture with gold border */}
       <div
-        className="relative flex items-center gap-3 px-4 py-3"
+        className="relative flex items-center gap-3 px-4"
         style={{
           background: PARCHMENT.headerBg,
           borderBottom: `3px double ${PARCHMENT.goldDark}`,
+          paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)",
+          paddingBottom: 12,
         }}
       >
         <button onClick={handleBack} style={{ color: PARCHMENT.goldPrimary, fontFamily: PARCHMENT.font }}
@@ -429,7 +431,7 @@ function MainView({
   setShowSlimePicker, handleSelectAvatarSlime, setSubView, setShowLogoutModal,
 }: MainViewProps) {
   const avatarSpeciesId = avatarSlimeId ? slimes.find((s) => s.id === avatarSlimeId)?.species_id : undefined;
-  const avatarSvg = generateSlimeIconSvg(avatarElement, 80, avatarGrade, avatarAccessoryOverlays, avatarSpeciesId);
+  const avatarSvg = generateSlimeIconSvg(avatarElement, 96, avatarGrade, avatarAccessoryOverlays, avatarSpeciesId);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [showDeleteImageModal, setShowDeleteImageModal] = useState(false);
@@ -491,11 +493,11 @@ function MainView({
             style={{ background: "linear-gradient(135deg, #D4C4A8, #C9B896)" }} />
         </div>
 
-        <div className="p-6 flex flex-col items-center">
-          {/* Avatar — leather + gold frame */}
-          <div className="relative mb-3">
+        <div className="p-5 pt-8 flex flex-col items-center">
+          {/* Avatar — leather + gold frame with overlapping level badge */}
+          <div className="relative mb-4">
             <button onClick={() => setShowSlimePicker(!showSlimePicker)}
-              className="w-20 h-20 rounded-full flex items-center justify-center active:scale-95 transition overflow-hidden"
+              className="w-24 h-24 rounded-full flex items-center justify-center active:scale-95 transition overflow-hidden"
               style={{
                 border: `3px solid ${PARCHMENT.goldPrimary}`,
                 background: "linear-gradient(135deg, #3D2017, #2C1810)",
@@ -504,7 +506,7 @@ function MainView({
               {hasProfileImage ? (
                 <img src={resolveMediaUrl(user!.profile_image_url!)} alt="profile" className="w-full h-full object-cover" draggable={false} />
               ) : (
-                <img src={avatarSvg} alt="avatar" className="w-16 h-16" draggable={false} />
+                <img src={avatarSvg} alt="avatar" className="w-20 h-20" draggable={false} />
               )}
               {uploading && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-full">
@@ -512,6 +514,18 @@ function MainView({
                 </div>
               )}
             </button>
+            {/* Level badge — overlaps bottom of avatar */}
+            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full whitespace-nowrap" style={{
+              background: "linear-gradient(135deg, #6B3A2A, #3D2017)",
+              border: `1.5px solid ${PARCHMENT.goldPrimary}`,
+              boxShadow: "0 2px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(139,105,20,0.3)",
+            }}>
+              <span className="text-[10px] font-bold" style={{
+                color: "#F5E6C8",
+                fontFamily: PARCHMENT.font,
+                letterSpacing: "0.05em",
+              }}>{t("level")} {user?.level}</span>
+            </div>
             {/* Camera button for photo upload */}
             <button
               onClick={() => fileInputRef.current?.click()}
@@ -530,7 +544,7 @@ function MainView({
           {hasProfileImage && (
             <button
               onClick={() => setShowDeleteImageModal(true)}
-              className="text-[10px] font-bold mb-2 active:scale-95 transition"
+              className="text-[10px] font-bold mb-1 active:scale-95 transition"
               style={{ color: "#8B4513", fontFamily: PARCHMENT.font }}
             >
               사진 삭제
@@ -546,7 +560,7 @@ function MainView({
               onBlur={handleNicknameSubmit}
               onKeyDown={(e) => e.key === "Enter" && handleNicknameSubmit()}
               maxLength={20}
-              className="font-bold text-xl text-center rounded-lg px-3 py-1 outline-none w-48"
+              className="font-bold text-xl text-center rounded-lg px-3 py-1 outline-none w-48 mt-1"
               style={{
                 color: PARCHMENT.ink,
                 fontFamily: PARCHMENT.font,
@@ -555,7 +569,7 @@ function MainView({
               }}
             />
           ) : (
-            <button onClick={() => setEditingNickname(true)} className="group">
+            <button onClick={() => setEditingNickname(true)} className="group mt-1">
               <span className="font-bold text-xl" style={{ color: PARCHMENT.ink, fontFamily: PARCHMENT.font }}>
                 {user?.nickname}
               </span>
@@ -566,58 +580,45 @@ function MainView({
             </button>
           )}
 
-          {/* Level — wax seal style badge */}
-          <div className="mt-2 px-4 py-1 rounded-full" style={{
-            background: "linear-gradient(135deg, #6B3A2A, #3D2017)",
-            border: `1px solid ${PARCHMENT.goldDark}`,
-            boxShadow: "0 2px 4px rgba(0,0,0,0.2), inset 0 1px 0 rgba(139,105,20,0.3)",
-          }}>
-            <span className="text-xs font-bold" style={{
-              color: "#F5E6C8",
-              fontFamily: PARCHMENT.font,
-              letterSpacing: "0.05em",
-            }}>{t("level")} {user?.level}</span>
-          </div>
-
-          {/* Currency row */}
-          <div className="flex gap-4 mt-3">
-            <div className="flex items-center gap-1">
-              <span className="text-sm">🪙</span>
-              <span className="text-xs font-medium" style={{ color: PARCHMENT.ink, fontFamily: PARCHMENT.font }}>
-                {user?.gold?.toLocaleString()}
-              </span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-sm">💎</span>
-              <span className="text-xs font-medium" style={{ color: PARCHMENT.ink, fontFamily: PARCHMENT.font }}>
-                {user?.gems?.toLocaleString()}
-              </span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-sm">✨</span>
-              <span className="text-xs font-medium" style={{ color: PARCHMENT.ink, fontFamily: PARCHMENT.font }}>
-                {user?.stardust?.toLocaleString()}
-              </span>
-            </div>
+          {/* Currency — 3-column leather grid */}
+          <div className="grid grid-cols-3 gap-2 mt-4 w-full">
+            {[
+              { icon: "🪙", value: user?.gold, label: "Gold" },
+              { icon: "💎", value: user?.gems, label: "Gems" },
+              { icon: "✨", value: user?.stardust, label: "Stardust" },
+            ].map((c) => (
+              <div key={c.label} className="flex flex-col items-center py-2.5 rounded-xl" style={{
+                background: "linear-gradient(145deg, rgba(61,32,23,0.6), rgba(44,24,16,0.8))",
+                border: "1px solid rgba(139,105,20,0.2)",
+              }}>
+                <span className="text-base leading-none">{c.icon}</span>
+                <span className="text-sm font-bold mt-1" style={{ color: PARCHMENT.goldBright, fontFamily: PARCHMENT.font, fontVariantNumeric: "tabular-nums" }}>
+                  {c.value?.toLocaleString() ?? 0}
+                </span>
+                <span className="text-[9px] mt-0.5" style={{ color: PARCHMENT.inkLight, fontFamily: PARCHMENT.font }}>
+                  {c.label}
+                </span>
+              </div>
+            ))}
           </div>
 
           <OrnamentalDivider />
 
-          {/* Community stats */}
-          <div className="flex gap-6">
+          {/* Community stats — larger numbers with gold accent */}
+          <div className="flex gap-8">
             <div className="text-center">
-              <p className="font-bold text-lg" style={{ color: PARCHMENT.ink, fontFamily: PARCHMENT.font }}>
+              <p className="font-bold text-2xl" style={{ color: PARCHMENT.goldBright, fontFamily: PARCHMENT.font }}>
                 {communityStats.post_count}
               </p>
-              <p className="text-[10px]" style={{ color: PARCHMENT.inkLight, fontFamily: PARCHMENT.font }}>
+              <p className="text-[10px] font-medium" style={{ color: PARCHMENT.inkLight, fontFamily: PARCHMENT.font }}>
                 {t("posts")}
               </p>
             </div>
             <div className="text-center">
-              <p className="font-bold text-lg" style={{ color: PARCHMENT.ink, fontFamily: PARCHMENT.font }}>
+              <p className="font-bold text-2xl" style={{ color: PARCHMENT.goldBright, fontFamily: PARCHMENT.font }}>
                 {communityStats.comment_count}
               </p>
-              <p className="text-[10px]" style={{ color: PARCHMENT.inkLight, fontFamily: PARCHMENT.font }}>
+              <p className="text-[10px] font-medium" style={{ color: PARCHMENT.inkLight, fontFamily: PARCHMENT.font }}>
                 {t("comments")}
               </p>
             </div>
@@ -767,7 +768,10 @@ function SettingsItem({ emoji, label, value, danger, onClick }: {
   return (
     <button onClick={onClick}
       className="w-full flex items-center gap-3 px-4 py-3.5 active:opacity-80 transition">
-      <span className="text-lg">{emoji}</span>
+      <span className="w-9 h-9 rounded-full flex items-center justify-center text-lg flex-shrink-0" style={{
+        background: "linear-gradient(145deg, rgba(61,32,23,0.7), rgba(44,24,16,0.9))",
+        border: "1px solid rgba(139,105,20,0.2)",
+      }}>{emoji}</span>
       <span className="flex-1 text-left text-sm font-medium" style={{
         color: danger ? "#A0522D" : "#F5E6C8",
         fontFamily: PARCHMENT.font,

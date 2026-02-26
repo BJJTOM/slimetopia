@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useGameStore } from "@/lib/store/gameStore";
 
 // ─── 10 Home Background Themes ────────────────────────────────────────────
@@ -88,23 +88,26 @@ export const HOME_BACKGROUNDS = [
 ];
 
 export default function HomePage() {
-  const {
-    setShowMissionModal,
-    setShowAttendanceModal,
-    setActivePanel,
-    setShowMailbox,
-    dailyMissions,
-    slimes,
-    unreadMailCount,
-  } = useGameStore();
+  // Individual selectors to avoid unnecessary re-renders
+  const setShowMissionModal = useGameStore((s) => s.setShowMissionModal);
+  const setShowAttendanceModal = useGameStore((s) => s.setShowAttendanceModal);
+  const setActivePanel = useGameStore((s) => s.setActivePanel);
+  const setShowMailbox = useGameStore((s) => s.setShowMailbox);
+  const dailyMissions = useGameStore((s) => s.dailyMissions);
+  const slimes = useGameStore((s) => s.slimes);
+  const unreadMailCount = useGameStore((s) => s.unreadMailCount);
 
   const [showBgPicker, setShowBgPicker] = useState(false);
 
-  const unclaimedCount = dailyMissions.filter((m) => m.completed && !m.claimed).length;
+  const unclaimedCount = useMemo(
+    () => dailyMissions.filter((m) => m.completed && !m.claimed).length,
+    [dailyMissions]
+  );
   const slimeCount = slimes.length;
-  const needsCareCount = slimes.filter(
-    (s) => s.hunger < 20 || s.condition < 20 || s.is_sick
-  ).length;
+  const needsCareCount = useMemo(
+    () => slimes.filter((s) => s.hunger < 20 || s.condition < 20 || s.is_sick).length,
+    [slimes]
+  );
 
   // Get owned backgrounds from localStorage
   const getOwned = (): string[] => {

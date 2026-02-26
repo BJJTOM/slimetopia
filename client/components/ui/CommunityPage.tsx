@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo, memo } from "react";
 import { useAuthStore } from "@/lib/store/authStore";
 import { authApi, uploadApi, resolveMediaUrl } from "@/lib/api/client";
 import { toastError, toastSuccess } from "@/components/ui/Toast";
@@ -171,6 +171,76 @@ function Avatar({ nickname, profileImageUrl, size = "md", gradient }: {
     </div>
   );
 }
+
+/* ===== Memoized PostCard — prevents re-render when other posts change ===== */
+const PostCard = memo(function PostCard({ post, idx, onOpen, onDelete, onReport, onBlock }: {
+  post: Post;
+  idx: number;
+  onOpen: (post: Post) => void;
+  onDelete: (id: string) => void;
+  onReport: (target: { type: string; id: string }) => void;
+  onBlock: (userId: string, nickname: string) => void;
+}) {
+  const avatarGrad = getAvatarGradient(post.nickname);
+  const isHot = post.likes >= 3;
+  return (
+    <button
+      onClick={() => onOpen(post)}
+      className="w-full text-left mb-2.5 rounded-xl overflow-hidden transition-all active:scale-[0.99]"
+      style={{
+        background: isHot
+          ? "linear-gradient(160deg, rgba(201,168,76,0.06) 0%, rgba(245,230,200,0.02) 100%)"
+          : "linear-gradient(160deg, rgba(245,230,200,0.05) 0%, rgba(245,230,200,0.02) 100%)",
+        border: isHot
+          ? "1px solid rgba(201,168,76,0.2)"
+          : "1px solid rgba(139,105,20,0.15)",
+        animation: `stagger-slide-in 0.25s ease-out ${idx * 30}ms both`,
+      }}>
+      {/* Post header */}
+      <div className="px-3 pt-3 flex items-center gap-2">
+        <Avatar nickname={post.nickname} profileImageUrl={post.profile_image_url} size="md" gradient={avatarGrad} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[12px] font-bold" style={{ color: "rgba(245,230,200,0.9)" }}>{post.nickname}</span>
+            <PostTypeTag type={post.post_type} />
+            {isHot && <span className="text-[9px] px-1 py-0.5 rounded font-bold" style={{ background: "rgba(201,168,76,0.15)", color: "#C9A84C" }}>🔥</span>}
+          </div>
+          <span className="text-[10px]" style={{ color: "rgba(201,168,76,0.3)" }}>{timeAgo(post.created_at)}</span>
+        </div>
+        <MoreMenu
+          isMine={post.is_mine}
+          onDelete={() => onDelete(post.id)}
+          onReport={() => onReport({ type: "post", id: post.id })}
+          onBlock={() => onBlock(post.user_id, post.nickname)}
+        />
+      </div>
+
+      {/* Post content preview */}
+      <div className="px-3 py-2">
+        <p className="text-[13px] leading-relaxed line-clamp-3 break-words" style={{ color: "rgba(245,230,200,0.75)" }}>
+          {post.content}
+        </p>
+        {post.image_urls.length > 0 && (
+          <ImageCarousel images={post.image_urls} size="thumb" />
+        )}
+      </div>
+
+      {/* Post footer */}
+      <div className="px-3 pb-2.5 flex items-center gap-4">
+        <span className={`flex items-center gap-1 text-[11px] ${post.liked ? "text-pink-400" : ""}`}
+          style={post.liked ? {} : { color: "rgba(245,230,200,0.25)" }}>
+          {post.liked ? "❤️" : "🤍"} <span className="tabular-nums">{post.likes > 0 ? post.likes : ""}</span>
+        </span>
+        <span className="flex items-center gap-1 text-[11px]" style={{ color: "rgba(245,230,200,0.25)" }}>
+          💬 <span className="tabular-nums">{post.reply_count > 0 ? post.reply_count : "답글"}</span>
+        </span>
+        <span className="flex items-center gap-1 text-[11px] ml-auto" style={{ color: "rgba(245,230,200,0.4)" }}>
+          👁 <span className="tabular-nums">{post.view_count}</span>
+        </span>
+      </div>
+    </button>
+  );
+});
 
 function PostSkeleton() {
   return (
@@ -446,16 +516,17 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
     fetchPosts(next, filter, true);
   };
 
-  // Sort posts client-side
-  const sortedPosts = sortMode === "hot"
-    ? [...posts].sort((a, b) => {
-        const ageA = (Date.now() - new Date(a.created_at).getTime()) / 3600000;
-        const ageB = (Date.now() - new Date(b.created_at).getTime()) / 3600000;
-        const scoreA = (a.likes * 2 + a.reply_count) / Math.max(1, Math.pow(ageA + 2, 0.5));
-        const scoreB = (b.likes * 2 + b.reply_count) / Math.max(1, Math.pow(ageB + 2, 0.5));
-        return scoreB - scoreA;
-      })
-    : posts;
+  // Sort posts client-side (memoized to avoid O(n log n) on every render)
+  const sortedPosts = useMemo(() => {
+    if (sortMode !== "hot") return posts;
+    return [...posts].sort((a, b) => {
+      const ageA = (Date.now() - new Date(a.created_at).getTime()) / 3600000;
+      const ageB = (Date.now() - new Date(b.created_at).getTime()) / 3600000;
+      const scoreA = (a.likes * 2 + a.reply_count) / Math.max(1, Math.pow(ageA + 2, 0.5));
+      const scoreB = (b.likes * 2 + b.reply_count) / Math.max(1, Math.pow(ageB + 2, 0.5));
+      return scoreB - scoreA;
+    });
+  }, [posts, sortMode]);
 
   // ===== Compose with images =====
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -465,21 +536,20 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
 
     setComposeImages((prev) => [...prev, ...selected]);
 
-    selected.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setComposeImagePreviews((prev) => [...prev, ev.target?.result as string]);
-      };
-      reader.readAsDataURL(file);
-    });
+    const urls = selected.map((file) => URL.createObjectURL(file));
+    setComposeImagePreviews((prev) => [...prev, ...urls]);
 
     // Reset input
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const removeImage = (index: number) => {
+    setComposeImagePreviews((prev) => {
+      const url = prev[index];
+      if (url?.startsWith("blob:")) URL.revokeObjectURL(url);
+      return prev.filter((_, i) => i !== index);
+    });
     setComposeImages((prev) => prev.filter((_, i) => i !== index));
-    setComposeImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   const createPost = async () => {
@@ -506,6 +576,8 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
       }
       setComposeText("");
       setComposeImages([]);
+      // Revoke blob URLs before clearing
+      composeImagePreviews.forEach((url) => { if (url.startsWith("blob:")) URL.revokeObjectURL(url); });
       setComposeImagePreviews([]);
       setShowCompose(false);
       toastSuccess("게시글이 등록되었습니다!", "📝");
@@ -1135,69 +1207,17 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
           </div>
         )}
 
-        {sortedPosts.map((post, idx) => {
-          const avatarGrad = getAvatarGradient(post.nickname);
-          const isHot = post.likes >= 3;
-          return (
-            <button
-              key={post.id}
-              onClick={() => openPostDetail(post)}
-              className="w-full text-left mb-2.5 rounded-xl overflow-hidden transition-all active:scale-[0.99]"
-              style={{
-                background: isHot
-                  ? "linear-gradient(160deg, rgba(201,168,76,0.06) 0%, rgba(245,230,200,0.02) 100%)"
-                  : "linear-gradient(160deg, rgba(245,230,200,0.05) 0%, rgba(245,230,200,0.02) 100%)",
-                border: isHot
-                  ? "1px solid rgba(201,168,76,0.2)"
-                  : "1px solid rgba(139,105,20,0.15)",
-                animation: `stagger-slide-in 0.25s ease-out ${idx * 30}ms both`,
-              }}>
-              {/* Post header */}
-              <div className="px-3 pt-3 flex items-center gap-2">
-                <Avatar nickname={post.nickname} profileImageUrl={post.profile_image_url} size="md" gradient={avatarGrad} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[12px] font-bold" style={{ color: "rgba(245,230,200,0.9)" }}>{post.nickname}</span>
-                    <PostTypeTag type={post.post_type} />
-                    {isHot && <span className="text-[9px] px-1 py-0.5 rounded font-bold" style={{ background: "rgba(201,168,76,0.15)", color: "#C9A84C" }}>🔥</span>}
-                  </div>
-                  <span className="text-[10px]" style={{ color: "rgba(201,168,76,0.3)" }}>{timeAgo(post.created_at)}</span>
-                </div>
-                <MoreMenu
-                  isMine={post.is_mine}
-                  onDelete={() => { deletePost(post.id); }}
-                  onReport={() => setReportTarget({ type: "post", id: post.id })}
-                  onBlock={() => blockUser(post.user_id, post.nickname)}
-                />
-              </div>
-
-              {/* Post content preview */}
-              <div className="px-3 py-2">
-                <p className="text-[13px] leading-relaxed line-clamp-3 break-words" style={{ color: "rgba(245,230,200,0.75)" }}>
-                  {post.content}
-                </p>
-                {/* Image thumbnails */}
-                {post.image_urls.length > 0 && (
-                  <ImageCarousel images={post.image_urls} size="thumb" />
-                )}
-              </div>
-
-              {/* Post footer */}
-              <div className="px-3 pb-2.5 flex items-center gap-4">
-                <span className={`flex items-center gap-1 text-[11px] ${post.liked ? "text-pink-400" : ""}`}
-                  style={post.liked ? {} : { color: "rgba(245,230,200,0.25)" }}>
-                  {post.liked ? "❤️" : "🤍"} <span className="tabular-nums">{post.likes > 0 ? post.likes : ""}</span>
-                </span>
-                <span className="flex items-center gap-1 text-[11px]" style={{ color: "rgba(245,230,200,0.25)" }}>
-                  💬 <span className="tabular-nums">{post.reply_count > 0 ? post.reply_count : "답글"}</span>
-                </span>
-                <span className="flex items-center gap-1 text-[11px] ml-auto" style={{ color: "rgba(245,230,200,0.4)" }}>
-                  👁 <span className="tabular-nums">{post.view_count}</span>
-                </span>
-              </div>
-            </button>
-          );
-        })}
+        {sortedPosts.map((post, idx) => (
+          <PostCard
+            key={post.id}
+            post={post}
+            idx={idx}
+            onOpen={openPostDetail}
+            onDelete={deletePost}
+            onReport={setReportTarget}
+            onBlock={blockUser}
+          />
+        ))}
 
         {hasMore && posts.length > 0 && (
           <button onClick={loadMore} disabled={loading}
