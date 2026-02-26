@@ -10,7 +10,7 @@ export default function DiscoveryPage() {
   const [tab, setTab] = useState<DiscoveryTab>("explore");
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col" style={{ background: "#1A0E08" }}>
       {/* Tab bar at top */}
       <div className="shrink-0 px-4 pt-2 pb-1">
         <div className="flex gap-1 rounded-xl p-1" style={{ background: "rgba(255,255,255,0.04)" }}>

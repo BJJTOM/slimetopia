@@ -29,9 +29,8 @@ func (h *AdminHandler) AnnouncementList(c *fiber.Ctx) error {
 	)
 	if err != nil {
 		return h.render(c, "announcements.html", fiber.Map{
-			"Title":    "공지사항 관리",
-			"Username": username,
-			"Error":    "Failed to fetch announcements",
+			"Title": "공지사항 관리", "Username": username,
+			"Error": "Failed to fetch announcements", "Message": "",
 		})
 	}
 	defer rows.Close()

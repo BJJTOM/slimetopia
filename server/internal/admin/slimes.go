@@ -27,7 +27,7 @@ func (h *AdminHandler) SlimeList(c *fiber.Ctx) error {
 	limit := 30
 	offset := (page - 1) * limit
 
-	baseQuery := `FROM slimes s JOIN species sp ON sp.id = s.species_id JOIN users u ON u.id = s.user_id`
+	baseQuery := `FROM slimes s JOIN slime_species sp ON sp.id = s.species_id JOIN users u ON u.id = s.user_id`
 	where := " WHERE 1=1"
 	args := make([]interface{}, 0)
 	argIdx := 1
@@ -55,9 +55,10 @@ func (h *AdminHandler) SlimeList(c *fiber.Ctx) error {
 	rows, err := h.pool.Query(ctx, selectQuery, args...)
 	if err != nil {
 		return h.render(c, "slimes.html", fiber.Map{
-			"Title":    "슬라임 관리",
-			"Username": username,
-			"Error":    "Failed to fetch slimes",
+			"Title": "슬라임 관리", "Username": username, "Error": "Failed to fetch slimes",
+			"Search": search, "Grade": gradeFilter, "TotalCount": 0,
+			"Page": 1, "TotalPages": 1, "HasPrev": false, "HasNext": false,
+			"PrevPage": 0, "NextPage": 0,
 		})
 	}
 	defer rows.Close()

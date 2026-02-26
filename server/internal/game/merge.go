@@ -124,6 +124,25 @@ func (h *Handler) MergeSlimes(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "not your slimes"})
 	}
 
+	// Check if slimes are on exploration
+	onExp, err := h.explorationRepo.IsSlimeOnExploration(ctx, userID, []string{body.SlimeIDA, body.SlimeIDB})
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to check exploration status"})
+	}
+	if onExp {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "one or more slimes are on exploration"})
+	}
+
+	// Check if slimes are in training
+	var trainingCount int
+	pool.QueryRow(ctx,
+		`SELECT COUNT(*) FROM training_slots WHERE user_id = $1 AND (slime_id = $2 OR slime_id = $3)`,
+		userID, body.SlimeIDA, body.SlimeIDB,
+	).Scan(&trainingCount)
+	if trainingCount > 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "one or more slimes are in training"})
+	}
+
 	// Material handling
 	var material *Material
 	if body.MaterialID > 0 {

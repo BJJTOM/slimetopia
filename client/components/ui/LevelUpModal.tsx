@@ -18,7 +18,7 @@ export default function LevelUpModal() {
   const isMaxLevel = levelUpInfo.newLevel >= 30;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
       <div className="frosted-card rounded-3xl p-8 w-[300px] text-center animate-scale-in relative overflow-hidden" style={{
         borderColor: `${color}18`,
         boxShadow: `0 24px 64px rgba(0,0,0,0.5), 0 0 40px ${color}08, inset 0 1px 0 rgba(255,255,255,0.05)`,

@@ -120,12 +120,13 @@ export default function SlimeInfoPanel() {
 
   return (
     <div className="absolute bottom-[84px] left-1/2 -translate-x-1/2 z-[60] w-[340px] max-w-[calc(100%-24px)] animate-fade-in-up pointer-events-auto">
-      <div className="frosted-card rounded-2xl p-4 relative overflow-hidden" style={{
+      <div className="frosted-card rounded-2xl relative overflow-hidden" style={{
         borderColor: `${gradeColor}20`,
         boxShadow: `0 16px 48px rgba(0,0,0,0.5), 0 0 40px ${gradeColor}10, inset 0 1px 0 rgba(255,255,255,0.06)`,
         backdropFilter: "blur(24px) saturate(1.4)",
         WebkitBackdropFilter: "blur(24px) saturate(1.4)",
       }}>
+      <div className="p-4 max-h-[calc(100vh-180px)] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.1) transparent" }}>
         {/* Sick alert banner */}
         {slime.is_sick && (
           <div className="mb-3 p-2 rounded-xl text-center animate-pulse"
@@ -345,7 +346,8 @@ export default function SlimeInfoPanel() {
           submittedPersonalities={submittedPersonalities}
           onSubmit={() => setShowSubmitConfirm(true)}
         />
-      </div>
+      </div>{/* end scrollable content */}
+      </div>{/* end frosted-card */}
 
       {/* Submit confirmation modal — portalled to body to avoid clipping */}
       {showSubmitConfirm && createPortal(

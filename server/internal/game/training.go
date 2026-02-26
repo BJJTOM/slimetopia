@@ -7,19 +7,19 @@ import (
 )
 
 const (
-	maxTrainingSlots  = 3
-	trainingExpPerMin = 2 // base EXP per minute
-	maxTrainingMins   = 480
+	maxTrainingSlots  = 5   // expanded from 3 to 5
+	trainingExpPerMin = 2   // base EXP per minute
+	maxTrainingMins   = 480 // 8 hours cap
 )
 
-// Grade-based training EXP multiplier (higher grades train faster)
+// Grade-based training EXP multiplier (narrowed variance for fairness)
 var gradeTrainingMultiplier = map[string]float64{
 	"common":    1.0,
-	"uncommon":  1.2,
-	"rare":      1.5,
-	"epic":      1.8,
-	"legendary": 2.2,
-	"mythic":    3.0,
+	"uncommon":  1.1,
+	"rare":      1.3,
+	"epic":      1.6,
+	"legendary": 2.0,
+	"mythic":    2.5,
 }
 
 // GetTrainingSlots returns the current training slots for a user
@@ -34,7 +34,7 @@ func (h *Handler) GetTrainingSlots(c *fiber.Ctx) error {
 		        sp.name as species_name, sp.grade
 		 FROM training_slots t
 		 JOIN slimes s ON s.id = t.slime_id
-		 JOIN species sp ON sp.id = s.species_id
+		 JOIN slime_species sp ON sp.id = s.species_id
 		 WHERE t.user_id = $1
 		 ORDER BY t.slot_number`,
 		userID,
@@ -161,10 +161,11 @@ func (h *Handler) CollectTraining(c *fiber.Ctx) error {
 	pool := h.slimeRepo.Pool()
 	ctx := c.UserContext()
 
+	// Atomically delete the training slot and return its data to prevent double-collection
 	var slimeID string
 	var startedAt time.Time
 	err := pool.QueryRow(ctx,
-		`SELECT slime_id::text, started_at FROM training_slots WHERE id = $1 AND user_id = $2`,
+		`DELETE FROM training_slots WHERE id = $1 AND user_id = $2 RETURNING slime_id::text, started_at`,
 		slotID, userID,
 	).Scan(&slimeID, &startedAt)
 	if err != nil {
@@ -187,7 +188,7 @@ func (h *Handler) CollectTraining(c *fiber.Ctx) error {
 
 	// Look up grade
 	var grade string
-	pool.QueryRow(ctx, `SELECT grade FROM species WHERE id = $1`, slime.SpeciesID).Scan(&grade)
+	pool.QueryRow(ctx, `SELECT grade FROM slime_species WHERE id = $1`, slime.SpeciesID).Scan(&grade)
 	mult := gradeTrainingMultiplier[grade]
 	if mult == 0 {
 		mult = 1.0
@@ -206,9 +207,6 @@ func (h *Handler) CollectTraining(c *fiber.Ctx) error {
 	LogGameAction(pool, userID, "training_collect", "training", 0, 0, 0, map[string]interface{}{
 		"slime_id": slimeID, "exp_gained": earnedExp,
 	})
-
-	// Remove training slot and reorder remaining slots
-	pool.Exec(ctx, `DELETE FROM training_slots WHERE id = $1`, slotID)
 
 	// Reorder remaining slots
 	pool.Exec(ctx,

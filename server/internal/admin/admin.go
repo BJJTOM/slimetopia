@@ -16,7 +16,7 @@ import (
 
 type AdminHandler struct {
 	pool      *pgxpool.Pool
-	templates *template.Template
+	templates map[string]*template.Template
 }
 
 func NewAdminHandler(pool *pgxpool.Pool) *AdminHandler {
@@ -69,38 +69,59 @@ func (h *AdminHandler) loadTemplates() {
 	// Find templates directory relative to this file
 	_, filename, _, _ := runtime.Caller(0)
 	dir := filepath.Dir(filename)
-	pattern := filepath.Join(dir, "templates", "*.html")
+	templatesDir := filepath.Join(dir, "templates")
 
-	tmpl, err := template.New("").Funcs(adminFuncMap()).ParseGlob(pattern)
-	if err != nil {
-		log.Warn().Err(err).Str("pattern", pattern).Msg("Failed to load admin templates, trying fallback paths")
-		// Fallback paths for different working directories
+	// Try to find layout.html
+	layoutPath := filepath.Join(templatesDir, "layout.html")
+	pages, err := filepath.Glob(filepath.Join(templatesDir, "*.html"))
+	if err != nil || len(pages) == 0 {
+		log.Warn().Str("dir", templatesDir).Msg("Failed to find templates, trying fallback paths")
 		fallbacks := []string{
-			"server/internal/admin/templates/*.html",
-			"internal/admin/templates/*.html",
-			"../server/internal/admin/templates/*.html",
+			"server/internal/admin/templates",
+			"internal/admin/templates",
+			"../server/internal/admin/templates",
 		}
 		for _, fb := range fallbacks {
-			tmpl, err = template.New("").Funcs(adminFuncMap()).ParseGlob(fb)
-			if err == nil {
+			layoutPath = filepath.Join(fb, "layout.html")
+			pages, err = filepath.Glob(filepath.Join(fb, "*.html"))
+			if err == nil && len(pages) > 0 {
 				break
 			}
 		}
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to load admin templates from any path")
+		if len(pages) == 0 {
+			log.Error().Msg("Failed to load admin templates from any path")
 			return
 		}
 	}
-	h.templates = tmpl
-	log.Info().Msg("Admin templates loaded")
+
+	// Parse each page template individually with layout.html
+	// This avoids {{define "content"}} collisions between pages
+	h.templates = make(map[string]*template.Template)
+	for _, page := range pages {
+		name := filepath.Base(page)
+		if name == "layout.html" {
+			continue
+		}
+		tmpl, err := template.New("").Funcs(adminFuncMap()).ParseFiles(layoutPath, page)
+		if err != nil {
+			log.Warn().Err(err).Str("page", name).Msg("Failed to parse admin template")
+			continue
+		}
+		h.templates[name] = tmpl
+	}
+	log.Info().Int("count", len(h.templates)).Msg("Admin templates loaded")
 }
 
 func (h *AdminHandler) render(c *fiber.Ctx, name string, data fiber.Map) error {
 	if h.templates == nil {
 		return c.Status(fiber.StatusInternalServerError).SendString("Templates not loaded")
 	}
+	tmpl, ok := h.templates[name]
+	if !ok {
+		return c.Status(fiber.StatusInternalServerError).SendString("Template not found: " + name)
+	}
 	c.Set("Content-Type", "text/html; charset=utf-8")
-	return h.templates.ExecuteTemplate(c.Response().BodyWriter(), name, data)
+	return tmpl.ExecuteTemplate(c.Response().BodyWriter(), name, data)
 }
 
 func RegisterAdminRoutes(app *fiber.App, h *AdminHandler) {

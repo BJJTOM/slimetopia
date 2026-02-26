@@ -49,9 +49,9 @@ func (h *AdminHandler) AuditLog(c *fiber.Ctx) error {
 	)
 	if err != nil {
 		return h.render(c, "audit.html", fiber.Map{
-			"Title":    "감사 로그",
-			"Username": username,
-			"Error":    "Failed to fetch audit log",
+			"Title": "감사 로그", "Username": username, "Error": "Failed to fetch audit log",
+			"TotalCount": 0, "Page": 1, "TotalPages": 1,
+			"HasPrev": false, "HasNext": false, "PrevPage": 0, "NextPage": 0,
 		})
 	}
 	defer rows.Close()

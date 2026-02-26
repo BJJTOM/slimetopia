@@ -41,8 +41,8 @@ const GRADE_NAMES: Record<string, string> = {
 };
 
 const GRADE_MULTIPLIER: Record<string, number> = {
-  common: 1.0, uncommon: 1.2, rare: 1.5,
-  epic: 1.8, legendary: 2.2, mythic: 3.0,
+  common: 1.0, uncommon: 1.1, rare: 1.3,
+  epic: 1.6, legendary: 2.0, mythic: 2.5,
 };
 
 const GRADE_PRIORITY: Record<string, number> = {

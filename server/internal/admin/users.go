@@ -60,9 +60,10 @@ func (h *AdminHandler) UserList(c *fiber.Ctx) error {
 	rows, err := h.pool.Query(ctx, rows_query, args...)
 	if err != nil {
 		return h.render(c, "users.html", fiber.Map{
-			"Title":    "유저 관리",
-			"Username": username,
-			"Error":    "Failed to fetch users",
+			"Title": "유저 관리", "Username": username, "Error": "Failed to fetch users",
+			"Search": search, "TotalCount": 0,
+			"Page": 1, "TotalPages": 1, "HasPrev": false, "HasNext": false,
+			"PrevPage": 0, "NextPage": 0,
 		})
 	}
 	defer rows.Close()

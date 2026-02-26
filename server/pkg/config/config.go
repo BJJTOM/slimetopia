@@ -10,6 +10,10 @@ type Config struct {
 	DBPass    string
 	DBName    string
 	RedisAddr string
+	RedisURL  string
+
+	AllowedOrigins string
+	FrontendURL    string
 
 	JWTSecret         string
 	GoogleClientID    string
@@ -28,6 +32,10 @@ func Load() *Config {
 		DBPass:    getEnv("DB_PASSWORD", "slime_secret"),
 		DBName:    getEnv("DB_NAME", "slimetopia"),
 		RedisAddr: getEnv("REDIS_ADDR", "localhost:6379"),
+		RedisURL:  getEnv("REDIS_URL", ""),
+
+		AllowedOrigins: getEnv("ALLOWED_ORIGINS", ""),
+		FrontendURL:    getEnv("FRONTEND_URL", ""),
 
 		JWTSecret:         getEnv("JWT_SECRET", "slimetopia-dev-secret-change-in-production"),
 		GoogleClientID:    getEnv("GOOGLE_CLIENT_ID", ""),
@@ -38,7 +46,11 @@ func Load() *Config {
 	}
 }
 
+// DatabaseURL returns the connection string. If DATABASE_URL is set (Railway), use it directly.
 func (c *Config) DatabaseURL() string {
+	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
+		return dbURL
+	}
 	return "postgres://" + c.DBUser + ":" + c.DBPass + "@" + c.DBHost + ":" + c.DBPort + "/" + c.DBName + "?sslmode=disable"
 }
 

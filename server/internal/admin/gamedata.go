@@ -40,11 +40,13 @@ func loadJSON(filename string, target interface{}) error {
 // --- Species Viewer ---
 
 type SpeciesRow struct {
-	ID      int
-	Name    string
-	NameEN  string
-	Element string
-	Grade   string
+	ID          int
+	Name        string
+	NameEN      string
+	Element     string
+	Grade       string
+	Faction     string
+	Description string
 }
 
 func (h *AdminHandler) SpeciesViewer(c *fiber.Ctx) error {
@@ -89,11 +91,12 @@ func (h *AdminHandler) SpeciesViewer(c *fiber.Ctx) error {
 		argIdx++
 	}
 
-	query := "SELECT id, name, COALESCE(name_en, ''), element, grade FROM slime_species " + where + " ORDER BY id"
+	query := "SELECT id, name, COALESCE(name_en, ''), element, grade, COALESCE(faction, ''), COALESCE(description, '') FROM slime_species " + where + " ORDER BY id"
 	rows, err := h.pool.Query(ctx, query, args...)
 	if err != nil {
 		return h.render(c, "species.html", fiber.Map{
 			"Title": "종족 뷰어", "Username": username, "Error": err.Error(),
+			"Faction": "", "Element": "", "Grade": "", "Total": 0,
 		})
 	}
 	defer rows.Close()
@@ -101,19 +104,33 @@ func (h *AdminHandler) SpeciesViewer(c *fiber.Ctx) error {
 	var species []SpeciesRow
 	for rows.Next() {
 		var s SpeciesRow
-		if rows.Scan(&s.ID, &s.Name, &s.NameEN, &s.Element, &s.Grade) == nil {
+		if rows.Scan(&s.ID, &s.Name, &s.NameEN, &s.Element, &s.Grade, &s.Faction, &s.Description) == nil {
 			species = append(species, s)
 		}
 	}
 
+	// Grade stats
+	gradeCounts := map[string]int{}
+	for _, s := range species {
+		gradeCounts[s.Grade]++
+	}
+
+	// Element stats
+	elementCounts := map[string]int{}
+	for _, s := range species {
+		elementCounts[s.Element]++
+	}
+
 	return h.render(c, "species.html", fiber.Map{
-		"Title":    "종족 뷰어",
-		"Username": username,
-		"Species":  species,
-		"Total":    len(species),
-		"Faction":  faction,
-		"Element":  element,
-		"Grade":    grade,
+		"Title":         "종족 뷰어",
+		"Username":      username,
+		"Species":       species,
+		"Total":         len(species),
+		"Faction":       faction,
+		"Element":       element,
+		"Grade":         grade,
+		"GradeCounts":   gradeCounts,
+		"ElementCounts": elementCounts,
 	})
 }
 

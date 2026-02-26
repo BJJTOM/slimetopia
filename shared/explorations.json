@@ -6,7 +6,7 @@
       "duration_minutes": 30,
       "recommended_element": "grass",
       "rewards": {
-        "gold": { "min": 50, "max": 150 },
+        "gold": { "min": 80, "max": 180 },
         "items": ["grass_seed"]
       },
       "unlock": { "type": "default" },
@@ -22,7 +22,8 @@
       "duration_minutes": 60,
       "recommended_element": "water",
       "rewards": {
-        "gold": { "min": 100, "max": 300 },
+        "gold": { "min": 150, "max": 350 },
+        "gems": { "min": 0, "max": 1 },
         "items": ["water_seed", "recipe_hint"]
       },
       "unlock": { "type": "level", "value": 5 },
@@ -38,8 +39,8 @@
       "duration_minutes": 120,
       "recommended_element": "fire",
       "rewards": {
-        "gold": { "min": 200, "max": 500 },
-        "gems": { "min": 1, "max": 3 },
+        "gold": { "min": 300, "max": 600 },
+        "gems": { "min": 1, "max": 4 },
         "items": ["fire_seed", "rare_egg"]
       },
       "unlock": { "type": "level", "value": 10 },
@@ -55,7 +56,7 @@
       "duration_minutes": 45,
       "recommended_element": "ice",
       "rewards": {
-        "gold": { "min": 100, "max": 200 },
+        "gold": { "min": 120, "max": 250 },
         "items": ["ice_crystal"]
       },
       "unlock": { "type": "level", "value": 8 },
@@ -71,7 +72,7 @@
       "duration_minutes": 60,
       "recommended_element": "electric",
       "rewards": {
-        "gold": { "min": 150, "max": 250 },
+        "gold": { "min": 180, "max": 350 },
         "gems": { "min": 0, "max": 2 },
         "items": ["thunder_shard"]
       },
@@ -88,7 +89,7 @@
       "duration_minutes": 30,
       "recommended_element": "poison",
       "rewards": {
-        "gold": { "min": 80, "max": 160 },
+        "gold": { "min": 100, "max": 200 },
         "items": ["toxic_spore"]
       },
       "unlock": { "type": "level", "value": 6 },
@@ -104,8 +105,8 @@
       "duration_minutes": 90,
       "recommended_element": "earth",
       "rewards": {
-        "gold": { "min": 200, "max": 400 },
-        "gems": { "min": 1, "max": 2 },
+        "gold": { "min": 250, "max": 500 },
+        "gems": { "min": 1, "max": 3 },
         "items": ["earth_core"]
       },
       "unlock": { "type": "level", "value": 15 },
@@ -121,7 +122,8 @@
       "duration_minutes": 45,
       "recommended_element": "wind",
       "rewards": {
-        "gold": { "min": 130, "max": 230 },
+        "gold": { "min": 150, "max": 280 },
+        "gems": { "min": 0, "max": 1 },
         "items": ["wind_feather"]
       },
       "unlock": { "type": "level", "value": 10 },
@@ -137,8 +139,8 @@
       "duration_minutes": 120,
       "recommended_element": "celestial",
       "rewards": {
-        "gold": { "min": 300, "max": 600 },
-        "gems": { "min": 1, "max": 3 },
+        "gold": { "min": 400, "max": 700 },
+        "gems": { "min": 2, "max": 5 },
         "items": ["star_fragment"]
       },
       "unlock": { "type": "level", "value": 20 },
@@ -156,8 +158,8 @@
       "duration_minutes": 60,
       "recommended_element": "light",
       "rewards": {
-        "gold": { "min": 150, "max": 350 },
-        "gems": { "min": 0, "max": 2 },
+        "gold": { "min": 200, "max": 400 },
+        "gems": { "min": 1, "max": 3 },
         "items": ["light_orb"]
       },
       "unlock": { "type": "level", "value": 12 },
@@ -174,8 +176,8 @@
       "duration_minutes": 75,
       "recommended_element": "dark",
       "rewards": {
-        "gold": { "min": 180, "max": 380 },
-        "gems": { "min": 1, "max": 2 },
+        "gold": { "min": 250, "max": 450 },
+        "gems": { "min": 1, "max": 3 },
         "items": ["shadow_shard"]
       },
       "unlock": { "type": "level", "value": 14 },
@@ -192,8 +194,8 @@
       "duration_minutes": 180,
       "recommended_element": "fire",
       "rewards": {
-        "gold": { "min": 400, "max": 800 },
-        "gems": { "min": 2, "max": 5 },
+        "gold": { "min": 500, "max": 900 },
+        "gems": { "min": 3, "max": 7 },
         "items": ["rare_egg", "fire_seed"]
       },
       "unlock": { "type": "level", "value": 25 },
@@ -211,8 +213,8 @@
       "duration_minutes": 240,
       "recommended_element": "celestial",
       "rewards": {
-        "gold": { "min": 500, "max": 1000 },
-        "gems": { "min": 3, "max": 6 },
+        "gold": { "min": 600, "max": 1200 },
+        "gems": { "min": 5, "max": 10 },
         "items": ["legendary_egg", "star_fragment"]
       },
       "unlock": { "type": "level", "value": 30 },

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"sort"
 	"syscall"
 	"time"
 
@@ -40,10 +42,24 @@ func main() {
 	defer pool.Close()
 	log.Info().Msg("Connected to PostgreSQL")
 
+	// Auto-run migrations
+	if err := runMigrations(ctx, pool); err != nil {
+		log.Warn().Err(err).Msg("Migration warning (may be already applied)")
+	}
+
 	// Redis connection
-	rdb := redis.NewClient(&redis.Options{
-		Addr: cfg.RedisAddr,
-	})
+	var rdb *redis.Client
+	if cfg.RedisURL != "" {
+		opts, err := redis.ParseURL(cfg.RedisURL)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Failed to parse REDIS_URL")
+		}
+		rdb = redis.NewClient(opts)
+	} else {
+		rdb = redis.NewClient(&redis.Options{
+			Addr: cfg.RedisAddr,
+		})
+	}
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		log.Fatal().Err(err).Msg("Failed to connect to Redis")
 	}
@@ -89,10 +105,15 @@ func main() {
 
 	// Middleware
 	app.Use(logger.New())
+	corsOrigins := "http://localhost:3000, http://localhost:3001, https://localhost, capacitor://localhost"
+	if cfg.AllowedOrigins != "" {
+		corsOrigins = corsOrigins + ", " + cfg.AllowedOrigins
+	}
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "http://localhost:3000, http://localhost:3001, https://localhost, capacitor://localhost, https://lol-privilege-aud-decades.trycloudflare.com",
-		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
-		AllowMethods: "GET, POST, PATCH, DELETE, OPTIONS",
+		AllowOrigins:     corsOrigins,
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
+		AllowMethods:     "GET, POST, PATCH, DELETE, OPTIONS",
+		AllowCredentials: true,
 	}))
 
 	// Admin panel (server-rendered HTML)
@@ -156,6 +177,68 @@ func main() {
 	if err := app.Shutdown(); err != nil {
 		log.Error().Err(err).Msg("Server shutdown error")
 	}
+}
+
+func runMigrations(ctx context.Context, pool *pgxpool.Pool) error {
+	// Create migration tracking table
+	_, err := pool.Exec(ctx, `CREATE TABLE IF NOT EXISTS schema_migrations (
+		version VARCHAR(255) PRIMARY KEY,
+		applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+	)`)
+	if err != nil {
+		return fmt.Errorf("create migration table: %w", err)
+	}
+
+	// Find migration files
+	migrationPaths := []string{"migrations", "server/migrations", "/app/migrations"}
+	var files []string
+	for _, dir := range migrationPaths {
+		matches, _ := filepath.Glob(filepath.Join(dir, "*.up.sql"))
+		if len(matches) > 0 {
+			files = matches
+			break
+		}
+	}
+	if len(files) == 0 {
+		log.Info().Msg("No migration files found, skipping")
+		return nil
+	}
+	sort.Strings(files)
+
+	applied := 0
+	for _, f := range files {
+		version := filepath.Base(f)
+		// Check if already applied
+		var exists bool
+		err := pool.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version=$1)", version).Scan(&exists)
+		if err != nil {
+			return fmt.Errorf("check migration %s: %w", version, err)
+		}
+		if exists {
+			continue
+		}
+
+		// Read and execute migration
+		sql, err := os.ReadFile(f)
+		if err != nil {
+			return fmt.Errorf("read migration %s: %w", version, err)
+		}
+		if _, err := pool.Exec(ctx, string(sql)); err != nil {
+			return fmt.Errorf("apply migration %s: %w", version, err)
+		}
+		// Record as applied
+		if _, err := pool.Exec(ctx, "INSERT INTO schema_migrations (version) VALUES ($1)", version); err != nil {
+			return fmt.Errorf("record migration %s: %w", version, err)
+		}
+		applied++
+		log.Info().Str("file", version).Msg("Applied migration")
+	}
+	if applied > 0 {
+		log.Info().Int("count", applied).Msg("Migrations completed")
+	} else {
+		log.Info().Msg("All migrations already applied")
+	}
+	return nil
 }
 
 func connectDB(ctx context.Context, cfg *config.Config) (*pgxpool.Pool, error) {

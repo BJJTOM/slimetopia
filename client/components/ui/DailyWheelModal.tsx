@@ -250,7 +250,7 @@ export default function DailyWheelModal({ onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-[55] flex items-center justify-center modal-backdrop">
-      <div className="modal-panel p-6 w-[340px] text-center relative overflow-hidden">
+      <div className="modal-panel p-6 w-[340px] max-h-[90vh] overflow-y-auto text-center relative">
         {/* Decorative background orbs */}
         <div
           className="absolute -top-20 -right-20 w-40 h-40 rounded-full opacity-20"

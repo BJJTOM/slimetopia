@@ -78,7 +78,7 @@ export default function MissionModal() {
   }, [token, claimingAll, claimable, claimMission]);
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center modal-backdrop" onClick={() => setShowMissionModal(false)}>
+    <div className="absolute inset-0 z-[100] flex items-center justify-center modal-backdrop" onClick={() => setShowMissionModal(false)}>
       <div
         className="modal-panel w-[360px] max-w-[94%] max-h-[82vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}

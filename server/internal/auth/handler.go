@@ -150,7 +150,10 @@ func (h *Handler) Callback(c *fiber.Ctx) error {
 	}
 
 	// Redirect to frontend with token
-	frontendBase := os.Getenv("FRONTEND_CALLBACK_URL")
+	frontendBase := os.Getenv("FRONTEND_URL")
+	if frontendBase == "" {
+		frontendBase = os.Getenv("FRONTEND_CALLBACK_URL")
+	}
 	if frontendBase == "" {
 		frontendBase = "http://localhost:3000"
 	}

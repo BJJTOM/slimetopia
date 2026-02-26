@@ -9,8 +9,8 @@ import (
 
 const (
 	maxIdleMinutes   = 480 // 8 hours cap
-	baseGoldRate     = 10  // per minute
-	slimeBonusPerMin = 2   // extra gold per slime per minute
+	baseGoldRate     = 5   // per minute (was 10)
+	slimeBonusPerMin = 1   // extra gold per slime per minute (was 2)
 )
 
 // GET /api/idle/status — preview offline accumulated rewards

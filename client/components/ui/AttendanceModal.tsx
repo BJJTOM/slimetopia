@@ -72,7 +72,7 @@ export default function AttendanceModal() {
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center modal-backdrop" onClick={() => setShowAttendanceModal(false)}>
       <div
-        className="modal-panel w-[400px] max-w-[95%] flex flex-col"
+        className="modal-panel w-[400px] max-w-[95%] max-h-[85vh] overflow-y-auto flex flex-col"
         onClick={(e) => e.stopPropagation()}
         style={{ animation: "modal-pop-in 0.25s ease-out" }}
       >

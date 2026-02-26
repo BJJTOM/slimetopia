@@ -179,6 +179,17 @@ func (h *Handler) AttackWorldBoss(c *fiber.Ctx) error {
 		slimeIDs = slimeIDs[:5]
 	}
 
+	// Deduplicate slime IDs to prevent counting same slime multiple times
+	seen := make(map[string]bool)
+	uniqueIDs := make([]string, 0, len(slimeIDs))
+	for _, sid := range slimeIDs {
+		if !seen[sid] {
+			seen[sid] = true
+			uniqueIDs = append(uniqueIDs, sid)
+		}
+	}
+	slimeIDs = uniqueIDs
+
 	pool := h.slimeRepo.Pool()
 	ctx := c.UserContext()
 
