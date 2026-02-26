@@ -6,33 +6,33 @@ import Button from "@/components/common/Button";
 import { generateSlimeIconSvg } from "@/lib/slimeSvg";
 
 const ELEMENTS_INFO = [
-  { name: "Water", color: "#74B9FF", icon: "\uD83D\uDCA7" },
-  { name: "Fire", color: "#FF6B6B", icon: "\uD83D\uDD25" },
-  { name: "Grass", color: "#55EFC4", icon: "\uD83C\uDF3F" },
-  { name: "Light", color: "#FFEAA7", icon: "\u2B50" },
-  { name: "Dark", color: "#A29BFE", icon: "\uD83C\uDF19" },
-  { name: "Ice", color: "#81ECEC", icon: "\u2744\uFE0F" },
-  { name: "Electric", color: "#FDCB6E", icon: "\u26A1" },
-  { name: "Poison", color: "#6C5CE7", icon: "\u2620\uFE0F" },
-  { name: "Earth", color: "#E17055", icon: "\uD83C\uDF0D" },
-  { name: "Wind", color: "#DFE6E9", icon: "\uD83D\uDCA8" },
-  { name: "Celestial", color: "#FD79A8", icon: "\uD83D\uDCAB" },
+  { name: "물", color: "#74B9FF", icon: "\uD83D\uDCA7" },
+  { name: "불", color: "#FF6B6B", icon: "\uD83D\uDD25" },
+  { name: "풀", color: "#55EFC4", icon: "\uD83C\uDF3F" },
+  { name: "빛", color: "#FFEAA7", icon: "\u2B50" },
+  { name: "어둠", color: "#A29BFE", icon: "\uD83C\uDF19" },
+  { name: "얼음", color: "#81ECEC", icon: "\u2744\uFE0F" },
+  { name: "번개", color: "#FDCB6E", icon: "\u26A1" },
+  { name: "독", color: "#6C5CE7", icon: "\u2620\uFE0F" },
+  { name: "대지", color: "#E17055", icon: "\uD83C\uDF0D" },
+  { name: "바람", color: "#DFE6E9", icon: "\uD83D\uDCA8" },
+  { name: "천상", color: "#FD79A8", icon: "\uD83D\uDCAB" },
 ];
 
 const RECIPES_PREVIEW = [
-  { from: ["Water", "Fire"], result: "Steam Slime", color: "#81ECEC" },
-  { from: ["Grass", "Light"], result: "Bloom Slime", color: "#55EFC4" },
-  { from: ["Dark", "Poison"], result: "Shadow Slime", color: "#6C5CE7" },
-  { from: ["Electric", "Wind"], result: "Storm Slime", color: "#FDCB6E" },
+  { from: ["물", "불"], result: "증기 슬라임", color: "#81ECEC" },
+  { from: ["풀", "빛"], result: "개화 슬라임", color: "#55EFC4" },
+  { from: ["어둠", "독"], result: "그림자 슬라임", color: "#6C5CE7" },
+  { from: ["번개", "바람"], result: "폭풍 슬라임", color: "#FDCB6E" },
 ];
 
 const GRADES_INFO = [
-  { name: "Common", color: "#B2BEC3", stars: 1 },
-  { name: "Uncommon", color: "#55EFC4", stars: 2 },
-  { name: "Rare", color: "#74B9FF", stars: 3 },
-  { name: "Epic", color: "#A29BFE", stars: 4 },
-  { name: "Legendary", color: "#FFEAA7", stars: 5 },
-  { name: "Mythic", color: "#FF6B6B", stars: 6 },
+  { name: "커먼", color: "#B2BEC3", stars: 1 },
+  { name: "언커먼", color: "#55EFC4", stars: 2 },
+  { name: "레어", color: "#74B9FF", stars: 3 },
+  { name: "에픽", color: "#A29BFE", stars: 4 },
+  { name: "레전더리", color: "#FFEAA7", stars: 5 },
+  { name: "미식", color: "#FF6B6B", stars: 6 },
 ];
 
 export default function GameInfoPage() {
@@ -57,11 +57,11 @@ export default function GameInfoPage() {
             draggable={false}
           />
           <h1 className="text-4xl md:text-6xl font-black web-text-gradient mb-6">
-            Game Guide
+            게임 가이드
           </h1>
           <p className="text-white/40 max-w-2xl mx-auto">
-            Everything you need to know about raising, collecting, and merging
-            slimes in SlimeTopia.
+            슬라임토피아에서 슬라임을 키우고, 수집하고, 합성하는 데
+            필요한 모든 정보를 알려드립니다.
           </p>
         </ScrollFadeIn>
       </section>
@@ -72,10 +72,10 @@ export default function GameInfoPage() {
       <section className="py-20 px-6">
         <ScrollFadeIn className="text-center mb-12">
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#55EFC4]/60 mb-3">
-            Elements
+            속성
           </p>
           <h2 className="text-3xl md:text-4xl font-black web-text-glow">
-            11 Elemental Types
+            11가지 속성
           </h2>
         </ScrollFadeIn>
 
@@ -113,10 +113,10 @@ export default function GameInfoPage() {
       <section className="py-20 px-6">
         <ScrollFadeIn className="text-center mb-12">
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#FFEAA7]/60 mb-3">
-            Rarity
+            희귀도
           </p>
           <h2 className="text-3xl md:text-4xl font-black web-text-glow-warm">
-            6 Grade Tiers
+            6단계 등급
           </h2>
         </ScrollFadeIn>
 
@@ -152,14 +152,14 @@ export default function GameInfoPage() {
       <section className="py-20 px-6">
         <ScrollFadeIn className="text-center mb-12">
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#A29BFE]/60 mb-3">
-            Synthesis
+            합성
           </p>
           <h2 className="text-3xl md:text-4xl font-black web-text-glow">
-            Merge & Discover
+            합성 & 발견
           </h2>
           <p className="text-white/40 mt-4 max-w-xl mx-auto">
-            Combine different slimes to create entirely new species. 30 recipes
-            to discover, including 3 hidden legendary mutations.
+            서로 다른 슬라임을 합성하여 완전히 새로운 종을 만드세요.
+            3종의 숨겨진 전설 돌연변이를 포함한 30가지 레시피를 발견하세요.
           </p>
         </ScrollFadeIn>
 
@@ -207,10 +207,10 @@ export default function GameInfoPage() {
       <section className="py-20 px-6 text-center">
         <ScrollFadeIn>
           <h2 className="text-3xl font-black mb-6 web-text-gradient">
-            Ready to Start Collecting?
+            수집을 시작할 준비 되셨나요?
           </h2>
           <Button variant="primary" size="lg" href="/play">
-            Play Now
+            지금 플레이
           </Button>
         </ScrollFadeIn>
       </section>

@@ -277,7 +277,7 @@ func (m *BotActivityManager) botGetNewSlime(ctx context.Context, userID string) 
 	// Pick a species matching the element, falling back to ID 1.
 	var speciesID int
 	err := m.pool.QueryRow(ctx,
-		`SELECT id FROM species WHERE element = $1 ORDER BY RANDOM() LIMIT 1`,
+		`SELECT id FROM slime_species WHERE element = $1 ORDER BY RANDOM() LIMIT 1`,
 		element,
 	).Scan(&speciesID)
 	if err != nil {

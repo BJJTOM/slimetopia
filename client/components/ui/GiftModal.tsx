@@ -86,9 +86,9 @@ export default function GiftModal({ onClose, defaultNickname = "" }: GiftModalPr
                 onClick={() => setGiftType("gems")}
                 className="flex-1 py-2 rounded-lg text-xs font-bold transition-all"
                 style={{
-                  background: giftType === "gems" ? "rgba(162,155,254,0.15)" : "rgba(255,255,255,0.05)",
-                  color: giftType === "gems" ? "#A29BFE" : "#B2BEC3",
-                  border: giftType === "gems" ? "1px solid rgba(162,155,254,0.3)" : "1px solid rgba(255,255,255,0.06)",
+                  background: giftType === "gems" ? "rgba(201,168,76,0.15)" : "rgba(255,255,255,0.05)",
+                  color: giftType === "gems" ? "#D4AF37" : "#B2BEC3",
+                  border: giftType === "gems" ? "1px solid rgba(201,168,76,0.3)" : "1px solid rgba(255,255,255,0.06)",
                 }}
               >
                 Gems {user ? `(${user.gems})` : ""}

@@ -15,7 +15,7 @@ interface ActiveBooster {
 const boosterConfig: Record<string, { icon: string; label: string; color: string }> = {
   exp_2x: { icon: "📖", label: "EXP", color: "#74B9FF" },
   gold_2x: { icon: "💰", label: "골드", color: "#FFEAA7" },
-  luck_up: { icon: "🍀", label: "행운", color: "#55EFC4" },
+  luck_up: { icon: "🍀", label: "행운", color: "#C9A84C" },
 };
 
 const GRADE_PRIORITY: Record<string, number> = {
@@ -112,7 +112,7 @@ export default function TopBar() {
               style={{
                 background: highestGrade !== "common"
                   ? `linear-gradient(135deg, ${glowColor}40, ${glowColor}18)`
-                  : "linear-gradient(135deg, rgba(0,210,211,0.25), rgba(255,234,167,0.15))",
+                  : "linear-gradient(135deg, rgba(201,168,76,0.25), rgba(255,234,167,0.15))",
                 border: `2px solid ${highestGrade !== "common" ? glowColor + "60" : "rgba(255,255,255,0.12)"}`,
                 boxShadow: highestGrade !== "common"
                   ? `0 4px 20px ${glowColor}25`
@@ -130,7 +130,7 @@ export default function TopBar() {
                   alt="" className="w-[36px] h-[36px] drop-shadow-lg" draggable={false}
                 />
               ) : (
-                <span className="text-lg font-bold text-[#55EFC4]">{user.nickname[0]}</span>
+                <span className="text-lg font-bold text-[#D4AF37]">{user.nickname[0]}</span>
               )}
             </div>
             <div
@@ -152,7 +152,7 @@ export default function TopBar() {
             {/* Boosters */}
             <div className="flex items-center gap-1 flex-wrap">
               {boosters.filter(b => (liveBoosterSeconds[b.type] ?? b.remaining_seconds) > 0).map((b) => {
-                const config = boosterConfig[b.type] || { icon: "⚡", label: "부스트", color: "#00D2D3" };
+                const config = boosterConfig[b.type] || { icon: "⚡", label: "부스트", color: "#C9A84C" };
                 const secs = liveBoosterSeconds[b.type] ?? b.remaining_seconds;
                 const isLow = secs < 300;
                 return (
@@ -270,7 +270,7 @@ function CurrencyPill({ type, value }: { type: "gold" | "gem"; value: number }) 
       style={{
         background: isGold
           ? "linear-gradient(135deg, rgba(255,234,167,0.12) 0%, rgba(249,202,36,0.06) 100%)"
-          : "linear-gradient(135deg, rgba(116,185,255,0.12) 0%, rgba(0,210,211,0.06) 100%)",
+          : "linear-gradient(135deg, rgba(116,185,255,0.12) 0%, rgba(116,185,255,0.06) 100%)",
         border: isGold
           ? "1.5px solid rgba(255,234,167,0.2)"
           : "1.5px solid rgba(116,185,255,0.2)",
@@ -306,9 +306,9 @@ function CurrencyPill({ type, value }: { type: "gold" | "gem"; value: number }) 
         <span
           className="absolute -top-3 right-1 text-[9px] font-black tabular-nums pointer-events-none"
           style={{
-            color: delta > 0 ? "#55EFC4" : "#FF6B6B",
+            color: delta > 0 ? "#D4AF37" : "#FF6B6B",
             animation: "currency-delta-float 1.2s ease-out forwards",
-            textShadow: `0 0 6px ${delta > 0 ? "rgba(85,239,196,0.5)" : "rgba(255,107,107,0.5)"}`,
+            textShadow: `0 0 6px ${delta > 0 ? "rgba(212,175,55,0.5)" : "rgba(255,107,107,0.5)"}`,
           }}
         >
           {delta > 0 ? "+" : ""}{delta.toLocaleString()}

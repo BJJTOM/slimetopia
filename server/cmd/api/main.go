@@ -93,7 +93,7 @@ func main() {
 
 	userHandler := auth.NewUserHandler(userRepo)
 	gameHandler := game.NewHandler(slimeRepo, userRepo, explorationRepo, missionRepo, villageRepo, rdb)
-	adminHandler := admin.NewAdminHandler(pool)
+	adminHandler := admin.NewAdminHandler(pool, cfg.JWTSecret)
 
 	// Fiber app
 	app := fiber.New(fiber.Config{

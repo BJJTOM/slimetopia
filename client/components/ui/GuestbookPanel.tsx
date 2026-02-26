@@ -30,7 +30,7 @@ function getRelativeTime(dateStr: string): string {
 
 // Color hash for avatar
 function getAvatarColor(name: string): string {
-  const colors = ["#55EFC4", "#74B9FF", "#A29BFE", "#FF9FF3", "#FFEAA7", "#FF6B6B", "#FD79A8", "#00CEC9", "#6C5CE7", "#E17055"];
+  const colors = ["#D4AF37", "#74B9FF", "#C9A84C", "#FF9FF3", "#FFEAA7", "#FF6B6B", "#FD79A8", "#F5E6C8", "#8B6914", "#E17055"];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -87,7 +87,7 @@ export default function GuestbookPanel({ entries, message, onMessageChange, onSu
         <div className="px-4 pb-2 space-y-1">
           {previewEntries.map((entry) => (
             <div key={entry.id} className="flex items-center gap-2 text-[10px]">
-              <span className="text-[#55EFC4] font-medium truncate max-w-[60px]">{entry.author_nickname}</span>
+              <span className="text-[#D4AF37] font-medium truncate max-w-[60px]">{entry.author_nickname}</span>
               <span className="text-white/60 truncate flex-1">{entry.message}</span>
             </div>
           ))}
@@ -162,7 +162,7 @@ export default function GuestbookPanel({ entries, message, onMessageChange, onSu
                   maxLength={200}
                   placeholder={"\uBA54\uC2DC\uC9C0\uB97C \uB0A8\uACA8\uBCF4\uC138\uC694..."}
                   rows={1}
-                  className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-3 py-2 text-white text-xs placeholder:text-[#636e72] focus:outline-none focus:border-[#55EFC4]/30 resize-none"
+                  className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl px-3 py-2 text-white text-xs placeholder:text-[#636e72] focus:outline-none focus:border-[#C9A84C]/30 resize-none"
                   style={{ maxHeight: 72, minHeight: 34 }}
                   onInput={(e) => {
                     const target = e.target as HTMLTextAreaElement;
@@ -185,9 +185,9 @@ export default function GuestbookPanel({ entries, message, onMessageChange, onSu
                 disabled={!message.trim()}
                 className="shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition"
                 style={{
-                  backgroundColor: message.trim() ? "rgba(85,239,196,0.2)" : "rgba(255,255,255,0.05)",
-                  color: message.trim() ? "#55EFC4" : "rgba(255,255,255,0.2)",
-                  border: `1px solid ${message.trim() ? "rgba(85,239,196,0.3)" : "rgba(255,255,255,0.06)"}`,
+                  backgroundColor: message.trim() ? "rgba(201,168,76,0.2)" : "rgba(255,255,255,0.05)",
+                  color: message.trim() ? "#C9A84C" : "rgba(255,255,255,0.2)",
+                  border: `1px solid ${message.trim() ? "rgba(201,168,76,0.3)" : "rgba(255,255,255,0.06)"}`,
                 }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none">

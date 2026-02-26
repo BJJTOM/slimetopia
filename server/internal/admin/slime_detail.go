@@ -1,192 +1,302 @@
 package admin
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
+	"runtime"
 	"strconv"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-type SlimeDetailData struct {
-	ID          string
-	SpeciesID   int
-	SpeciesName string
+type SpeciesDetailData struct {
+	ID          int
+	Name        string
+	NameEN      string
 	Element     string
 	Grade       string
-	Level       int
-	Exp         int
-	Personality string
-	Affection   int
-	Hunger      int
-	Condition   int
-	IsSick      bool
-	OwnerID     string
-	OwnerNick   string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	Faction     string
+	Description string
+}
+
+type FactionInfo struct {
+	ID      string
+	Name    string
+	NameEN  string
+	RangeStart int
+	RangeEnd   int
+	Count   int
+	Members []FactionMember
+}
+
+type FactionMember struct {
+	ID      int
+	Name    string
+	Element string
+	Grade   string
+}
+
+type RelatedRecipe struct {
+	ID         int
+	InputAID   int
+	InputAName string
+	InputBID   int
+	InputBName string
+	OutputID   int
+	OutputName string
+	Role       string // "재료 A", "재료 B", "결과물"
+	Hidden     bool
+	Hint       string
+}
+
+type SameElementSpecies struct {
+	ID    int
+	Name  string
+	Grade string
 }
 
 func (h *AdminHandler) SlimeDetail(c *fiber.Ctx) error {
 	ctx := c.Context()
 	username := c.Locals("admin_username").(string)
-	slimeID := c.Params("id")
-	message := c.Query("msg")
+	speciesIDStr := c.Params("id")
+	speciesID, _ := strconv.Atoi(speciesIDStr)
+	if speciesID == 0 {
+		return c.Redirect("/admin/slimes")
+	}
 
-	var sl SlimeDetailData
+	// 1. Basic species info
+	var sp SpeciesDetailData
 	err := h.pool.QueryRow(ctx,
-		`SELECT s.id, s.species_id, sp.name, s.element, sp.grade, s.level, s.exp,
-		        s.personality, s.affection, s.hunger, s.condition, s.is_sick,
-		        s.user_id, COALESCE(u.nickname, 'Unknown'), s.created_at, s.updated_at
-		 FROM slimes s
-		 JOIN slime_species sp ON sp.id = s.species_id
-		 LEFT JOIN users u ON u.id = s.user_id
-		 WHERE s.id = $1`, slimeID,
-	).Scan(&sl.ID, &sl.SpeciesID, &sl.SpeciesName, &sl.Element, &sl.Grade, &sl.Level, &sl.Exp,
-		&sl.Personality, &sl.Affection, &sl.Hunger, &sl.Condition, &sl.IsSick,
-		&sl.OwnerID, &sl.OwnerNick, &sl.CreatedAt, &sl.UpdatedAt)
+		`SELECT id, name, COALESCE(name_en,''), element, grade, COALESCE(faction,''), COALESCE(description,'')
+		 FROM slime_species WHERE id = $1`, speciesID,
+	).Scan(&sp.ID, &sp.Name, &sp.NameEN, &sp.Element, &sp.Grade, &sp.Faction, &sp.Description)
 	if err != nil {
-		return c.Redirect("/admin/slimes?msg=not_found")
+		return c.Redirect("/admin/slimes")
 	}
 
-	return h.render(c, "slime_detail.html", fiber.Map{
-		"Title":    fmt.Sprintf("슬라임: %s (Lv.%d)", sl.SpeciesName, sl.Level),
-		"Username": username,
-		"Slime":    sl,
-		"Message":  message,
-	})
-}
-
-func (h *AdminHandler) SlimeEdit(c *fiber.Ctx) error {
-	ctx := c.Context()
-	adminUsername := c.Locals("admin_username").(string)
-	adminID := c.Locals("admin_id").(int)
-	slimeID := c.Params("id")
-
-	level, _ := strconv.Atoi(c.FormValue("level"))
-	exp, _ := strconv.Atoi(c.FormValue("exp"))
-	affection, _ := strconv.Atoi(c.FormValue("affection"))
-	hunger, _ := strconv.Atoi(c.FormValue("hunger"))
-	condition, _ := strconv.Atoi(c.FormValue("condition"))
-	isSick := c.FormValue("is_sick") == "true"
-
-	_, err := h.pool.Exec(ctx,
-		`UPDATE slimes SET level = $1, exp = $2, affection = $3, hunger = $4, condition = $5, is_sick = $6, updated_at = NOW()
-		 WHERE id = $7`,
-		level, exp, affection, hunger, condition, isSick, slimeID,
-	)
-	if err != nil {
-		return c.Redirect(fmt.Sprintf("/admin/slimes/%s?msg=error", slimeID))
+	// 2. Collection level requirement
+	collectionReqs := map[string]int{
+		"common": 3, "uncommon": 5, "rare": 10, "epic": 15, "legendary": 20, "mythic": 25,
 	}
+	requiredLevel := collectionReqs[sp.Grade]
 
-	detail := fmt.Sprintf("level:%d exp:%d affection:%d hunger:%d condition:%d sick:%v", level, exp, affection, hunger, condition, isSick)
-	logAdminAction(h.pool, ctx, adminID, adminUsername, "edit_slime", "slime", slimeID, detail)
-
-	return c.Redirect(fmt.Sprintf("/admin/slimes/%s?msg=edited", slimeID))
-}
-
-func (h *AdminHandler) SlimeDelete(c *fiber.Ctx) error {
-	ctx := c.Context()
-	adminUsername := c.Locals("admin_username").(string)
-	adminID := c.Locals("admin_id").(int)
-	slimeID := c.Params("id")
-
-	// Get slime info before deleting for audit log
-	var speciesName, ownerID string
-	h.pool.QueryRow(ctx,
-		`SELECT sp.name, s.user_id FROM slimes s JOIN slime_species sp ON sp.id = s.species_id WHERE s.id = $1`,
-		slimeID,
-	).Scan(&speciesName, &ownerID)
-
-	_, err := h.pool.Exec(ctx, `DELETE FROM slimes WHERE id = $1`, slimeID)
-	if err != nil {
-		return c.Redirect(fmt.Sprintf("/admin/slimes/%s?msg=delete_error", slimeID))
-	}
-
-	detail := fmt.Sprintf("species:%s owner:%s", speciesName, ownerID)
-	logAdminAction(h.pool, ctx, adminID, adminUsername, "delete_slime", "slime", slimeID, detail)
-
-	return c.Redirect("/admin/slimes?msg=deleted")
-}
-
-func (h *AdminHandler) SlimeCreatePage(c *fiber.Ctx) error {
-	ctx := c.Context()
-	username := c.Locals("admin_username").(string)
-	message := c.Query("msg")
-
-	// Get all species for dropdown
-	type SpeciesOption struct {
-		ID      int
-		Name    string
-		Element string
-		Grade   string
-	}
-	var species []SpeciesOption
-	rows, err := h.pool.Query(ctx,
-		`SELECT id, name, element, grade FROM slime_species ORDER BY id`)
+	// 3. Faction info + members
+	var faction FactionInfo
+	fRows, err := h.pool.Query(ctx,
+		`SELECT id, name, element, grade FROM slime_species WHERE faction = $1 ORDER BY id`, sp.Faction)
 	if err == nil {
-		defer rows.Close()
-		for rows.Next() {
-			var s SpeciesOption
-			if rows.Scan(&s.ID, &s.Name, &s.Element, &s.Grade) == nil {
-				species = append(species, s)
+		defer fRows.Close()
+		for fRows.Next() {
+			var m FactionMember
+			if fRows.Scan(&m.ID, &m.Name, &m.Element, &m.Grade) == nil {
+				faction.Members = append(faction.Members, m)
+			}
+		}
+	}
+	faction.ID = sp.Faction
+	faction.Count = len(faction.Members)
+	// Faction metadata from JSON
+	factionNames := map[string][2]string{
+		"east_blue": {"이스트 블루", "East Blue"}, "grand_line": {"그랜드 라인", "Grand Line"},
+		"straw_hat": {"밀짚모자 해적단", "Straw Hat Pirates"}, "baroque": {"바로크 워크스", "Baroque Works"},
+		"sky_island": {"스카이 아일랜드", "Sky Island"}, "cipher_pol": {"사이퍼 폴", "Cipher Pol"},
+		"warlords": {"칠무해", "Seven Warlords"}, "worst_gen": {"최악의 세대", "Worst Generation"},
+		"marines": {"해군", "Marines"}, "yonko": {"사황", "Yonko"},
+		"logia": {"자연계", "Logia"}, "paramecia": {"초인계", "Paramecia"},
+		"zoan": {"동물계", "Zoan"}, "revolutionary": {"혁명군", "Revolutionary Army"},
+		"celestial": {"천룡인", "Celestial Dragons"}, "hidden": {"히든", "Hidden"},
+	}
+	if names, ok := factionNames[sp.Faction]; ok {
+		faction.Name = names[0]
+		faction.NameEN = names[1]
+	}
+	if len(faction.Members) > 0 {
+		faction.RangeStart = faction.Members[0].ID
+		faction.RangeEnd = faction.Members[len(faction.Members)-1].ID
+	}
+
+	// 4. Find position in faction
+	positionInFaction := 0
+	for i, m := range faction.Members {
+		if m.ID == speciesID {
+			positionInFaction = i + 1
+			break
+		}
+	}
+
+	// 5. Related recipes (this species as input or output)
+	var recipes []RelatedRecipe
+	recipesData := loadRecipesJSON()
+	speciesNameCache := map[int]string{}
+	getSpeciesNameCached := func(id int) string {
+		if n, ok := speciesNameCache[id]; ok {
+			return n
+		}
+		var name string
+		h.pool.QueryRow(ctx, `SELECT name FROM slime_species WHERE id = $1`, id).Scan(&name)
+		speciesNameCache[id] = name
+		return name
+	}
+
+	for _, r := range recipesData {
+		if r.InputA == speciesID || r.InputB == speciesID || r.Output == speciesID {
+			role := "결과물"
+			if r.InputA == speciesID {
+				role = "재료 A"
+			} else if r.InputB == speciesID {
+				role = "재료 B"
+			}
+			recipes = append(recipes, RelatedRecipe{
+				ID: r.ID, InputAID: r.InputA, InputAName: getSpeciesNameCached(r.InputA),
+				InputBID: r.InputB, InputBName: getSpeciesNameCached(r.InputB),
+				OutputID: r.Output, OutputName: r.OutputName,
+				Role: role, Hidden: r.Hidden, Hint: r.Hint,
+			})
+		}
+	}
+
+	// 6. Same element species (other factions, limit 10)
+	var sameElement []SameElementSpecies
+	seRows, err := h.pool.Query(ctx,
+		`SELECT id, name, grade FROM slime_species WHERE element = $1 AND id != $2 ORDER BY id LIMIT 12`,
+		sp.Element, speciesID)
+	if err == nil {
+		defer seRows.Close()
+		for seRows.Next() {
+			var s SameElementSpecies
+			if seRows.Scan(&s.ID, &s.Name, &s.Grade) == nil {
+				sameElement = append(sameElement, s)
 			}
 		}
 	}
 
-	return h.render(c, "slime_create.html", fiber.Map{
-		"Title":    "슬라임 지급",
-		"Username": username,
-		"Species":  species,
-		"Message":  message,
+	// 7. Same grade species (limit 12)
+	var sameGrade []SameElementSpecies
+	sgRows, err := h.pool.Query(ctx,
+		`SELECT id, name, grade FROM slime_species WHERE grade = $1 AND id != $2 ORDER BY id LIMIT 12`,
+		sp.Grade, speciesID)
+	if err == nil {
+		defer sgRows.Close()
+		for sgRows.Next() {
+			var s SameElementSpecies
+			if sgRows.Scan(&s.ID, &s.Name, &s.Grade) == nil {
+				sameGrade = append(sameGrade, s)
+			}
+		}
+	}
+
+	// 8. Element/grade counts for context
+	var totalSameElement, totalSameGrade int
+	h.pool.QueryRow(ctx, `SELECT COUNT(*) FROM slime_species WHERE element = $1`, sp.Element).Scan(&totalSameElement)
+	h.pool.QueryRow(ctx, `SELECT COUNT(*) FROM slime_species WHERE grade = $1`, sp.Grade).Scan(&totalSameGrade)
+
+	// 9. Is starter slime?
+	isStarter := speciesID == 1 || speciesID == 2 || speciesID == 3
+
+	// 10. Egg obtainability
+	eggInfo := getEggInfo(sp.Grade, sp.Element)
+
+	// 11. Prev/Next species navigation
+	var prevID, nextID int
+	h.pool.QueryRow(ctx, `SELECT id FROM slime_species WHERE id < $1 ORDER BY id DESC LIMIT 1`, speciesID).Scan(&prevID)
+	h.pool.QueryRow(ctx, `SELECT id FROM slime_species WHERE id > $1 ORDER BY id ASC LIMIT 1`, speciesID).Scan(&nextID)
+
+	return h.render(c, "slime_detail.html", fiber.Map{
+		"Title":             fmt.Sprintf("#%d %s", sp.ID, sp.Name),
+		"Username":          username,
+		"Species":           sp,
+		"RequiredLevel":     requiredLevel,
+		"Faction":           faction,
+		"PositionInFaction": positionInFaction,
+		"Recipes":           recipes,
+		"SameElement":       sameElement,
+		"SameGrade":         sameGrade,
+		"TotalSameElement":  totalSameElement,
+		"TotalSameGrade":    totalSameGrade,
+		"IsStarter":         isStarter,
+		"EggInfo":           eggInfo,
+		"PrevID":            prevID,
+		"NextID":            nextID,
 	})
 }
 
-func (h *AdminHandler) SlimeCreate(c *fiber.Ctx) error {
-	ctx := c.Context()
-	adminUsername := c.Locals("admin_username").(string)
-	adminID := c.Locals("admin_id").(int)
+// --- Helpers ---
 
-	userID := c.FormValue("user_id")
-	speciesID, _ := strconv.Atoi(c.FormValue("species_id"))
-	personality := c.FormValue("personality")
-	level, _ := strconv.Atoi(c.FormValue("level"))
+type recipeEntry struct {
+	ID      int
+	InputA  int
+	InputB  int
+	Output  int
+	OutputName string
+	Hidden  bool
+	Hint    string
+}
 
-	if userID == "" || speciesID == 0 || personality == "" {
-		return c.Redirect("/admin/slimes/create?msg=required")
+func loadRecipesJSON() []recipeEntry {
+	_, filename, _, _ := runtime.Caller(0)
+	dir := filepath.Join(filepath.Dir(filename), "..", "..", "..", "shared")
+	paths := []string{
+		filepath.Join(dir, "recipes.json"),
+		"shared/recipes.json",
+		"../shared/recipes.json",
 	}
-	if level < 1 {
-		level = 1
+	var data []byte
+	var err error
+	for _, p := range paths {
+		data, err = os.ReadFile(p)
+		if err == nil {
+			break
+		}
 	}
-
-	// Get species element
-	var element string
-	err := h.pool.QueryRow(ctx, `SELECT element FROM slime_species WHERE id = $1`, speciesID).Scan(&element)
 	if err != nil {
-		return c.Redirect("/admin/slimes/create?msg=invalid_species")
+		return nil
 	}
-
-	// Verify user exists
-	var exists bool
-	h.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)`, userID).Scan(&exists)
-	if !exists {
-		return c.Redirect("/admin/slimes/create?msg=user_not_found")
+	var raw struct {
+		Recipes []struct {
+			ID         int    `json:"id"`
+			InputA     int    `json:"input_a"`
+			InputB     int    `json:"input_b"`
+			Output     int    `json:"output"`
+			OutputName string `json:"output_name"`
+			Hidden     bool   `json:"hidden"`
+			Hint       string `json:"hint"`
+		} `json:"recipes"`
 	}
-
-	// Create slime
-	var slimeID string
-	err = h.pool.QueryRow(ctx,
-		`INSERT INTO slimes (id, user_id, species_id, element, personality, level, affection, hunger, condition)
-		 VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 50, 50, 100)
-		 RETURNING id`,
-		userID, speciesID, element, personality, level,
-	).Scan(&slimeID)
-	if err != nil {
-		return c.Redirect("/admin/slimes/create?msg=error")
+	if json.Unmarshal(data, &raw) != nil {
+		return nil
 	}
+	result := make([]recipeEntry, len(raw.Recipes))
+	for i, r := range raw.Recipes {
+		result[i] = recipeEntry{ID: r.ID, InputA: r.InputA, InputB: r.InputB, Output: r.Output, OutputName: r.OutputName, Hidden: r.Hidden, Hint: r.Hint}
+	}
+	return result
+}
 
-	detail := fmt.Sprintf("species:%d personality:%s level:%d user:%s", speciesID, personality, level, userID)
-	logAdminAction(h.pool, ctx, adminID, adminUsername, "create_slime", "slime", slimeID, detail)
-
-	return c.Redirect(fmt.Sprintf("/admin/slimes/%s?msg=created", slimeID))
+func getEggInfo(grade, element string) []string {
+	var info []string
+	switch grade {
+	case "common":
+		info = append(info, "일반 알 (50%)")
+	case "uncommon":
+		info = append(info, "일반 알 (30%)", "프리미엄 알 (35%)")
+	case "rare":
+		info = append(info, "일반 알 (15%)", "프리미엄 알 (22%)", "레전더리 알 (40%)")
+	case "epic":
+		info = append(info, "일반 알 (4%)", "프리미엄 알 (10%)", "레전더리 알 (35%)")
+	case "legendary":
+		info = append(info, "일반 알 (0.9%/50회 피티)", "프리미엄 알 (2.5%/30회 피티)", "레전더리 알 (20%/20회 피티)")
+	case "mythic":
+		info = append(info, "일반 알 (0.1%)", "프리미엄 알 (0.5%)", "레전더리 알 (5%)")
+	}
+	// Element-specific eggs
+	elementEggs := map[string]string{
+		"fire": "불 속성 알", "water": "물 속성 알", "grass": "풀 속성 알",
+		"dark": "어둠 속성 알", "ice": "얼음 속성 알", "electric": "번개 속성 알", "earth": "대지 속성 알",
+	}
+	if eggName, ok := elementEggs[element]; ok {
+		info = append(info, eggName+" (속성 확정)")
+	}
+	return info
 }

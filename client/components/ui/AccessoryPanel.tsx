@@ -149,7 +149,7 @@ export default function AccessoryPanel() {
               <div
                 className="absolute -top-1 -right-1 min-w-[20px] h-5 rounded-full text-[10px] font-bold flex items-center justify-center px-1"
                 style={{
-                  background: "linear-gradient(135deg, #FF9FF3, #A29BFE)",
+                  background: "linear-gradient(135deg, #C9A84C, #D4AF37)",
                   color: "#fff",
                 }}
               >
@@ -208,7 +208,7 @@ export default function AccessoryPanel() {
           <span className="text-[10px] text-[#FFEAA7] font-bold">
             💰 {user?.gold?.toLocaleString() || 0}
           </span>
-          <span className="text-[10px] text-[#A29BFE] font-bold">
+          <span className="text-[10px] text-[#D4AF37] font-bold">
             💎 {user?.gems?.toLocaleString() || 0}
           </span>
         </div>
@@ -230,7 +230,7 @@ export default function AccessoryPanel() {
                 const wasJustBought = justBought === acc.id;
 
                 // Price indicator
-                const priceColor = acc.cost_gems > 0 ? "#A29BFE" : "#FFEAA7";
+                const priceColor = acc.cost_gems > 0 ? "#D4AF37" : "#FFEAA7";
 
                 return (
                   <div
@@ -247,7 +247,7 @@ export default function AccessoryPanel() {
                       <div
                         className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full text-[10px] flex items-center justify-center"
                         style={{
-                          background: "linear-gradient(135deg, #55EFC4, #00D2D3)",
+                          background: "linear-gradient(135deg, #C9A84C, #D4AF37)",
                         }}
                       >
                         ✓
@@ -269,7 +269,7 @@ export default function AccessoryPanel() {
                       className="w-12 h-12 rounded-xl flex items-center justify-center transition-transform hover:scale-110"
                       style={{
                         background: isOwned
-                          ? "linear-gradient(135deg, rgba(162,155,254,0.2), rgba(255,159,243,0.2))"
+                          ? "linear-gradient(135deg, rgba(201,168,76,0.2), rgba(139,105,20,0.15))"
                           : "rgba(255,255,255,0.03)",
                       }}
                     >
@@ -289,9 +289,9 @@ export default function AccessoryPanel() {
                         className="btn-cute w-full py-1.5 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1"
                         style={{
                           background: acc.cost_gems > 0
-                            ? "linear-gradient(135deg, #A29BFE, #C8B6FF)"
-                            : "linear-gradient(135deg, #FFEAA7, #FD79A8)",
-                          color: acc.cost_gems > 0 ? "#1a0e3d" : "#3d1f00",
+                            ? "linear-gradient(135deg, #C9A84C, #D4AF37)"
+                            : "linear-gradient(135deg, #FFEAA7, #C9A84C)",
+                          color: acc.cost_gems > 0 ? "#1A0E08" : "#3d1f00",
                         }}
                       >
                         {isBuying ? (

@@ -7,9 +7,43 @@
 <div class="msg-error">{{.Error}}</div>
 {{end}}
 
+<!-- Stats Summary -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-bottom: 16px;">
+  <div style="background: #2d3436; border-radius: 8px; padding: 12px; text-align: center;">
+    <div style="font-size: 22px; font-weight: 700; color: #0984e3;">{{.Total}}</div>
+    <div style="font-size: 11px; color: #b2bec3;">총 종족수</div>
+  </div>
+  {{if .GradeCounts}}
+  {{with index .GradeCounts "common"}}<div style="background: #2d3436; border-radius: 8px; padding: 12px; text-align: center;">
+    <div style="font-size: 22px; font-weight: 700; color: #636e72;">{{.}}</div>
+    <div style="font-size: 11px; color: #b2bec3;">Common</div>
+  </div>{{end}}
+  {{with index .GradeCounts "uncommon"}}<div style="background: #2d3436; border-radius: 8px; padding: 12px; text-align: center;">
+    <div style="font-size: 22px; font-weight: 700; color: #00b894;">{{.}}</div>
+    <div style="font-size: 11px; color: #b2bec3;">Uncommon</div>
+  </div>{{end}}
+  {{with index .GradeCounts "rare"}}<div style="background: #2d3436; border-radius: 8px; padding: 12px; text-align: center;">
+    <div style="font-size: 22px; font-weight: 700; color: #0984e3;">{{.}}</div>
+    <div style="font-size: 11px; color: #b2bec3;">Rare</div>
+  </div>{{end}}
+  {{with index .GradeCounts "epic"}}<div style="background: #2d3436; border-radius: 8px; padding: 12px; text-align: center;">
+    <div style="font-size: 22px; font-weight: 700; color: #6c5ce7;">{{.}}</div>
+    <div style="font-size: 11px; color: #b2bec3;">Epic</div>
+  </div>{{end}}
+  {{with index .GradeCounts "legendary"}}<div style="background: #2d3436; border-radius: 8px; padding: 12px; text-align: center;">
+    <div style="font-size: 22px; font-weight: 700; color: #fdcb6e;">{{.}}</div>
+    <div style="font-size: 11px; color: #b2bec3;">Legendary</div>
+  </div>{{end}}
+  {{with index .GradeCounts "mythic"}}<div style="background: #2d3436; border-radius: 8px; padding: 12px; text-align: center;">
+    <div style="font-size: 22px; font-weight: 700; color: #fd79a8;">{{.}}</div>
+    <div style="font-size: 11px; color: #b2bec3;">Mythic</div>
+  </div>{{end}}
+  {{end}}
+</div>
+
 <!-- Faction Tabs -->
 <div class="tab-bar">
-  <a href="/admin/gamedata/species" {{if eq .Faction ""}}class="active"{{end}}>전체</a>
+  <a href="/admin/gamedata/species" {{if eq .Faction ""}}class="active"{{end}}>전체 (203)</a>
   <a href="/admin/gamedata/species?faction=east_blue" {{if eq .Faction "east_blue"}}class="active"{{end}}>이스트블루</a>
   <a href="/admin/gamedata/species?faction=grand_line" {{if eq .Faction "grand_line"}}class="active"{{end}}>그랜드라인</a>
   <a href="/admin/gamedata/species?faction=straw_hat" {{if eq .Faction "straw_hat"}}class="active"{{end}}>밀짚모자</a>
@@ -20,9 +54,9 @@
   <a href="/admin/gamedata/species?faction=worst_gen" {{if eq .Faction "worst_gen"}}class="active"{{end}}>최악의세대</a>
   <a href="/admin/gamedata/species?faction=marines" {{if eq .Faction "marines"}}class="active"{{end}}>해군</a>
   <a href="/admin/gamedata/species?faction=yonko" {{if eq .Faction "yonko"}}class="active"{{end}}>사황</a>
-  <a href="/admin/gamedata/species?faction=logia" {{if eq .Faction "logia"}}class="active"{{end}}>로기아</a>
-  <a href="/admin/gamedata/species?faction=paramecia" {{if eq .Faction "paramecia"}}class="active"{{end}}>파라미시아</a>
-  <a href="/admin/gamedata/species?faction=zoan" {{if eq .Faction "zoan"}}class="active"{{end}}>조안</a>
+  <a href="/admin/gamedata/species?faction=logia" {{if eq .Faction "logia"}}class="active"{{end}}>자연계</a>
+  <a href="/admin/gamedata/species?faction=paramecia" {{if eq .Faction "paramecia"}}class="active"{{end}}>초인계</a>
+  <a href="/admin/gamedata/species?faction=zoan" {{if eq .Faction "zoan"}}class="active"{{end}}>동물계</a>
   <a href="/admin/gamedata/species?faction=revolutionary" {{if eq .Faction "revolutionary"}}class="active"{{end}}>혁명군</a>
   <a href="/admin/gamedata/species?faction=celestial" {{if eq .Faction "celestial"}}class="active"{{end}}>천룡인</a>
   <a href="/admin/gamedata/species?faction=hidden" {{if eq .Faction "hidden"}}class="active"{{end}}>히든</a>
@@ -33,17 +67,17 @@
   {{if .Faction}}<input type="hidden" name="faction" value="{{.Faction}}" />{{end}}
   <select name="element" style="width: 130px;">
     <option value="">전체 원소</option>
-    <option value="water" {{if eq .Element "water"}}selected{{end}}>water</option>
-    <option value="fire" {{if eq .Element "fire"}}selected{{end}}>fire</option>
-    <option value="grass" {{if eq .Element "grass"}}selected{{end}}>grass</option>
-    <option value="light" {{if eq .Element "light"}}selected{{end}}>light</option>
-    <option value="dark" {{if eq .Element "dark"}}selected{{end}}>dark</option>
-    <option value="ice" {{if eq .Element "ice"}}selected{{end}}>ice</option>
-    <option value="electric" {{if eq .Element "electric"}}selected{{end}}>electric</option>
-    <option value="poison" {{if eq .Element "poison"}}selected{{end}}>poison</option>
-    <option value="earth" {{if eq .Element "earth"}}selected{{end}}>earth</option>
-    <option value="wind" {{if eq .Element "wind"}}selected{{end}}>wind</option>
-    <option value="celestial" {{if eq .Element "celestial"}}selected{{end}}>celestial</option>
+    <option value="water" {{if eq .Element "water"}}selected{{end}}>💧 water</option>
+    <option value="fire" {{if eq .Element "fire"}}selected{{end}}>🔥 fire</option>
+    <option value="grass" {{if eq .Element "grass"}}selected{{end}}>🌿 grass</option>
+    <option value="light" {{if eq .Element "light"}}selected{{end}}>✨ light</option>
+    <option value="dark" {{if eq .Element "dark"}}selected{{end}}>🌑 dark</option>
+    <option value="ice" {{if eq .Element "ice"}}selected{{end}}>❄️ ice</option>
+    <option value="electric" {{if eq .Element "electric"}}selected{{end}}>⚡ electric</option>
+    <option value="poison" {{if eq .Element "poison"}}selected{{end}}>☠️ poison</option>
+    <option value="earth" {{if eq .Element "earth"}}selected{{end}}>🪨 earth</option>
+    <option value="wind" {{if eq .Element "wind"}}selected{{end}}>🌪️ wind</option>
+    <option value="celestial" {{if eq .Element "celestial"}}selected{{end}}>🌟 celestial</option>
   </select>
   <select name="grade" style="width: 130px;">
     <option value="">전체 등급</option>
@@ -58,29 +92,43 @@
   <a href="/admin/gamedata/species" class="btn btn-danger btn-sm">초기화</a>
 </form>
 
-<p style="font-size: 12px; color: #636e72; margin-bottom: 12px;">총 {{.Total}}종</p>
+<p style="font-size: 12px; color: #636e72; margin-bottom: 12px;">
+  검색 결과: {{.Total}}종
+</p>
 
 <table>
   <thead>
     <tr>
-      <th>ID</th>
+      <th style="width: 50px;">ID</th>
       <th>이름</th>
       <th>영문명</th>
-      <th>원소</th>
-      <th>등급</th>
+      <th style="width: 80px;">속성</th>
+      <th style="width: 90px;">등급</th>
+      <th style="width: 110px;">진영</th>
+      <th>설명</th>
     </tr>
   </thead>
   <tbody>
     {{range .Species}}
     <tr>
-      <td style="color: #636e72;">{{.ID}}</td>
-      <td>{{.Name}}</td>
-      <td style="color: #b2bec3;">{{.NameEN}}</td>
-      <td>{{.Element}}</td>
+      <td style="color: #636e72; font-size: 12px;">{{.ID}}</td>
+      <td style="font-weight: 600;">{{.Name}}</td>
+      <td style="color: #b2bec3; font-size: 12px;">{{.NameEN}}</td>
+      <td>
+        <span style="font-size: 12px;">
+        {{if eq .Element "water"}}💧{{else if eq .Element "fire"}}🔥{{else if eq .Element "grass"}}🌿{{else if eq .Element "light"}}✨{{else if eq .Element "dark"}}🌑{{else if eq .Element "ice"}}❄️{{else if eq .Element "electric"}}⚡{{else if eq .Element "poison"}}☠️{{else if eq .Element "earth"}}🪨{{else if eq .Element "wind"}}🌪️{{else if eq .Element "celestial"}}🌟{{end}}
+        {{.Element}}</span>
+      </td>
       <td><span class="badge badge-{{.Grade}}">{{.Grade}}</span></td>
+      <td>
+        {{if .Faction}}
+        <span style="font-size: 11px; padding: 2px 6px; border-radius: 4px; background: #2d3436; color: #dfe6e9;">{{.Faction}}</span>
+        {{end}}
+      </td>
+      <td style="color: #b2bec3; font-size: 11px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{.Description}}</td>
     </tr>
     {{else}}
-    <tr><td colspan="5" style="text-align:center; color:#636e72; padding: 24px;">종족 데이터 없음</td></tr>
+    <tr><td colspan="7" style="text-align:center; color:#636e72; padding: 24px;">종족 데이터 없음</td></tr>
     {{end}}
   </tbody>
 </table>

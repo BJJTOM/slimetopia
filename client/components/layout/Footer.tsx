@@ -3,14 +3,14 @@
 import Link from "next/link";
 
 const FOOTER_LINKS = {
-  Game: [
-    { label: "Play Now", href: "/login" },
-    { label: "Game Info", href: "/game" },
-    { label: "News", href: "/news" },
+  "게임": [
+    { label: "지금 플레이", href: "/login" },
+    { label: "게임 소개", href: "/game" },
+    { label: "소식", href: "/news" },
   ],
-  Company: [
-    { label: "About", href: "/about" },
-    { label: "Support", href: "/support" },
+  "회사": [
+    { label: "소개", href: "/about" },
+    { label: "고객지원", href: "/support" },
   ],
 };
 
@@ -20,10 +20,10 @@ export default function Footer() {
       {/* Top gradient divider */}
       <div className="web-divider" />
 
-      <div className="max-w-7xl mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 md:py-16">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
           {/* Brand */}
-          <div className="md:col-span-2">
+          <div className="col-span-2">
             <div className="flex items-center gap-2 mb-4">
               <div
                 className="w-8 h-8 rounded-lg flex items-center justify-center"
@@ -49,8 +49,8 @@ export default function Footer() {
               className="text-sm max-w-xs leading-relaxed"
               style={{ color: "rgba(178, 190, 195, 0.6)" }}
             >
-              Collect, merge, and raise adorable slimes. Build your dream
-              village in a world of 200+ unique species.
+              귀여운 슬라임을 수집하고, 합성하고, 키워보세요.
+              200종 이상의 슬라임이 사는 세계에서 나만의 마을을 만드세요.
             </p>
 
             {/* Decorative slimes */}
@@ -108,7 +108,7 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div
-          className="mt-12 pt-6 flex flex-col md:flex-row items-center justify-between gap-4"
+          className="mt-8 md:mt-12 pt-6 flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4"
           style={{
             borderTop: "1px solid rgba(255, 255, 255, 0.04)",
           }}
@@ -123,7 +123,7 @@ export default function Footer() {
             className="text-xs"
             style={{ color: "rgba(178, 190, 195, 0.2)" }}
           >
-            Made with care for slime lovers everywhere.
+            전 세계 슬라임 팬들을 위해 정성껏 만들었습니다.
           </p>
         </div>
       </div>

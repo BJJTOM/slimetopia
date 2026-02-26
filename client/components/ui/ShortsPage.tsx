@@ -406,7 +406,7 @@ export default function ShortsPage({ onClose, embedded }: { onClose: () => void;
           </p>
           <button onClick={() => setShowUpload(true)}
             className="px-6 py-2.5 rounded-full text-white font-bold text-sm"
-            style={{ background: "linear-gradient(135deg, #55EFC4, #00B894)" }}>
+            style={{ background: "linear-gradient(135deg, #C9A84C, #8B6914)" }}>
             업로드
           </button>
         </div>
@@ -505,7 +505,7 @@ export default function ShortsPage({ onClose, embedded }: { onClose: () => void;
       <button
         onClick={() => setShowUpload(true)}
         className="absolute bottom-20 right-4 z-30 w-12 h-12 rounded-full flex items-center justify-center shadow-lg"
-        style={{ background: "linear-gradient(135deg, #55EFC4, #00B894)", boxShadow: "0 4px 16px rgba(85,239,196,0.3)" }}
+        style={{ background: "linear-gradient(135deg, #C9A84C, #8B6914)", boxShadow: "0 4px 16px rgba(201,168,76,0.3)" }}
       >
         <span className="text-[#0a0a1a] text-2xl leading-none font-bold">+</span>
       </button>

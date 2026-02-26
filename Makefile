@@ -1,4 +1,4 @@
-.PHONY: dev dev-client dev-server dev-android infra infra-down migrate-up migrate-down build build-android clean
+.PHONY: dev dev-client dev-server dev-android infra infra-down migrate-up migrate-down build build-android build-android-prod build-web clean
 
 # Start all infrastructure (DB + Redis)
 infra:
@@ -63,6 +63,19 @@ build-android:
 	cd client && npx cap sync android
 	cd client/android && JAVA_HOME=$$HOME/.local/jdk-21.0.10+7/Contents/Home ANDROID_HOME=$$HOME/.local/android-sdk ./gradlew assembleDebug
 	@echo "APK: client/android/app/build/outputs/apk/debug/app-debug.apk"
+
+# Build production Android APK (connects to Railway server)
+build-android-prod:
+	cd client && NEXT_PUBLIC_API_URL=https://slimetopia-api-production.up.railway.app CAPACITOR_BUILD=true pnpm build
+	cd client && npx cap sync android
+	cd client/android && JAVA_HOME=$$HOME/.local/jdk-21.0.10+7/Contents/Home ANDROID_HOME=$$HOME/.local/android-sdk ./gradlew assembleDebug
+	@echo "APK: client/android/app/build/outputs/apk/debug/app-debug.apk"
+
+# Build web frontend for Cloudflare Pages (static export → out/)
+build-web:
+	cd client && NEXT_PUBLIC_API_URL=https://slimetopia-api-production.up.railway.app STATIC_EXPORT=true pnpm build
+	@echo "Static site: client/out/"
+	@echo "Deploy client/out/ to Cloudflare Pages"
 
 # Clean build artifacts
 clean:

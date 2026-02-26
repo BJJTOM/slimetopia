@@ -19,19 +19,19 @@ interface Props {
 }
 
 const WHEEL_COLORS = [
-  "rgba(162,155,254,0.12)",
-  "rgba(255,159,243,0.08)",
-  "rgba(85,239,196,0.10)",
+  "rgba(201,168,76,0.12)",
+  "rgba(139,105,20,0.08)",
+  "rgba(212,175,55,0.10)",
   "rgba(255,234,167,0.08)",
-  "rgba(116,185,255,0.10)",
-  "rgba(253,121,168,0.08)",
-  "rgba(129,236,236,0.10)",
-  "rgba(200,182,255,0.08)",
+  "rgba(201,168,76,0.10)",
+  "rgba(245,230,200,0.06)",
+  "rgba(212,175,55,0.08)",
+  "rgba(139,105,20,0.10)",
 ];
 
 const RARITY_COLORS: Record<string, string> = {
   gold: "#FFEAA7",
-  gem: "#A29BFE",
+  gem: "#D4AF37",
   egg: "#FF9FF3",
   item: "#55EFC4",
   stardust: "#81ECEC",
@@ -120,7 +120,7 @@ export default function DailyWheelModal({ onClose }: Props) {
       ctx.fill();
 
       // Segment divider
-      ctx.strokeStyle = "rgba(162,155,254,0.08)";
+      ctx.strokeStyle = "rgba(201,168,76,0.08)";
       ctx.lineWidth = 1;
       ctx.stroke();
 
@@ -148,14 +148,14 @@ export default function DailyWheelModal({ onClose }: Props) {
     // Outer ring
     ctx.beginPath();
     ctx.arc(cx, cy, r + 2, 0, Math.PI * 2);
-    ctx.strokeStyle = "rgba(162,155,254,0.15)";
+    ctx.strokeStyle = "rgba(201,168,76,0.15)";
     ctx.lineWidth = 4;
     ctx.stroke();
 
     // Inner ring
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.strokeStyle = "rgba(200,182,255,0.25)";
+    ctx.strokeStyle = "rgba(201,168,76,0.25)";
     ctx.lineWidth = 2;
     ctx.stroke();
 
@@ -170,25 +170,25 @@ export default function DailyWheelModal({ onClose }: Props) {
       ctx.beginPath();
       ctx.arc(dx, dy, isMajor ? 2.5 : 1.5, 0, Math.PI * 2);
       ctx.fillStyle = isMajor
-        ? "rgba(200,182,255,0.35)"
-        : "rgba(200,182,255,0.15)";
+        ? "rgba(201,168,76,0.35)"
+        : "rgba(201,168,76,0.15)";
       ctx.fill();
     }
 
     // Center circle
     const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 26);
-    grad.addColorStop(0, "rgba(28,22,42,1)");
-    grad.addColorStop(1, "rgba(18,15,30,1)");
+    grad.addColorStop(0, "rgba(44,24,16,1)");
+    grad.addColorStop(1, "rgba(26,14,8,1)");
     ctx.beginPath();
     ctx.arc(cx, cy, 26, 0, Math.PI * 2);
     ctx.fillStyle = grad;
     ctx.fill();
-    ctx.strokeStyle = "rgba(162,155,254,0.3)";
+    ctx.strokeStyle = "rgba(201,168,76,0.3)";
     ctx.lineWidth = 2;
     ctx.stroke();
 
     ctx.font = "bold 11px sans-serif";
-    ctx.fillStyle = spinning ? "#FF9FF3" : "#C8B6FF";
+    ctx.fillStyle = spinning ? "#FFEAA7" : "#D4AF37";
     ctx.textAlign = "center";
     ctx.fillText(spinning ? "..." : "SPIN", cx, cy + 4);
   }, [rewards, rotation, spinning]);
@@ -254,11 +254,11 @@ export default function DailyWheelModal({ onClose }: Props) {
         {/* Decorative background orbs */}
         <div
           className="absolute -top-20 -right-20 w-40 h-40 rounded-full opacity-20"
-          style={{ background: "radial-gradient(circle, #FF9FF3, transparent)" }}
+          style={{ background: "radial-gradient(circle, #D4AF37, transparent)" }}
         />
         <div
           className="absolute -bottom-16 -left-16 w-32 h-32 rounded-full opacity-15"
-          style={{ background: "radial-gradient(circle, #A29BFE, transparent)" }}
+          style={{ background: "radial-gradient(circle, #C9A84C, transparent)" }}
         />
 
         {/* Header */}
@@ -266,7 +266,7 @@ export default function DailyWheelModal({ onClose }: Props) {
           <div className="flex items-center gap-2">
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background: "linear-gradient(135deg, #FF6B6B30, #FF9FF320)" }}
+              style={{ background: "linear-gradient(135deg, #C9A84C30, #D4AF3720)" }}
             >
               <span className={`text-xl ${spinning ? "animate-spin" : ""}`}>🎰</span>
             </div>
@@ -328,8 +328,8 @@ export default function DailyWheelModal({ onClose }: Props) {
             <div
               className="absolute inset-[-4px] rounded-full pointer-events-none"
               style={{
-                border: "2px solid rgba(162,155,254,0.3)",
-                boxShadow: "0 0 20px rgba(162,155,254,0.2), inset 0 0 20px rgba(162,155,254,0.1)",
+                border: "2px solid rgba(201,168,76,0.3)",
+                boxShadow: "0 0 20px rgba(201,168,76,0.2), inset 0 0 20px rgba(201,168,76,0.1)",
                 animation: "wheel-ring-pulse 1s ease-in-out infinite",
               }}
             />
@@ -427,7 +427,7 @@ export default function DailyWheelModal({ onClose }: Props) {
           <p
             className="text-[10px] mt-3 font-medium"
             style={{
-              background: "linear-gradient(90deg, #A29BFE, #FF9FF3)",
+              background: "linear-gradient(90deg, #C9A84C, #D4AF37)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
             }}

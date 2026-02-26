@@ -93,14 +93,14 @@ const POST_TYPES = [
   { value: "general", label: "일반", icon: "💬", color: "#B2BEC3" },
   { value: "tip", label: "꿀팁", icon: "💡", color: "#FFEAA7" },
   { value: "question", label: "질문", icon: "❓", color: "#74B9FF" },
-  { value: "flex", label: "자랑", icon: "✨", color: "#A29BFE" },
-  { value: "screenshot", label: "스샷", icon: "📸", color: "#55EFC4" },
+  { value: "flex", label: "자랑", icon: "✨", color: "#D4AF37" },
+  { value: "screenshot", label: "스샷", icon: "📸", color: "#C9A84C" },
 ];
 
 const AVATAR_GRADIENTS = [
-  "from-[#55EFC4] to-[#00B894]",
+  "from-[#D4AF37] to-[#8B6914]",
   "from-[#74B9FF] to-[#0984E3]",
-  "from-[#A29BFE] to-[#6C5CE7]",
+  "from-[#C9A84C] to-[#8B6914]",
   "from-[#FFEAA7] to-[#FDCB6E]",
   "from-[#FF6B6B] to-[#E17055]",
   "from-[#FD79A8] to-[#E84393]",
@@ -777,7 +777,7 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
                                 return next;
                               });
                             }}
-                              className="text-[10px] text-[#74B9FF] hover:text-[#A29BFE] transition">
+                              className="text-[10px] text-[#74B9FF] hover:text-[#C9A84C] transition">
                               {isExpanded ? "접기" : `답글 ${subReplies.length}개 보기`}
                             </button>
                           )}
@@ -833,13 +833,13 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
               onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && submitReply(selectedPost.id)}
               placeholder={replyingTo ? `@${replyingTo.nickname}에게 답글...` : "답글을 입력하세요..."}
               maxLength={300}
-              className="flex-1 bg-white/5 text-white text-[13px] rounded-xl px-4 py-2.5 border border-white/10 focus:border-[#55EFC4]/40 focus:outline-none placeholder-white/20"
+              className="flex-1 bg-white/5 text-white text-[13px] rounded-xl px-4 py-2.5 border border-white/10 focus:border-[#C9A84C]/40 focus:outline-none placeholder-white/20"
             />
             <button
               onClick={() => submitReply(selectedPost.id)}
               disabled={replying || !replyText.trim()}
               className="px-4 py-2.5 rounded-xl font-bold text-[12px] disabled:opacity-30 transition"
-              style={{ background: "linear-gradient(135deg, #55EFC4, #00B894)", color: "#0a0a1a" }}>
+              style={{ background: "linear-gradient(135deg, #C9A84C, #8B6914)", color: "#fff" }}>
               {replying ? "..." : "전송"}
             </button>
           </div>
@@ -849,7 +849,7 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
                 <div className="h-full rounded-full transition-all duration-300"
                   style={{
                     width: `${(replyText.length / 300) * 100}%`,
-                    background: replyText.length > 270 ? "#FF6B6B" : replyText.length > 200 ? "#FFEAA7" : "#55EFC4",
+                    background: replyText.length > 270 ? "#FF6B6B" : replyText.length > 200 ? "#FFEAA7" : "#C9A84C",
                   }} />
               </div>
               <span className={`text-[8px] tabular-nums ${replyText.length > 270 ? "text-[#FF6B6B]" : "text-white/20"}`}>
@@ -949,7 +949,7 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
             </button>
             <button
               className="flex-1 py-1.5 rounded-lg text-xs font-bold transition"
-              style={{ background: "rgba(162,155,254,0.15)", color: "#C8B6FF" }}>
+              style={{ background: "rgba(201,168,76,0.15)", color: "#D4AF37" }}>
               📱 쇼츠
             </button>
             <button onClick={() => setCommunityTab("updates")}
@@ -986,8 +986,8 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
             <button onClick={() => setSortMode("new")}
               className="text-[9px] font-bold px-2.5 py-1 transition"
               style={{
-                background: sortMode === "new" ? "rgba(85,239,196,0.12)" : "transparent",
-                color: sortMode === "new" ? "#55EFC4" : "rgba(255,255,255,0.3)",
+                background: sortMode === "new" ? "rgba(201,168,76,0.12)" : "transparent",
+                color: sortMode === "new" ? "#D4AF37" : "rgba(255,255,255,0.3)",
               }}>
               🕐 최신
             </button>
@@ -1005,7 +1005,7 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
         <div className="flex gap-1 rounded-xl p-1 mb-2" style={{ background: "rgba(255,255,255,0.04)" }}>
           <button
             className="flex-1 py-1.5 rounded-lg text-xs font-bold transition"
-            style={{ background: "rgba(162,155,254,0.15)", color: "#C8B6FF" }}>
+            style={{ background: "rgba(201,168,76,0.15)", color: "#D4AF37" }}>
             📋 게시판
           </button>
           <button onClick={() => setCommunityTab("shorts")}
@@ -1141,8 +1141,8 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
           onClick={() => setShowCompose(true)}
           className="absolute bottom-4 right-4 w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-lg transition hover:scale-105 active:scale-95"
           style={{
-            background: "linear-gradient(135deg, #55EFC4, #00B894)",
-            boxShadow: "0 4px 20px rgba(85,239,196,0.4)",
+            background: "linear-gradient(135deg, #C9A84C, #8B6914)",
+            boxShadow: "0 4px 20px rgba(201,168,76,0.4)",
           }}>
           ✏️
         </button>
@@ -1179,7 +1179,7 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
               placeholder="슬라임토피아에서 무슨 일이 있었나요?"
               maxLength={500}
               rows={4}
-              className="w-full bg-white/5 text-white text-[13px] rounded-xl px-4 py-3 border border-white/10 focus:border-[#55EFC4]/40 focus:outline-none placeholder-white/20 resize-none"
+              className="w-full bg-white/5 text-white text-[13px] rounded-xl px-4 py-3 border border-white/10 focus:border-[#C9A84C]/40 focus:outline-none placeholder-white/20 resize-none"
               autoFocus
             />
 
@@ -1202,7 +1202,7 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
             {posting && uploadProgress > 0 && uploadProgress < 100 && (
               <div className="mt-2 h-1 bg-white/[0.04] rounded-full overflow-hidden">
                 <div className="h-full rounded-full transition-all"
-                  style={{ width: `${uploadProgress}%`, background: "#55EFC4" }} />
+                  style={{ width: `${uploadProgress}%`, background: "#C9A84C" }} />
               </div>
             )}
 
@@ -1225,7 +1225,7 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
                     <div className="h-full rounded-full transition-all duration-300"
                       style={{
                         width: `${(composeText.length / 500) * 100}%`,
-                        background: composeText.length > 450 ? "#FF6B6B" : composeText.length > 350 ? "#FFEAA7" : "#55EFC4",
+                        background: composeText.length > 450 ? "#FF6B6B" : composeText.length > 350 ? "#FFEAA7" : "#C9A84C",
                       }} />
                   </div>
                   <span className={`text-[10px] tabular-nums ${composeText.length > 450 ? "text-[#FF6B6B]" : "text-white/20"}`}>
@@ -1235,7 +1235,7 @@ export default function CommunityPage({ onClose }: { onClose?: () => void }) {
               </div>
               <button onClick={createPost} disabled={posting || !composeText.trim()}
                 className="px-5 py-2 rounded-xl font-bold text-sm disabled:opacity-30 transition active:scale-95"
-                style={{ background: "linear-gradient(135deg, #55EFC4, #00B894)", color: "#0a0a1a" }}>
+                style={{ background: "linear-gradient(135deg, #C9A84C, #8B6914)", color: "#fff" }}>
                 {posting ? "등록 중..." : "게시하기"}
               </button>
             </div>

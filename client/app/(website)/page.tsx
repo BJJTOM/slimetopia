@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import HeroSection from "@/components/home/HeroSection";
 import FeaturesSection from "@/components/home/FeaturesSection";
 import SlimeShowcase from "@/components/home/SlimeShowcase";
@@ -9,14 +8,23 @@ import ScreenshotSection from "@/components/home/ScreenshotSection";
 import CtaSection from "@/components/home/CtaSection";
 
 export default function LandingPage() {
-  const router = useRouter();
+  const [ready, setReady] = useState(false);
 
-  // Capacitor (Android/iOS) opens at root - redirect to game
   useEffect(() => {
-    if (typeof window !== "undefined" && (window as any).Capacitor?.isNativePlatform?.()) {
-      router.replace("/play");
+    // Capacitor (Android/iOS) — hard redirect, no Next.js router dependency
+    if ((window as any).Capacitor?.isNativePlatform?.()) {
+      window.location.replace("/login/");
+      return;
     }
-  }, [router]);
+    setReady(true);
+  }, []);
+
+  if (!ready)
+    return (
+      <div style={{ width: "100vw", height: "100vh", background: "#0a0e14", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ color: "rgba(255,255,255,0.3)", fontSize: 14 }}>Loading...</p>
+      </div>
+    );
 
   return (
     <>

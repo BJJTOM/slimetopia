@@ -3,10 +3,48 @@
 {{end}}
 
 {{define "content"}}
-<form class="search-bar" method="GET" action="/admin/slimes">
-  <input type="text" name="search" placeholder="Search by species or owner..." value="{{.Search}}" />
-  <select name="grade" style="width: 130px;">
-    <option value="">All Grades</option>
+{{if .Error}}
+<div class="msg-error">{{.Error}}</div>
+{{end}}
+
+<!-- Search & Filters -->
+<form class="filter-bar" method="GET" action="/admin/slimes">
+  <input type="text" name="search" placeholder="이름으로 검색..." value="{{.Search}}" style="width: 200px;" />
+  <select name="faction" style="width: 140px;">
+    <option value="">전체 진영</option>
+    <option value="east_blue" {{if eq .Faction "east_blue"}}selected{{end}}>이스트 블루</option>
+    <option value="grand_line" {{if eq .Faction "grand_line"}}selected{{end}}>그랜드 라인</option>
+    <option value="straw_hat" {{if eq .Faction "straw_hat"}}selected{{end}}>밀짚모자</option>
+    <option value="baroque" {{if eq .Faction "baroque"}}selected{{end}}>바로크 워크스</option>
+    <option value="sky_island" {{if eq .Faction "sky_island"}}selected{{end}}>스카이 아일랜드</option>
+    <option value="cipher_pol" {{if eq .Faction "cipher_pol"}}selected{{end}}>사이퍼 폴</option>
+    <option value="warlords" {{if eq .Faction "warlords"}}selected{{end}}>칠무해</option>
+    <option value="worst_gen" {{if eq .Faction "worst_gen"}}selected{{end}}>최악의 세대</option>
+    <option value="marines" {{if eq .Faction "marines"}}selected{{end}}>해군</option>
+    <option value="yonko" {{if eq .Faction "yonko"}}selected{{end}}>사황</option>
+    <option value="logia" {{if eq .Faction "logia"}}selected{{end}}>자연계</option>
+    <option value="paramecia" {{if eq .Faction "paramecia"}}selected{{end}}>초인계</option>
+    <option value="zoan" {{if eq .Faction "zoan"}}selected{{end}}>동물계</option>
+    <option value="revolutionary" {{if eq .Faction "revolutionary"}}selected{{end}}>혁명군</option>
+    <option value="celestial" {{if eq .Faction "celestial"}}selected{{end}}>천룡인</option>
+    <option value="hidden" {{if eq .Faction "hidden"}}selected{{end}}>히든</option>
+  </select>
+  <select name="element" style="width: 120px;">
+    <option value="">전체 속성</option>
+    <option value="water" {{if eq .Element "water"}}selected{{end}}>💧 water</option>
+    <option value="fire" {{if eq .Element "fire"}}selected{{end}}>🔥 fire</option>
+    <option value="grass" {{if eq .Element "grass"}}selected{{end}}>🌿 grass</option>
+    <option value="light" {{if eq .Element "light"}}selected{{end}}>✨ light</option>
+    <option value="dark" {{if eq .Element "dark"}}selected{{end}}>🌑 dark</option>
+    <option value="ice" {{if eq .Element "ice"}}selected{{end}}>❄️ ice</option>
+    <option value="electric" {{if eq .Element "electric"}}selected{{end}}>⚡ electric</option>
+    <option value="poison" {{if eq .Element "poison"}}selected{{end}}>☠️ poison</option>
+    <option value="earth" {{if eq .Element "earth"}}selected{{end}}>🪨 earth</option>
+    <option value="wind" {{if eq .Element "wind"}}selected{{end}}>🌪️ wind</option>
+    <option value="celestial" {{if eq .Element "celestial"}}selected{{end}}>🌟 celestial</option>
+  </select>
+  <select name="grade" style="width: 120px;">
+    <option value="">전체 등급</option>
     <option value="common" {{if eq .Grade "common"}}selected{{end}}>Common</option>
     <option value="uncommon" {{if eq .Grade "uncommon"}}selected{{end}}>Uncommon</option>
     <option value="rare" {{if eq .Grade "rare"}}selected{{end}}>Rare</option>
@@ -14,42 +52,54 @@
     <option value="legendary" {{if eq .Grade "legendary"}}selected{{end}}>Legendary</option>
     <option value="mythic" {{if eq .Grade "mythic"}}selected{{end}}>Mythic</option>
   </select>
-  <button type="submit" class="btn btn-primary">Filter</button>
-  {{if or .Search .Grade}}<a href="/admin/slimes" class="btn btn-danger">Clear</a>{{end}}
+  <button type="submit" class="btn btn-primary">검색</button>
+  {{if or .Search .Grade .Element .Faction}}<a href="/admin/slimes" class="btn btn-danger btn-sm">초기화</a>{{end}}
 </form>
 
-<p style="font-size: 12px; color: #636e72; margin-bottom: 12px;">Total: {{.TotalCount}} slimes</p>
+<p style="font-size: 12px; color: #636e72; margin-bottom: 12px;">총 {{.TotalCount}}종</p>
 
 <table>
   <thead>
     <tr>
-      <th>Species</th>
-      <th>Element</th>
-      <th>Grade</th>
-      <th>Level</th>
-      <th>Owner</th>
+      <th style="width: 50px;"></th>
+      <th style="width: 50px;">ID</th>
+      <th>이름</th>
+      <th>영문명</th>
+      <th style="width: 90px;">속성</th>
+      <th style="width: 90px;">등급</th>
+      <th style="width: 110px;">진영</th>
+      <th>설명</th>
     </tr>
   </thead>
   <tbody>
     {{range .Slimes}}
-    <tr>
-      <td>{{.SpeciesName}}</td>
-      <td>{{.Element}}</td>
+    <tr onclick="location.href='/admin/slimes/{{.ID}}'" style="cursor: pointer;">
+      <td style="padding: 4px 8px;"><img src="/admin/slime-icon/{{.ID}}?element={{.Element}}&grade={{.Grade}}" width="40" height="40" alt="" /></td>
+      <td style="color: #636e72; font-size: 12px;">{{.ID}}</td>
+      <td style="font-weight: 600;">{{.Name}}</td>
+      <td style="color: #b2bec3; font-size: 12px;">{{.NameEN}}</td>
+      <td>
+        <span style="font-size: 12px;">
+        {{if eq .Element "water"}}💧{{else if eq .Element "fire"}}🔥{{else if eq .Element "grass"}}🌿{{else if eq .Element "light"}}✨{{else if eq .Element "dark"}}🌑{{else if eq .Element "ice"}}❄️{{else if eq .Element "electric"}}⚡{{else if eq .Element "poison"}}☠️{{else if eq .Element "earth"}}🪨{{else if eq .Element "wind"}}🌪️{{else if eq .Element "celestial"}}🌟{{end}}
+        {{.Element}}</span>
+      </td>
       <td><span class="badge badge-{{.Grade}}">{{.Grade}}</span></td>
-      <td>{{.Level}}</td>
-      <td>{{.OwnerNick}}</td>
+      <td>
+        {{if .Faction}}<span style="font-size: 11px; padding: 2px 6px; border-radius: 4px; background: #2d3436; color: #dfe6e9;">{{.Faction}}</span>{{end}}
+      </td>
+      <td style="color: #b2bec3; font-size: 11px; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{truncate .Description 40}}</td>
     </tr>
     {{else}}
-    <tr><td colspan="5" style="text-align:center; color:#636e72; padding: 24px;">No slimes found</td></tr>
+    <tr><td colspan="8" style="text-align:center; color:#636e72; padding: 24px;">슬라임 데이터 없음</td></tr>
     {{end}}
   </tbody>
 </table>
 
 {{if gt .TotalPages 1}}
 <div class="pagination">
-  {{if .HasPrev}}<a href="/admin/slimes?page={{.PrevPage}}&search={{.Search}}&grade={{.Grade}}" class="btn btn-sm">&laquo; Prev</a>{{end}}
+  {{if .HasPrev}}<a href="/admin/slimes?page={{.PrevPage}}&search={{.Search}}&grade={{.Grade}}&element={{.Element}}&faction={{.Faction}}" class="btn btn-sm">&laquo; 이전</a>{{end}}
   <span class="current">{{.Page}} / {{.TotalPages}}</span>
-  {{if .HasNext}}<a href="/admin/slimes?page={{.NextPage}}&search={{.Search}}&grade={{.Grade}}" class="btn btn-sm">Next &raquo;</a>{{end}}
+  {{if .HasNext}}<a href="/admin/slimes?page={{.NextPage}}&search={{.Search}}&grade={{.Grade}}&element={{.Element}}&faction={{.Faction}}" class="btn btn-sm">다음 &raquo;</a>{{end}}
 </div>
 {{end}}
 {{end}}

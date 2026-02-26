@@ -1,10 +1,13 @@
 import type { NextConfig } from "next";
 
-const isCapacitorBuild = process.env.CAPACITOR_BUILD === "true";
+// Static export: Capacitor builds OR Cloudflare Pages (when API URL is configured externally)
+const isStaticExport =
+  process.env.CAPACITOR_BUILD === "true" ||
+  process.env.STATIC_EXPORT === "true";
 
 const nextConfig: NextConfig = {
-  // Static export for Capacitor (Android/iOS) builds
-  ...(isCapacitorBuild && {
+  // Static export for Capacitor (Android/iOS) and Cloudflare Pages
+  ...(isStaticExport && {
     output: "export",
     trailingSlash: true,
   }),
@@ -13,8 +16,8 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
 
-  // Proxy API requests to Go backend during web development only
-  ...(!isCapacitorBuild && {
+  // Proxy API requests to Go backend during local web development only
+  ...(!isStaticExport && {
     async rewrites() {
       return [
         {

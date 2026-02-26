@@ -6,26 +6,26 @@ import ScrollFadeIn from "@/components/common/ScrollFadeIn";
 const SCREENSHOTS = [
   {
     id: "home",
-    label: "Home",
-    desc: "Your personal slime habitat with real-time PixiJS rendering",
+    label: "홈",
+    desc: "PixiJS로 실시간 렌더링되는 나만의 슬라임 서식지",
     color: "#55EFC4",
   },
   {
     id: "collection",
-    label: "Collection",
-    desc: "Track your progress across 200+ species and 1200 variants",
+    label: "컬렉션",
+    desc: "200종 이상, 1200가지 변종에 걸친 수집 진행도 추적",
     color: "#74B9FF",
   },
   {
     id: "merge",
-    label: "Merge Lab",
-    desc: "Combine slimes to discover new species and rare mutations",
+    label: "합성소",
+    desc: "슬라임을 합성하여 새로운 종과 희귀 돌연변이를 발견",
     color: "#FFEAA7",
   },
   {
     id: "shop",
-    label: "Shop",
-    desc: "Purchase eggs, food, and decorations for your village",
+    label: "상점",
+    desc: "알, 먹이, 장식품을 구매하여 마을을 꾸미세요",
     color: "#A29BFE",
   },
 ];
@@ -34,31 +34,31 @@ export default function ScreenshotSection() {
   const [active, setActive] = useState(0);
 
   return (
-    <section className="relative py-32 px-6">
+    <section className="relative py-16 md:py-32 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto">
-        <ScrollFadeIn className="text-center mb-16">
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#74B9FF]/60 mb-3">
-            Screenshots
+        <ScrollFadeIn className="text-center mb-10 md:mb-16">
+          <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.2em] text-[#74B9FF]/60 mb-2 sm:mb-3">
+            스크린샷
           </p>
-          <h2 className="text-4xl md:text-5xl font-black web-text-glow">
-            See It In Action
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black web-text-glow">
+            직접 확인해보세요
           </h2>
         </ScrollFadeIn>
 
         <ScrollFadeIn>
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 sm:gap-8 items-center">
             {/* Device frame */}
             <div className="lg:col-span-3 flex justify-center">
-              <div className="web-device-phone w-[280px] h-[500px] md:w-[320px] md:h-[570px]">
+              <div className="web-device-phone w-[240px] h-[420px] sm:w-[280px] sm:h-[500px] md:w-[320px] md:h-[570px]">
                 {/* Screen content placeholder */}
                 <div
-                  className="w-full h-full flex flex-col items-center justify-center p-8 text-center"
+                  className="w-full h-full flex flex-col items-center justify-center p-5 sm:p-8 text-center"
                   style={{
                     background: `linear-gradient(135deg, ${SCREENSHOTS[active].color}08, rgba(10, 14, 20, 0.95))`,
                   }}
                 >
                   <div
-                    className="text-6xl mb-4"
+                    className="text-4xl sm:text-6xl mb-3 sm:mb-4"
                     style={{
                       filter: `drop-shadow(0 0 20px ${SCREENSHOTS[active].color}60)`,
                     }}
@@ -106,12 +106,12 @@ export default function ScreenshotSection() {
             </div>
 
             {/* Thumbnail list */}
-            <div className="lg:col-span-2 flex flex-row lg:flex-col gap-3">
+            <div className="lg:col-span-2 grid grid-cols-2 lg:grid-cols-1 gap-2 sm:gap-3">
               {SCREENSHOTS.map((ss, i) => (
                 <button
                   key={ss.id}
                   onClick={() => setActive(i)}
-                  className="flex-1 lg:flex-none p-4 rounded-2xl text-left transition-all duration-300 cursor-pointer"
+                  className="p-3 sm:p-4 rounded-xl sm:rounded-2xl text-left transition-all duration-300 cursor-pointer touch-manipulation"
                   style={{
                     background:
                       active === i

@@ -15,7 +15,7 @@ const typeIcons: Record<string, string> = {
 const typeColors: Record<string, string> = {
   announcement: "#74B9FF",
   reward: "#FFEAA7",
-  system: "#A29BFE",
+  system: "#C9A84C",
 };
 
 function getRelativeTime(dateStr: string): string {
@@ -94,14 +94,14 @@ export default function MailboxModal() {
       >
         {/* Header */}
         <div className="px-5 py-4 flex items-center justify-between" style={{
-          background: "linear-gradient(135deg, rgba(116,185,255,0.08), rgba(162,155,254,0.04))",
-          borderBottom: "1px solid rgba(116,185,255,0.08)",
+          background: "linear-gradient(180deg, #4A2515 0%, #3D2017 50%, #2C1810 100%)",
+          borderBottom: "3px solid #8B6914",
           borderRadius: "24px 24px 0 0",
         }}>
           <div className="flex items-center gap-2.5">
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center relative"
-              style={{ background: "linear-gradient(135deg, #74B9FF30, #A29BFE20)" }}
+              style={{ background: "linear-gradient(135deg, #C9A84C, #8B6914)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.2)" }}
             >
               <span className="text-lg">📬</span>
               {unreadMailCount > 0 && (
@@ -112,7 +112,7 @@ export default function MailboxModal() {
               )}
             </div>
             <div>
-              <h2 className="text-white font-bold text-[15px]">우편함</h2>
+              <h2 className="font-bold text-[15px]" style={{ color: "#F5E6C8", fontFamily: "Georgia, 'Times New Roman', serif", textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}>우편함</h2>
               <span className="text-[9px] text-white/30">{mails.length}통</span>
             </div>
           </div>
@@ -133,9 +133,9 @@ export default function MailboxModal() {
               <button key={f.id} onClick={() => setFilter(f.id)}
                 className="text-[10px] font-bold px-2.5 py-1 rounded-lg transition"
                 style={{
-                  background: filter === f.id ? "rgba(116,185,255,0.12)" : "transparent",
-                  color: filter === f.id ? "#74B9FF" : "rgba(255,255,255,0.3)",
-                  border: filter === f.id ? "1px solid rgba(116,185,255,0.2)" : "1px solid transparent",
+                  background: filter === f.id ? "rgba(201,168,76,0.12)" : "transparent",
+                  color: filter === f.id ? "#D4AF37" : "rgba(255,255,255,0.3)",
+                  border: filter === f.id ? "1px solid rgba(201,168,76,0.2)" : "1px solid transparent",
                 }}>
                 {f.label}
                 {f.count !== undefined && f.count > 0 && (
@@ -150,9 +150,9 @@ export default function MailboxModal() {
               disabled={claimingAll}
               className="text-[8px] font-bold px-2.5 py-1 rounded-lg active:scale-95 transition disabled:opacity-50"
               style={{
-                background: "linear-gradient(135deg, #A29BFE20, #FF9FF310)",
-                color: "#C8B6FF",
-                border: "1px solid rgba(162,155,254,0.15)",
+                background: "linear-gradient(135deg, rgba(201,168,76,0.12), rgba(139,105,20,0.06))",
+                color: "#D4AF37",
+                border: "1px solid rgba(201,168,76,0.15)",
               }}
             >
               {claimingAll ? "수령중..." : `모두 수령 (${claimable.length})`}
@@ -163,7 +163,7 @@ export default function MailboxModal() {
         {/* Claim All reward preview */}
         {claimable.length > 1 && !claimingAll && (
           <div className="px-4 py-1.5 flex items-center justify-center gap-2" style={{
-            background: "rgba(162,155,254,0.03)",
+            background: "rgba(201,168,76,0.03)",
             borderBottom: "1px solid rgba(255,255,255,0.03)",
           }}>
             <span className="text-[9px] text-white/25">총 보상:</span>
@@ -174,7 +174,7 @@ export default function MailboxModal() {
               </span>
             )}
             {totalClaimGems > 0 && (
-              <span className="text-[9px] text-[#C8B6FF] font-bold flex items-center gap-0.5">
+              <span className="text-[9px] text-[#D4AF37] font-bold flex items-center gap-0.5">
                 <img src="/assets/icons/gems.png" alt="" className="w-3 h-3 pixel-art" />
                 {totalClaimGems}
               </span>
@@ -194,7 +194,7 @@ export default function MailboxModal() {
               </span>
               <span className="text-[10px] text-white/20 mt-0.5">
                 {filter !== "all" ? (
-                  <button onClick={() => setFilter("all")} className="text-[#74B9FF]/50 hover:text-[#74B9FF] transition">
+                  <button onClick={() => setFilter("all")} className="text-[#D4AF37]/50 hover:text-[#D4AF37] transition">
                     전체 보기 →
                   </button>
                 ) : "새 메시지를 기다리는 중..."}
@@ -280,7 +280,7 @@ export default function MailboxModal() {
                                 </span>
                               )}
                               {mail.reward_gems > 0 && (
-                                <span className="text-[9px] text-[#C8B6FF] font-bold flex items-center gap-0.5 bg-[#C8B6FF]/[0.08] rounded-full px-2 py-0.5">
+                                <span className="text-[9px] text-[#D4AF37] font-bold flex items-center gap-0.5 bg-[#D4AF37]/[0.08] rounded-full px-2 py-0.5">
                                   <img src="/assets/icons/gems.png" alt="" className="w-3 h-3 pixel-art" />
                                   +{mail.reward_gems}
                                 </span>
@@ -298,9 +298,9 @@ export default function MailboxModal() {
                                 }}
                                 className="text-[9px] font-bold px-3 py-1 rounded-full active:scale-90 transition-transform animate-heartbeat"
                                 style={{
-                                  background: "linear-gradient(135deg, #A29BFE, #FF9FF3)",
-                                  color: "#0c0a18",
-                                  boxShadow: "0 2px 8px rgba(162,155,254,0.3)",
+                                  background: "linear-gradient(135deg, #C9A84C, #8B6914)",
+                                  color: "#1A0E08",
+                                  boxShadow: "0 2px 8px rgba(201,168,76,0.3)",
                                 }}
                               >
                                 수령

@@ -45,7 +45,7 @@ const NPC_MESSAGES = [
   "같이 놀아요~", "보스 잡으러 가요!", "마을 꾸미기 재밌어요",
 ];
 
-const CHAT_COLORS = ["#55EFC4", "#74B9FF", "#A29BFE", "#FFEAA7", "#FF6B6B", "#FD79A8", "#81ECEC", "#FDCB6E"];
+const CHAT_COLORS = ["#D4AF37", "#74B9FF", "#C9A84C", "#FFEAA7", "#FF6B6B", "#FD79A8", "#F5E6C8", "#FDCB6E"];
 
 function randomBetween(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -182,7 +182,7 @@ export default function PlazaPage({ onClose }: { onClose: () => void }) {
       nickname: user.nickname,
       content: chatInput.trim(),
       timestamp: Date.now(),
-      color: "#55EFC4",
+      color: "#D4AF37",
     };
     setChatMessages((prev) => [...prev.slice(-50), msg]);
     setChatInput("");
@@ -208,7 +208,7 @@ export default function PlazaPage({ onClose }: { onClose: () => void }) {
 
         {/* Description */}
         <div className="px-4 py-4">
-          <div className="rounded-2xl p-4" style={{ background: "linear-gradient(135deg, rgba(162,155,254,0.15), rgba(253,121,168,0.1))" }}>
+          <div className="rounded-2xl p-4" style={{ background: "linear-gradient(135deg, rgba(201,168,76,0.15), rgba(139,105,20,0.1))" }}>
             <p className="text-white/90 text-sm font-bold mb-1">🏟️ 광장에 입장하세요!</p>
             <p className="text-white/50 text-xs">함께 돌아다니고 다른 플레이어와 채팅할 슬라임을 선택하세요.</p>
           </div>
@@ -262,7 +262,7 @@ export default function PlazaPage({ onClose }: { onClose: () => void }) {
             className="w-full py-3 rounded-2xl font-bold text-sm transition-all"
             style={{
               background: selectedSlimeId
-                ? "linear-gradient(135deg, #A29BFE, #6C5CE7)"
+                ? "linear-gradient(135deg, #C9A84C, #8B6914)"
                 : "rgba(255,255,255,0.05)",
               color: selectedSlimeId ? "white" : "rgba(255,255,255,0.3)",
             }}
@@ -395,7 +395,7 @@ export default function PlazaPage({ onClose }: { onClose: () => void }) {
           >
             <div className="flex flex-col items-center">
               <span className="text-[10px] font-bold mb-0.5 whitespace-nowrap"
-                style={{ color: "#55EFC4", transform: `scaleX(${playerDir === "left" ? -1 : 1})` }}>
+                style={{ color: "#D4AF37", transform: `scaleX(${playerDir === "left" ? -1 : 1})` }}>
                 {user?.nickname || "나"}
               </span>
               <div className="relative">
@@ -440,14 +440,14 @@ export default function PlazaPage({ onClose }: { onClose: () => void }) {
                 onKeyDown={(e) => e.key === "Enter" && sendChat()}
                 placeholder="메시지를 입력하세요..."
                 maxLength={100}
-                className="flex-1 bg-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/30 outline-none border border-white/5 focus:border-[#A29BFE]/50"
+                className="flex-1 bg-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/30 outline-none border border-white/5 focus:border-[#C9A84C]/50"
               />
               <button
                 onClick={sendChat}
                 disabled={!chatInput.trim()}
                 className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
                 style={{
-                  background: chatInput.trim() ? "linear-gradient(135deg, #A29BFE, #6C5CE7)" : "rgba(255,255,255,0.05)",
+                  background: chatInput.trim() ? "linear-gradient(135deg, #C9A84C, #8B6914)" : "rgba(255,255,255,0.05)",
                 }}
               >
                 <span className="text-sm">↑</span>

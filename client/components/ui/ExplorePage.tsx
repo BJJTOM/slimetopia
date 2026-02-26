@@ -280,7 +280,7 @@ export default function ExplorePage() {
               {claimResult.gems > 0 && (
                 <div className="flex flex-col items-center gap-1">
                   <span className="text-2xl">💎</span>
-                  <span className="text-[#C8B6FF] font-bold text-lg">+{claimResult.gems}</span>
+                  <span className="text-[#D4AF37] font-bold text-lg">+{claimResult.gems}</span>
                   <span className="text-white/30 text-[9px]">젬</span>
                 </div>
               )}
@@ -424,7 +424,7 @@ export default function ExplorePage() {
                     {/* Reward preview */}
                     <div className="flex items-center gap-2 text-[10px] flex-wrap">
                       {selectedDest.rewards.gold && <span className="text-[#FFEAA7] bg-[#FFEAA7]/10 rounded-full px-2.5 py-1 font-bold">🪙 {selectedDest.rewards.gold.min}~{selectedDest.rewards.gold.max}</span>}
-                      {selectedDest.rewards.gems && <span className="text-[#C8B6FF] bg-[#C8B6FF]/10 rounded-full px-2.5 py-1 font-bold">💎 {selectedDest.rewards.gems.min}~{selectedDest.rewards.gems.max}</span>}
+                      {selectedDest.rewards.gems && <span className="text-[#D4AF37] bg-[#D4AF37]/10 rounded-full px-2.5 py-1 font-bold">💎 {selectedDest.rewards.gems.min}~{selectedDest.rewards.gems.max}</span>}
                       <span className="text-[#55EFC4] bg-[#55EFC4]/10 rounded-full px-2.5 py-1 font-bold">✨ EXP +{Math.max(5, Math.floor(selectedDest.duration_minutes / 3))}</span>
                     </div>
 
@@ -480,8 +480,8 @@ export default function ExplorePage() {
                     <button key={idx} onClick={() => sid && setSelectedSlimeIds((p) => p.filter((id) => id !== sid))}
                       className="flex-1 flex flex-col items-center gap-1.5 rounded-2xl py-3 transition-all"
                       style={{
-                        background: sl ? (match ? "rgba(85,239,196,0.12)" : "rgba(162,155,254,0.10)") : "rgba(255,255,255,0.03)",
-                        border: sl ? (match ? "2px dashed rgba(85,239,196,0.4)" : "2px solid rgba(162,155,254,0.2)") : "2px dashed rgba(255,255,255,0.08)",
+                        background: sl ? (match ? "rgba(85,239,196,0.12)" : "rgba(201,168,76,0.10)") : "rgba(255,255,255,0.03)",
+                        border: sl ? (match ? "2px dashed rgba(85,239,196,0.4)" : "2px solid rgba(201,168,76,0.2)") : "2px dashed rgba(255,255,255,0.08)",
                       }}>
                       {sl ? (
                         <>
@@ -513,7 +513,7 @@ export default function ExplorePage() {
                   const gc = sp ? gradeColors[sp.grade] : "#B2BEC3";
                   return (
                     <button key={sl.id} onClick={() => toggleSlime(sl.id)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left ${isSelected ? "highlight-selected bg-[#A29BFE]/10" : "game-card"}`}>
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left ${isSelected ? "highlight-selected bg-[#C9A84C]/10" : "game-card"}`}>
                       <div className="w-10 h-10 rounded-xl bg-black/20 flex items-center justify-center shrink-0">
                         <img src={generateSlimeIconSvg(sl.element, 32, sp?.grade, (equippedAccessories[sl.id] || []).map(e => e.svg_overlay).filter(Boolean), sl.species_id)} alt="" className="w-8 h-8 drop-shadow-md" />
                       </div>
@@ -528,7 +528,7 @@ export default function ExplorePage() {
                         </div>
                       </div>
                       {isSelected && (
-                        <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #A29BFE, #FF9FF3)" }}>
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #C9A84C, #D4AF37)" }}>
                           <span className="text-white text-[10px] font-bold">✓</span>
                         </div>
                       )}
@@ -596,7 +596,7 @@ export default function ExplorePage() {
                       {/* Reward pills */}
                       <div className="flex items-center gap-1.5 text-[9px] ml-[52px]">
                         <span className="text-[#FFEAA7] bg-[#FFEAA7]/8 rounded-full px-2 py-0.5 font-bold">🪙 {goldMin}~{goldMax}</span>
-                        {dest.rewards.gems && <span className="text-[#C8B6FF] bg-[#C8B6FF]/8 rounded-full px-2 py-0.5 font-bold">💎 {dest.rewards.gems.min}~{dest.rewards.gems.max}</span>}
+                        {dest.rewards.gems && <span className="text-[#D4AF37] bg-[#D4AF37]/8 rounded-full px-2 py-0.5 font-bold">💎 {dest.rewards.gems.min}~{dest.rewards.gems.max}</span>}
                         <span className="text-[#55EFC4] bg-[#55EFC4]/8 rounded-full px-2 py-0.5 font-bold">✨ +{Math.max(5, Math.floor(dest.duration_minutes / 3))}</span>
                       </div>
 

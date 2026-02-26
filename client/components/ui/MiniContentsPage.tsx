@@ -14,9 +14,9 @@ const CONTENTS = [
     name: "슬라임 레이스",
     desc: "슬라임을 선택하고 다른 슬라임과 경주하세요!",
     emoji: "🏃",
-    gradient: "linear-gradient(135deg, rgba(162,155,254,0.15), rgba(162,155,254,0.05))",
-    border: "rgba(162,155,254,0.2)",
-    accent: "#A29BFE",
+    gradient: "linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05))",
+    border: "rgba(201,168,76,0.2)",
+    accent: "#C9A84C",
   },
   {
     id: "fishing" as const,

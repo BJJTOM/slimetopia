@@ -1,0 +1,12 @@
+DROP TABLE IF EXISTS game_mutation_recipes;
+DROP TABLE IF EXISTS game_slime_sets;
+DROP TABLE IF EXISTS game_seasons;
+DROP TABLE IF EXISTS game_evolution_trees;
+DROP TABLE IF EXISTS game_attendance_rewards;
+DROP TABLE IF EXISTS game_missions;
+DROP TABLE IF EXISTS game_accessories;
+DROP TABLE IF EXISTS game_achievements;
+DROP TABLE IF EXISTS game_explorations;
+DROP TABLE IF EXISTS game_materials;
+DROP TABLE IF EXISTS game_shop_items;
+DROP TABLE IF EXISTS game_recipes;

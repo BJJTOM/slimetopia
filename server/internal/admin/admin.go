@@ -16,11 +16,12 @@ import (
 
 type AdminHandler struct {
 	pool      *pgxpool.Pool
+	jwtSecret []byte
 	templates map[string]*template.Template
 }
 
-func NewAdminHandler(pool *pgxpool.Pool) *AdminHandler {
-	h := &AdminHandler{pool: pool}
+func NewAdminHandler(pool *pgxpool.Pool, jwtSecret string) *AdminHandler {
+	h := &AdminHandler{pool: pool, jwtSecret: []byte(jwtSecret)}
 	h.loadTemplates()
 	return h
 }
@@ -146,13 +147,16 @@ func RegisterAdminRoutes(app *fiber.App, h *AdminHandler) {
 	protected.Post("/users/:id/ban", h.BanUser)
 	protected.Post("/users/:id/unban", h.UnbanUser)
 
-	// Slime management (create routes BEFORE :id to avoid conflict)
+	// Slime species data
 	protected.Get("/slimes", h.SlimeList)
-	protected.Get("/slimes/create", h.SlimeCreatePage)
-	protected.Post("/slimes/create", h.SlimeCreate)
+	protected.Get("/slime-icon/:id", h.SlimeIcon)
 	protected.Get("/slimes/:id", h.SlimeDetail)
-	protected.Post("/slimes/:id/edit", h.SlimeEdit)
-	protected.Post("/slimes/:id/delete", h.SlimeDelete)
+
+	// Slime instance management (admin give/edit)
+	protected.Get("/slime-instances/create", h.SlimeCreatePage)
+	protected.Post("/slime-instances/create", h.SlimeCreate)
+	protected.Post("/slime-instances/:id/edit", h.SlimeEdit)
+	protected.Post("/slime-instances/:id/delete", h.SlimeDelete)
 
 	// Game data viewers
 	protected.Get("/gamedata/species", h.SpeciesViewer)

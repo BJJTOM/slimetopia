@@ -61,23 +61,11 @@ func (h *AdminHandler) SpeciesViewer(c *fiber.Ctx) error {
 	args := make([]interface{}, 0)
 	argIdx := 1
 
-	// Faction filter (by ID range)
-	factionRanges := map[string][2]int{
-		"east_blue":  {1, 11}, "grand_line": {12, 29}, "straw_hat": {30, 40},
-		"baroque":    {41, 50}, "sky_island": {51, 62}, "cipher_pol": {63, 72},
-		"warlords":   {73, 84}, "worst_gen": {85, 98}, "marines": {99, 118},
-		"yonko":      {119, 143}, "logia": {144, 158}, "paramecia": {159, 172},
-		"zoan":       {173, 187}, "revolutionary": {188, 195}, "celestial": {196, 200},
-		"hidden":     {777, 999},
-	}
-	if r, ok := factionRanges[faction]; ok {
-		if faction == "hidden" {
-			where += " AND id IN (777, 888, 999)"
-		} else {
-			where += " AND id >= $" + strconv.Itoa(argIdx) + " AND id <= $" + strconv.Itoa(argIdx+1)
-			args = append(args, r[0], r[1])
-			argIdx += 2
-		}
+	// Faction filter (direct column query)
+	if faction != "" {
+		where += " AND faction = $" + strconv.Itoa(argIdx)
+		args = append(args, faction)
+		argIdx++
 	}
 
 	if element != "" {

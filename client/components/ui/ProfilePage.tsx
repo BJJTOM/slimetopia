@@ -424,7 +424,7 @@ function MainView({
             {/* Camera button for photo upload */}
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#55EFC4] flex items-center justify-center text-xs active:scale-90 transition border-2 border-white/80"
+              className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#C9A84C] flex items-center justify-center text-xs active:scale-90 transition border-2 border-white/80"
               style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
               📷
             </button>
@@ -462,7 +462,7 @@ function MainView({
               <span className="text-white/80 text-xs font-medium">{user?.gold?.toLocaleString()}</span>
             </div>
             <div className="flex items-center gap-1">
-              <span className="text-purple-400 text-sm">💎</span>
+              <span className="text-[#C9A84C] text-sm">💎</span>
               <span className="text-white/80 text-xs font-medium">{user?.gems?.toLocaleString()}</span>
             </div>
             <div className="flex items-center gap-1">
@@ -556,7 +556,7 @@ function MainView({
         target="_blank"
         rel="noopener noreferrer"
         className="block w-full rounded-2xl overflow-hidden border border-white/5 active:scale-[0.98] transition"
-        style={{ background: "linear-gradient(135deg, rgba(85,239,196,0.08), rgba(0,184,148,0.04))" }}
+        style={{ background: "linear-gradient(135deg, rgba(201,168,76,0.08), rgba(139,105,20,0.04))" }}
       >
         <div className="flex items-center gap-3 px-4 py-3.5">
           <span className="text-lg">🏠</span>
@@ -564,7 +564,7 @@ function MainView({
             <p className="text-white/80 text-sm font-medium">SlimeTopia 홈페이지</p>
             <p className="text-white/30 text-[10px] mt-0.5">공식 홈페이지 방문하기</p>
           </div>
-          <span className="text-[#55EFC4]/60 text-sm">↗</span>
+          <span className="text-[#C9A84C]/60 text-sm">↗</span>
         </div>
       </a>
 
@@ -624,10 +624,10 @@ function LanguageView({ locale, setLocale, t, setSubView }: {
             {idx > 0 && <Divider />}
             <button onClick={() => handleSelect(opt.value)}
               className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-white/5 transition">
-              <span className={`flex-1 text-left text-sm font-medium ${locale === opt.value ? "text-[#55EFC4]" : "text-white/80"}`}>
+              <span className={`flex-1 text-left text-sm font-medium ${locale === opt.value ? "text-[#D4AF37]" : "text-white/80"}`}>
                 {t(opt.labelKey)}
               </span>
-              {locale === opt.value && <span className="text-[#55EFC4] text-sm">✓</span>}
+              {locale === opt.value && <span className="text-[#D4AF37] text-sm">✓</span>}
             </button>
           </div>
         ))}
@@ -658,9 +658,9 @@ function ContactView({ t, contactCategory, setContactCategory, contactEmail, set
             <button key={cat} onClick={() => setContactCategory(cat)}
               className="px-3 py-1.5 rounded-lg text-xs font-bold transition active:scale-95"
               style={{
-                background: contactCategory === cat ? "rgba(85,239,196,0.15)" : "rgba(255,255,255,0.05)",
-                border: contactCategory === cat ? "1px solid rgba(85,239,196,0.3)" : "1px solid rgba(255,255,255,0.1)",
-                color: contactCategory === cat ? "#55EFC4" : "rgba(255,255,255,0.6)",
+                background: contactCategory === cat ? "rgba(201,168,76,0.15)" : "rgba(255,255,255,0.05)",
+                border: contactCategory === cat ? "1px solid rgba(201,168,76,0.3)" : "1px solid rgba(255,255,255,0.1)",
+                color: contactCategory === cat ? "#C9A84C" : "rgba(255,255,255,0.6)",
               }}>
               {t(cat)}
             </button>
@@ -673,7 +673,7 @@ function ContactView({ t, contactCategory, setContactCategory, contactEmail, set
         <label className="text-white/50 text-xs font-bold mb-2 block">{t("contact_email")}</label>
         <input value={contactEmail} onChange={(e) => setContactEmail(e.target.value)}
           placeholder="email@example.com"
-          className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-[#55EFC4]/30 transition placeholder:text-white/20" />
+          className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-[#C9A84C]/30 transition placeholder:text-white/20" />
       </div>
 
       {/* Content */}
@@ -682,14 +682,14 @@ function ContactView({ t, contactCategory, setContactCategory, contactEmail, set
         <textarea value={contactContent} onChange={(e) => setContactContent(e.target.value)}
           placeholder={t("contact_placeholder")}
           rows={6}
-          className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-[#55EFC4]/30 transition resize-none placeholder:text-white/20" />
+          className="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-[#C9A84C]/30 transition resize-none placeholder:text-white/20" />
       </div>
 
       {/* Submit */}
       <button onClick={handleContactSubmit}
         disabled={!contactContent.trim()}
         className="w-full py-3 rounded-xl font-bold text-sm text-white transition active:scale-[0.98] disabled:opacity-40"
-        style={{ background: "linear-gradient(135deg, #55EFC4, #00B894)" }}>
+        style={{ background: "linear-gradient(135deg, #C9A84C, #8B6914)" }}>
         {t("contact_submit")}
       </button>
     </div>
@@ -812,7 +812,7 @@ function AccountView({ user, accessToken, fetchUser, t }: {
           <div className="flex items-center justify-between">
             <p className="text-white/40 text-[10px] font-bold">비밀번호</p>
             <button onClick={() => setShowPwForm(!showPwForm)}
-              className="text-[#55EFC4] text-[10px] font-bold hover:text-[#00B894] transition">
+              className="text-[#C9A84C] text-[10px] font-bold hover:text-[#D4AF37] transition">
               {showPwForm ? "취소" : "변경하기"}
             </button>
           </div>
@@ -821,16 +821,16 @@ function AccountView({ user, accessToken, fetchUser, t }: {
             <div className="mt-3 space-y-2">
               <input type="password" value={currentPw} onChange={(e) => setCurrentPw(e.target.value)}
                 placeholder="현재 비밀번호"
-                className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-[#55EFC4]/30 transition placeholder:text-white/20" />
+                className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-[#C9A84C]/30 transition placeholder:text-white/20" />
               <input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)}
                 placeholder="새 비밀번호 (6자 이상)"
-                className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-[#55EFC4]/30 transition placeholder:text-white/20" />
+                className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-[#C9A84C]/30 transition placeholder:text-white/20" />
               <input type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)}
                 placeholder="새 비밀번호 확인"
-                className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-[#55EFC4]/30 transition placeholder:text-white/20" />
+                className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-[#C9A84C]/30 transition placeholder:text-white/20" />
               <button onClick={handleChangePassword} disabled={pwLoading || !currentPw || !newPw || !confirmPw}
                 className="w-full py-2.5 rounded-xl font-bold text-sm text-white transition active:scale-[0.98] disabled:opacity-40"
-                style={{ background: "linear-gradient(135deg, #55EFC4, #00B894)" }}>
+                style={{ background: "linear-gradient(135deg, #C9A84C, #8B6914)" }}>
                 {pwLoading ? "변경 중..." : "비밀번호 변경"}
               </button>
             </div>
@@ -924,14 +924,15 @@ function CreatorStudioView() {
         </div>
         <div className="rounded-xl p-3 border border-white/5" style={{ background: "rgba(20,20,40,0.9)" }}>
           <p className="text-white/40 text-[10px]">받은 젬</p>
-          <p className="text-purple-400 font-bold text-lg">{myTotalTipsGems.toLocaleString()}</p>
+          <p className="text-[#C9A84C] font-bold text-lg">{myTotalTipsGems.toLocaleString()}</p>
         </div>
       </div>
 
       {/* Upload button */}
       <button
         onClick={() => setShowUpload(true)}
-        className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold text-sm"
+        className="w-full py-3 rounded-xl text-white font-bold text-sm"
+        style={{ background: "linear-gradient(135deg, #C9A84C, #D4AF37)" }}
       >
         새 쇼츠 업로드
       </button>
@@ -1000,11 +1001,11 @@ function ToggleItem({ label, desc, value, onToggle }: {
         <p className="text-white/30 text-[10px] mt-0.5">{desc}</p>
       </div>
       <div className="w-10 h-6 rounded-full relative transition-colors duration-200"
-        style={{ background: value ? "rgba(85,239,196,0.4)" : "rgba(255,255,255,0.1)" }}>
+        style={{ background: value ? "rgba(201,168,76,0.4)" : "rgba(255,255,255,0.1)" }}>
         <div className="absolute top-1 w-4 h-4 rounded-full transition-all duration-200"
           style={{
             left: value ? 20 : 4,
-            background: value ? "#55EFC4" : "rgba(255,255,255,0.3)",
+            background: value ? "#C9A84C" : "rgba(255,255,255,0.3)",
           }} />
       </div>
     </button>

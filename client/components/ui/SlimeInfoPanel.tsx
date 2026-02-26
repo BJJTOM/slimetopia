@@ -337,85 +337,185 @@ export default function SlimeInfoPanel() {
           </button>
         </div>
 
-        {/* Collection submit section */}
-        <CollectionSubmitSection
-          slime={slime}
-          grade={sp?.grade}
-          collectionEntries={collectionEntries}
-          collectionRequirements={collectionRequirements}
-          submittedPersonalities={submittedPersonalities}
-          onSubmit={() => setShowSubmitConfirm(true)}
-        />
+        {/* Collection submit button — compact in action area */}
+        {(() => {
+          const alreadySubmitted = collectionEntries.some(
+            (e) => e.species_id === slime.species_id && e.personality === slime.personality
+          );
+          const requiredLevel = sp?.grade ? (collectionRequirements[sp.grade] ?? 3) : 3;
+          const levelMet = slime.level >= requiredLevel;
+          if (alreadySubmitted) return (
+            <div className="mt-3 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#55EFC4]/[0.06] border border-[#55EFC4]/[0.12]">
+              <span className="text-[#55EFC4] text-xs font-bold">{"\u2713"} 컬렉션 등록 완료</span>
+            </div>
+          );
+          return (
+            <button
+              onClick={() => setShowSubmitConfirm(true)}
+              disabled={!levelMet}
+              className="mt-3 w-full py-2.5 rounded-xl text-xs font-bold transition-all active:scale-[0.98]"
+              style={levelMet ? {
+                background: "linear-gradient(135deg, rgba(201,168,76,0.25), rgba(201,168,76,0.1))",
+                border: "1px solid rgba(201,168,76,0.35)",
+                boxShadow: "0 2px 8px rgba(201,168,76,0.15)",
+                color: "#D4AF37",
+              } : {
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.06)",
+                color: "rgba(178,190,195,0.5)",
+                cursor: "not-allowed",
+              }}
+            >
+              {!levelMet
+                ? `컬렉션 제출 (Lv.${requiredLevel} 필요)`
+                : `📜 컬렉션에 제출 (${personalityNames[slime.personality]})`}
+            </button>
+          );
+        })()}
       </div>{/* end scrollable content */}
       </div>{/* end frosted-card */}
 
-      {/* Submit confirmation modal — portalled to body to avoid clipping */}
+      {/* Collection submit modal — portalled to body, centered */}
       {showSubmitConfirm && createPortal(
         <div
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in"
           onClick={() => !submitting && setShowSubmitConfirm(false)}
         >
           <div
-            className="modal-panel w-[300px] p-5"
+            className="w-[320px] rounded-2xl overflow-hidden animate-bounce-in"
             onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "linear-gradient(180deg, #2C1810 0%, #1A0E08 100%)",
+              border: "2px solid #8B6914",
+              boxShadow: "0 24px 64px rgba(0,0,0,0.8), 0 0 40px rgba(201,168,76,0.1)",
+            }}
           >
-            <h3 className="text-white font-bold text-sm text-center mb-4">컬렉션 제출</h3>
+            {/* Header */}
+            <div className="px-5 py-3 text-center" style={{
+              background: "linear-gradient(180deg, #4A2515, #3D2017)",
+              borderBottom: "2px solid #8B6914",
+            }}>
+              <h3 className="font-bold text-[15px]" style={{
+                color: "#F5E6C8",
+                fontFamily: "Georgia, 'Times New Roman', serif",
+                textShadow: "0 2px 4px rgba(0,0,0,0.5)",
+              }}>📜 컬렉션 제출</h3>
+            </div>
 
-            {/* Slime preview */}
-            <div className="flex items-center gap-3 mb-4 p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-              <img
-                src={generateSlimeIconSvg(slime.element, 40, sp?.grade, equipped.map(e => e.svg_overlay).filter(Boolean), slime.species_id)}
-                alt=""
-                className="w-10 h-10"
-                draggable={false}
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-white text-sm font-bold truncate">
-                  {slime.name || sp?.name || "???"}
+            <div className="p-5">
+              {/* Slime preview card */}
+              <div className="flex items-center gap-3 mb-4 p-3 rounded-xl" style={{
+                background: "linear-gradient(135deg, rgba(201,168,76,0.08), rgba(139,105,20,0.04))",
+                border: "1px solid rgba(201,168,76,0.15)",
+              }}>
+                <div className="w-14 h-14 rounded-xl flex items-center justify-center" style={{
+                  background: `linear-gradient(145deg, ${color}20, ${gradeColor}10)`,
+                  border: `1px solid ${gradeColor}25`,
+                }}>
+                  <img
+                    src={generateSlimeIconSvg(slime.element, 48, sp?.grade, equipped.map(e => e.svg_overlay).filter(Boolean), slime.species_id)}
+                    alt="" className="w-12 h-12" draggable={false}
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold truncate" style={{ color: "#F5E6C8" }}>
+                    {slime.name || sp?.name || "???"}
+                  </p>
+                  <p className="text-[11px] mt-0.5" style={{ color: "#C9A84C" }}>
+                    Lv.{slime.level} · {personalityNames[slime.personality]}
+                  </p>
+                  <div className="flex items-center gap-1 mt-1">
+                    {sp && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
+                        style={{ backgroundColor: gradeColor + "18", color: gradeColor }}>
+                        {gradeNames[sp.grade] || sp.grade}
+                      </span>
+                    )}
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium"
+                      style={{ backgroundColor: color + "20", color }}>
+                      {elementNames[slime.element] || slime.element}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Personality collection progress */}
+              <div className="mb-4 p-2.5 rounded-lg" style={{
+                background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.1)",
+              }}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold" style={{ color: "#C9A84C" }}>성격 수집 현황</span>
+                  <span className="text-[10px] font-bold" style={{ color: submittedPersonalities.size >= 6 ? "#55EFC4" : "#C9A84C" }}>
+                    {submittedPersonalities.size}/6
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {ALL_PERSONALITIES.map((p) => {
+                    const has = submittedPersonalities.has(p);
+                    const isCurrent = p === slime.personality;
+                    return (
+                      <div key={p} className="flex flex-col items-center gap-0.5 flex-1">
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${isCurrent && !has ? "ring-2 ring-[#D4AF37]/50" : ""}`}
+                          style={{
+                            background: has ? "linear-gradient(135deg, #55EFC4, #00B894)" : isCurrent ? "rgba(212,175,55,0.2)" : "rgba(255,255,255,0.06)",
+                            border: has ? "1px solid rgba(85,239,196,0.5)" : "1px solid rgba(255,255,255,0.08)",
+                            color: has ? "#fff" : isCurrent ? "#D4AF37" : "rgba(255,255,255,0.3)",
+                          }}>
+                          {has ? "✓" : personalityEmoji[p]}
+                        </div>
+                        <span className="text-[7px]" style={{ color: has ? "#55EFC4" : "rgba(255,255,255,0.25)" }}>
+                          {personalityNames[p]?.slice(0, 2)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Warning */}
+              <div className="text-center mb-4 p-3 rounded-xl" style={{
+                background: "linear-gradient(135deg, rgba(255,107,107,0.08), rgba(255,107,107,0.04))",
+                border: "1px solid rgba(255,107,107,0.15)",
+              }}>
+                <p className="text-[#FF6B6B] text-xs font-bold">
+                  ⚠️ 이 슬라임은 영구적으로 삭제됩니다
                 </p>
-                <p className="text-[#B2BEC3] text-[10px]">
-                  Lv.{slime.level} · {personalityNames[slime.personality] || slime.personality}
+                <p className="text-[#FF6B6B]/50 text-[10px] mt-1">
+                  컬렉션에 등록되며 되돌릴 수 없습니다
                 </p>
               </div>
-            </div>
 
-            {/* Warning */}
-            <div className="text-center mb-4 p-2.5 rounded-lg bg-[#FF6B6B]/10 border border-[#FF6B6B]/20">
-              <p className="text-[#FF6B6B] text-xs font-bold">
-                이 슬라임은 영구 삭제됩니다
-              </p>
-              <p className="text-[#FF6B6B]/60 text-[10px] mt-1">
-                제출 후 되돌릴 수 없습니다
-              </p>
-            </div>
-
-            {/* Buttons */}
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowSubmitConfirm(false)}
-                disabled={submitting}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-[#B2BEC3] bg-white/[0.05] border border-white/[0.08] hover:bg-white/[0.08] transition"
-              >
-                취소
-              </button>
-              <button
-                onClick={async () => {
-                  setSubmitting(true);
-                  await submitToCollection(token, slime.id);
-                  setSubmitting(false);
-                  setShowSubmitConfirm(false);
-                }}
-                disabled={submitting}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition"
-                style={{
-                  background: submitting
-                    ? "rgba(85,239,196,0.2)"
-                    : "linear-gradient(135deg, #55EFC4, #00B894)",
-                  opacity: submitting ? 0.6 : 1,
-                }}
-              >
-                {submitting ? "제출 중..." : "제출하기"}
-              </button>
+              {/* Buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowSubmitConfirm(false)}
+                  disabled={submitting}
+                  className="flex-1 py-3 rounded-xl text-sm font-bold transition"
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "#B2BEC3" }}
+                >
+                  취소
+                </button>
+                <button
+                  onClick={async () => {
+                    setSubmitting(true);
+                    await submitToCollection(token, slime.id);
+                    setSubmitting(false);
+                    setShowSubmitConfirm(false);
+                  }}
+                  disabled={submitting}
+                  className="flex-1 py-3 rounded-xl text-sm font-bold transition active:scale-[0.97]"
+                  style={{
+                    background: submitting
+                      ? "rgba(201,168,76,0.2)"
+                      : "linear-gradient(135deg, #C9A84C, #8B6914)",
+                    color: submitting ? "#C9A84C" : "#1A0E08",
+                    opacity: submitting ? 0.6 : 1,
+                    boxShadow: submitting ? "none" : "0 4px 12px rgba(201,168,76,0.3)",
+                  }}
+                >
+                  {submitting ? "제출 중..." : "📜 제출하기"}
+                </button>
+              </div>
             </div>
           </div>
         </div>,
@@ -536,79 +636,3 @@ function StatBar({
   );
 }
 
-function CollectionSubmitSection({
-  slime,
-  grade,
-  collectionEntries,
-  collectionRequirements,
-  submittedPersonalities,
-  onSubmit,
-}: {
-  slime: { id: string; species_id: number; personality: string; level: number };
-  grade?: string;
-  collectionEntries: { species_id: number; personality: string }[];
-  collectionRequirements: Record<string, number>;
-  submittedPersonalities: Set<string>;
-  onSubmit: () => void;
-}) {
-  const alreadySubmitted = collectionEntries.some(
-    (e) => e.species_id === slime.species_id && e.personality === slime.personality
-  );
-  const requiredLevel = grade ? (collectionRequirements[grade] ?? 3) : 3;
-  const levelMet = slime.level >= requiredLevel;
-  const totalSubmitted = submittedPersonalities.size;
-
-  return (
-    <div className="mt-3 pt-3 border-t border-white/[0.06]">
-      {/* Personality collection progress */}
-      {totalSubmitted > 0 && (
-        <div className="mb-2.5 flex items-center gap-2">
-          <span className="text-[9px] text-white/30">수집:</span>
-          <div className="flex items-center gap-0.5">
-            {ALL_PERSONALITIES.map((p) => {
-              const has = submittedPersonalities.has(p);
-              const isCurrent = p === slime.personality;
-              return (
-                <div key={p} className="relative" title={`${personalityEmoji[p]} ${personalityNames[p]}`}>
-                  <div className={`w-3 h-3 rounded-full transition-all ${isCurrent && !has ? "ring-1 ring-[#FFEAA7]/50" : ""}`}
-                    style={{
-                      background: has ? "#55EFC4" : isCurrent ? "rgba(255,234,167,0.2)" : "rgba(255,255,255,0.06)",
-                      border: has ? "1px solid rgba(85,239,196,0.5)" : "1px solid rgba(255,255,255,0.08)",
-                    }} />
-                </div>
-              );
-            })}
-          </div>
-          <span className={`text-[8px] font-bold ${totalSubmitted >= 6 ? "text-[#55EFC4]" : "text-white/30"}`}>
-            {totalSubmitted}/6
-          </span>
-        </div>
-      )}
-
-      {alreadySubmitted ? (
-        <div className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#55EFC4]/[0.06] border border-[#55EFC4]/[0.12]">
-          <span className="text-[#55EFC4] text-xs font-bold">{"\u2713"} 컬렉션 등록 완료</span>
-        </div>
-      ) : !levelMet ? (
-        <button
-          disabled
-          className="w-full py-2.5 rounded-xl text-xs font-bold text-[#B2BEC3]/50 bg-white/[0.03] border border-white/[0.06] cursor-not-allowed"
-        >
-          컬렉션 제출 (Lv.{requiredLevel} 필요 — 현재 Lv.{slime.level})
-        </button>
-      ) : (
-        <button
-          onClick={onSubmit}
-          className="w-full py-2.5 rounded-xl text-xs font-bold text-white transition-all active:scale-[0.98]"
-          style={{
-            background: "linear-gradient(135deg, rgba(85,239,196,0.2), rgba(85,239,196,0.1))",
-            border: "1px solid rgba(85,239,196,0.25)",
-            boxShadow: "0 2px 8px rgba(85,239,196,0.15)",
-          }}
-        >
-          {"\u2728"} 컬렉션 제출 ({personalityNames[slime.personality]})
-        </button>
-      )}
-    </div>
-  );
-}

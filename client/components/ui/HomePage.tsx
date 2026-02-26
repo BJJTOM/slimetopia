@@ -232,17 +232,17 @@ export default function HomePage() {
                     <button key={bg.id} onClick={() => handleBuyBg(bg)}
                       className="relative rounded-xl overflow-hidden transition-all active:scale-[0.97]"
                       style={{
-                        border: active ? "2px solid #55EFC4" : "2px solid rgba(255,255,255,0.08)",
-                        boxShadow: active ? "0 0 12px rgba(85,239,196,0.3)" : "none",
+                        border: active ? "2px solid #D4AF37" : "2px solid rgba(255,255,255,0.08)",
+                        boxShadow: active ? "0 0 12px rgba(212,175,55,0.3)" : "none",
                       }}>
                       <div className="h-20 w-full" style={{ background: bg.css }} />
                       <div className="px-2 py-1.5 bg-black/60">
                         <div className="flex items-center justify-between">
                           <span className="text-white text-[11px] font-bold">{bg.icon} {bg.name}</span>
                           {owned ? (
-                            <span className="text-[9px] font-bold text-[#55EFC4]">{active ? "사용 중" : "보유"}</span>
+                            <span className="text-[9px] font-bold text-[#D4AF37]">{active ? "사용 중" : "보유"}</span>
                           ) : (
-                            <span className="text-[9px] font-bold" style={{ color: bg.currency === "gems" ? "#C8B6FF" : "#FFEAA7" }}>
+                            <span className="text-[9px] font-bold" style={{ color: bg.currency === "gems" ? "#C9A84C" : "#FFEAA7" }}>
                               {bg.currency === "gems" ? `💎${bg.price}` : `🪙${bg.price}`}
                             </span>
                           )}

@@ -11,7 +11,7 @@ const VisitCanvas = dynamic(() => import("@/components/game/VisitCanvas"), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center w-full h-full bg-[#0a0a1a]">
-      <p className="text-[#55EFC4] text-sm animate-pulse">{"\uB9C8\uC744 \uB85C\uB529 \uC911..."}</p>
+      <p className="text-[#D4AF37] text-sm animate-pulse">{"\uB9C8\uC744 \uB85C\uB529 \uC911..."}</p>
     </div>
   ),
 });
@@ -161,7 +161,7 @@ export default function VillagePage({ onClose }: { onClose: () => void }) {
               {myVillage && (
                 <div className="game-panel rounded-xl p-4">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#55EFC4]/20 to-[#00CEC9]/20 border border-[#55EFC4]/15 flex items-center justify-center text-lg">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#8B6914]/20 border border-[#D4AF37]/15 flex items-center justify-center text-lg">
                       {"\uD83C\uDFE1"}
                     </div>
                     <div>
@@ -204,7 +204,7 @@ export default function VillagePage({ onClose }: { onClose: () => void }) {
                     }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#A29BFE]/20 to-[#6C5CE7]/20 border border-[#A29BFE]/15 flex items-center justify-center text-lg shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#8B6914]/20 border border-[#D4AF37]/15 flex items-center justify-center text-lg shrink-0">
                         {"\uD83C\uDFE1"}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -226,7 +226,7 @@ export default function VillagePage({ onClose }: { onClose: () => void }) {
               <button
                 onClick={fetchRandomVillages}
                 disabled={loading}
-                className="w-full text-center text-[10px] text-[#A29BFE] py-2 hover:text-[#A29BFE]/80 transition"
+                className="w-full text-center text-[10px] text-[#C9A84C] py-2 hover:text-[#C9A84C]/80 transition"
               >
                 {"\uC0C8\uB85C\uACE0\uCE68"}
               </button>

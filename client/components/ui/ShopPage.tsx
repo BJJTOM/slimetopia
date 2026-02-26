@@ -1562,7 +1562,7 @@ interface CurrencyPkg {
 }
 
 const CURRENCY_TYPE_CONFIG: Record<string, { label: string; color: string; bgColor: string; borderColor: string }> = {
-  gem: { label: "보석", color: "#C8B6FF", bgColor: "rgba(162,155,254,", borderColor: "rgba(162,155,254," },
+  gem: { label: "보석", color: "#D4AF37", bgColor: "rgba(201,168,76,", borderColor: "rgba(201,168,76," },
   gold: { label: "골드", color: "#FFEAA7", bgColor: "rgba(255,234,167,", borderColor: "rgba(255,234,167," },
   stardust: { label: "별가루", color: "#81ECEC", bgColor: "rgba(129,236,236,", borderColor: "rgba(129,236,236," },
 };

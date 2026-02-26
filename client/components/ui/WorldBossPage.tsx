@@ -682,7 +682,7 @@ function GuideModal({ onClose, stage }: { onClose: () => void; stage: number }) 
           </ul>
 
           <p className="text-white/80 font-bold pt-2">{"\uD83D\uDD25"} \uC18D\uC131 \uC0C1\uC131</p>
-          <p>\uBCF4\uC2A4 \uC18D\uC131\uC5D0 \uC720\uB9AC\uD55C \uC2AC\uB77C\uC784\uC73C\uB85C \uACF5\uACA9\uD558\uBA74 <span className="text-[#55EFC4] font-bold">1.5\uBC30</span> \uB370\uBBF8\uC9C0!</p>
+          <p>\uBCF4\uC2A4 \uC18D\uC131\uC5D0 \uC720\uB9AC\uD55C \uC2AC\uB77C\uC784\uC73C\uB85C \uACF5\uACA9\uD558\uBA74 <span className="text-[#D4AF37] font-bold">1.5\uBC30</span> \uB370\uBBF8\uC9C0!</p>
           <p>\uBD88\uB9AC\uD55C \uC18D\uC131\uC740 <span className="text-[#FF6B6B] font-bold">0.7\uBC30</span> \uB370\uBBF8\uC9C0.</p>
 
           <p className="text-white/80 font-bold pt-2">{"\uD83C\uDFC6"} \uC2A4\uD14C\uC774\uC9C0 \uC2DC\uC2A4\uD15C</p>
@@ -703,7 +703,7 @@ function GuideModal({ onClose, stage }: { onClose: () => void; stage: number }) 
                   <div className="text-[9px] text-white/40 truncate">{bs.desc}</div>
                 </div>
                 {i + 1 === stage && (
-                  <span className="text-[8px] text-[#55EFC4] font-bold shrink-0">NOW</span>
+                  <span className="text-[8px] text-[#D4AF37] font-bold shrink-0">NOW</span>
                 )}
               </div>
             ))}
@@ -807,12 +807,12 @@ function AttackResultModal({
           {defeated && bonusGems > 0 && (
             <div className="flex items-center justify-between">
               <span className="text-white/40 text-[10px]">{"\uD83D\uDC8E"} \uBCF4\uC11D \uBCF4\uB108\uC2A4</span>
-              <span className="text-[#A29BFE] text-[11px] font-bold">+{bonusGems}</span>
+              <span className="text-[#C9A84C] text-[11px] font-bold">+{bonusGems}</span>
             </div>
           )}
           {nextStage && (
-            <div className="mt-2 text-center text-[#55EFC4] text-[11px] font-bold"
-              style={{ textShadow: "0 0 8px rgba(85,239,196,0.3)" }}>
+            <div className="mt-2 text-center text-[#D4AF37] text-[11px] font-bold"
+              style={{ textShadow: "0 0 8px rgba(212,175,55,0.3)" }}>
               {"\uD83D\uDD1D"} \uB2E4\uC74C \uC2A4\uD14C\uC774\uC9C0\uB85C \uC9C4\uD589!
             </div>
           )}
@@ -1068,8 +1068,8 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
         ctx.save();
         ctx.globalAlpha = 0.5 + Math.sin(t * 3) * 0.1;
         ctx.font = `bold ${Math.min(w * 0.08, 32)}px sans-serif`;
-        ctx.textAlign = "center"; ctx.fillStyle = "#55EFC4";
-        ctx.shadowColor = "#55EFC4"; ctx.shadowBlur = 20;
+        ctx.textAlign = "center"; ctx.fillStyle = "#D4AF37";
+        ctx.shadowColor = "#D4AF37"; ctx.shadowBlur = 20;
         ctx.fillText("DEFEATED!", w / 2, h * 0.2);
         ctx.restore();
       }
@@ -1323,7 +1323,7 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
                 <span className="text-white/50 text-[10px] font-bold">{"\u2694\uFE0F"} \uD30C\uD2F0 ({partySlimes.length}/5)</span>
                 <div className="flex items-center gap-2">
                   {slimes.length > 0 && partySlimes.length < 5 && (
-                    <button onClick={autoFillParty} className="text-[9px] text-[#74B9FF] hover:text-[#0984E3] font-bold transition">
+                    <button onClick={autoFillParty} className="text-[9px] text-[#C9A84C] hover:text-[#D4AF37] font-bold transition">
                       \uC790\uB3D9\uD3B8\uC131
                     </button>
                   )}
@@ -1425,7 +1425,7 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
           </>
         ) : (
           <div className="text-center py-4">
-            <span className="text-[#55EFC4] font-bold text-lg" style={{ textShadow: "0 0 16px rgba(85,239,196,0.4)" }}>
+            <span className="text-[#D4AF37] font-bold text-lg" style={{ textShadow: "0 0 16px rgba(212,175,55,0.4)" }}>
               {"\uD83C\uDF89"} \uBCF4\uC2A4 \uACA9\uD30C \uC644\uB8CC! {"\uD83C\uDF89"}
             </span>
             {(boss.stage || 1) < 5 ? (
@@ -1465,8 +1465,8 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
           ) : (
             top_attackers.map((a, i) => (
               <div key={i} className="px-3 py-2 flex items-center gap-2 border-b border-white/[0.03] last:border-0"
-                style={{ background: i < 3 ? `linear-gradient(135deg, ${["rgba(255,234,167,0.04)", "rgba(200,182,255,0.03)", "rgba(255,159,243,0.03)"][i]}, transparent)` : undefined }}>
-                <span className="text-[10px] w-5 text-center font-bold" style={{ color: i < 3 ? ["#FFEAA7", "#C8B6FF", "#FF9FF3"][i] : "rgba(255,255,255,0.2)" }}>
+                style={{ background: i < 3 ? `linear-gradient(135deg, ${["rgba(255,234,167,0.04)", "rgba(212,175,55,0.03)", "rgba(255,159,243,0.03)"][i]}, transparent)` : undefined }}>
+                <span className="text-[10px] w-5 text-center font-bold" style={{ color: i < 3 ? ["#FFEAA7", "#D4AF37", "#FF9FF3"][i] : "rgba(255,255,255,0.2)" }}>
                   {i < 3 ? ["\uD83E\uDD47", "\uD83E\uDD48", "\uD83E\uDD49"][i] : i + 1}
                 </span>
                 <span className="text-white/60 text-[11px] flex-1 truncate">{a.nickname}</span>

@@ -9,8 +9,8 @@ const MILESTONE_DAYS = new Set([7, 14, 21, 28]);
 
 const MILESTONE_REWARDS: Record<number, { label: string; icon: string; color: string }> = {
   7: { label: "1주 달성", icon: "🎁", color: "#74B9FF" },
-  14: { label: "2주 달성", icon: "🎊", color: "#A29BFE" },
-  21: { label: "3주 달성", icon: "🏅", color: "#FF9FF3" },
+  14: { label: "2주 달성", icon: "🎊", color: "#D4AF37" },
+  21: { label: "3주 달성", icon: "🏅", color: "#C9A84C" },
   28: { label: "개근 달성", icon: "🏆", color: "#FFEAA7" },
 };
 
@@ -78,19 +78,19 @@ export default function AttendanceModal() {
       >
         {/* Header */}
         <div className="px-5 py-4 flex items-center justify-between" style={{
-          background: "linear-gradient(135deg, rgba(255,234,167,0.08), rgba(255,159,243,0.04))",
-          borderBottom: "1px solid rgba(162,155,254,0.08)",
+          background: "linear-gradient(180deg, #4A2515 0%, #3D2017 50%, #2C1810 100%)",
+          borderBottom: "3px solid #8B6914",
           borderRadius: "24px 24px 0 0",
         }}>
           <div className="flex items-center gap-2.5">
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background: "linear-gradient(135deg, #FFEAA730, #FF9FF320)" }}
+              style={{ background: "linear-gradient(135deg, #C9A84C, #8B6914)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.2)" }}
             >
               <span className="text-lg">📅</span>
             </div>
             <div>
-              <h2 className="text-white font-bold text-[15px]">월간 출석 보상</h2>
+              <h2 className="font-bold text-[15px]" style={{ color: "#F5E6C8", fontFamily: "Georgia, 'Times New Roman', serif", textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}>월간 출석 보상</h2>
               <span className="text-[9px] text-white/30">{currentWeek}주차 진행 중</span>
             </div>
           </div>
@@ -116,7 +116,7 @@ export default function AttendanceModal() {
                 <span
                   className="text-[11px] font-extrabold"
                   style={{
-                    background: "linear-gradient(90deg, #FFEAA7, #FF9FF3)",
+                    background: "linear-gradient(90deg, #FFEAA7, #D4AF37)",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
                   }}
@@ -130,7 +130,7 @@ export default function AttendanceModal() {
                 className="h-full rounded-full transition-all duration-700 relative"
                 style={{
                   width: `${progressPercent}%`,
-                  background: "linear-gradient(90deg, #FFEAA7, #FF9FF3, #A29BFE)",
+                  background: "linear-gradient(90deg, #FFEAA7, #D4AF37, #C9A84C)",
                   boxShadow: "0 0 8px rgba(255,234,167,0.4)",
                 }}
               />
@@ -194,13 +194,13 @@ export default function AttendanceModal() {
                           ? {
                               background: claimed
                                 ? "linear-gradient(135deg, rgba(85,239,196,0.1), rgba(85,239,196,0.04))"
-                                : "linear-gradient(135deg, rgba(162,155,254,0.18), rgba(255,159,243,0.12))",
+                                : "linear-gradient(135deg, rgba(201,168,76,0.18), rgba(212,175,55,0.12))",
                               border: claimed
                                 ? "1.5px solid rgba(85,239,196,0.3)"
-                                : "1.5px solid rgba(162,155,254,0.4)",
+                                : "1.5px solid rgba(201,168,76,0.4)",
                               boxShadow: claimed
                                 ? "0 0 12px rgba(85,239,196,0.15)"
-                                : "0 0 16px rgba(162,155,254,0.25), inset 0 0 8px rgba(162,155,254,0.05)",
+                                : "0 0 16px rgba(201,168,76,0.25), inset 0 0 8px rgba(201,168,76,0.05)",
                             }
                           : isPast
                           ? {
@@ -221,7 +221,7 @@ export default function AttendanceModal() {
                     >
                       {/* Day number or icon */}
                       <span className={`text-[10px] font-bold leading-none ${
-                        isToday ? (claimed ? "text-[#55EFC4]" : "text-[#C8B6FF]")
+                        isToday ? (claimed ? "text-[#55EFC4]" : "text-[#D4AF37]")
                         : isMilestone ? `text-[${milestoneInfo.color}]`
                         : "text-white/30"
                       }`}>
@@ -236,7 +236,7 @@ export default function AttendanceModal() {
                           </span>
                         )}
                         {reward.gems > 0 && (
-                          <span className="text-[#C8B6FF] block font-bold">{reward.gems}💎</span>
+                          <span className="text-[#D4AF37] block font-bold">{reward.gems}💎</span>
                         )}
                       </div>
 
@@ -311,7 +311,7 @@ export default function AttendanceModal() {
             <div className="relative">
               <div className="text-lg mb-1">🏆</div>
               <div className="text-[10px] font-bold mb-1" style={{
-                background: "linear-gradient(90deg, #FFEAA7, #FF9FF3)",
+                background: "linear-gradient(90deg, #FFEAA7, #D4AF37)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
               }}>
@@ -319,7 +319,7 @@ export default function AttendanceModal() {
               </div>
               <div className="flex items-center justify-center gap-2">
                 <span className="text-[9px] text-[#FFEAA7] font-bold bg-[#FFEAA7]/[0.08] rounded-full px-2 py-0.5">1,500G</span>
-                <span className="text-[9px] text-[#C8B6FF] font-bold bg-[#C8B6FF]/[0.08] rounded-full px-2 py-0.5">15💎</span>
+                <span className="text-[9px] text-[#D4AF37] font-bold bg-[#D4AF37]/[0.08] rounded-full px-2 py-0.5">15💎</span>
                 <span className="text-[9px] text-[#FF9FF3] font-bold bg-[#FF9FF3]/[0.08] rounded-full px-2 py-0.5">🥚 전설의 알</span>
               </div>
             </div>
@@ -331,7 +331,7 @@ export default function AttendanceModal() {
               <div
                 className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full"
                 style={{
-                  background: "linear-gradient(135deg, rgba(85,239,196,0.1), rgba(162,155,254,0.05))",
+                  background: "linear-gradient(135deg, rgba(85,239,196,0.1), rgba(201,168,76,0.05))",
                   border: "1px solid rgba(85,239,196,0.15)",
                   animation: justClaimed ? "celebrate-pop 0.5s ease-out" : undefined,
                 }}
@@ -363,7 +363,7 @@ export default function AttendanceModal() {
                     <span className="text-[#FFEAA7] font-bold">{todayReward.gold}G</span>
                   )}
                   {todayReward.gems > 0 && (
-                    <span className="text-[#C8B6FF] font-bold">{todayReward.gems}💎</span>
+                    <span className="text-[#D4AF37] font-bold">{todayReward.gems}💎</span>
                   )}
                 </div>
               )}

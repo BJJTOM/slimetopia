@@ -17,6 +17,14 @@ type UserRow struct {
 	CreatedAt time.Time
 }
 
+type UserSlimeRow struct {
+	ID          string
+	SpeciesName string
+	Element     string
+	Grade       string
+	Level       int
+}
+
 type UserDetailData struct {
 	ID        string
 	Nickname  string
@@ -26,7 +34,7 @@ type UserDetailData struct {
 	Level     int
 	Provider  string
 	CreatedAt time.Time
-	Slimes    []SlimeRow
+	Slimes    []UserSlimeRow
 }
 
 func (h *AdminHandler) UserList(c *fiber.Ctx) error {
@@ -111,14 +119,14 @@ func (h *AdminHandler) UserDetail(c *fiber.Ctx) error {
 	// Fetch user's slimes
 	rows, err := h.pool.Query(ctx,
 		`SELECT s.id, sp.name, s.element, s.level, sp.grade
-		 FROM slimes s JOIN species sp ON sp.id = s.species_id
+		 FROM slimes s JOIN slime_species sp ON sp.id = s.species_id
 		 WHERE s.user_id = $1 ORDER BY s.level DESC LIMIT 50`,
 		userID,
 	)
 	if err == nil {
 		defer rows.Close()
 		for rows.Next() {
-			var sl SlimeRow
+			var sl UserSlimeRow
 			if rows.Scan(&sl.ID, &sl.SpeciesName, &sl.Element, &sl.Level, &sl.Grade) == nil {
 				u.Slimes = append(u.Slimes, sl)
 			}

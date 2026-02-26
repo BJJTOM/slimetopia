@@ -5,11 +5,11 @@ import Link from "next/link";
 import Button from "@/components/common/Button";
 
 const NAV_LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/game", label: "Game" },
-  { href: "/about", label: "About" },
-  { href: "/news", label: "News" },
-  { href: "/support", label: "Support" },
+  { href: "/", label: "홈" },
+  { href: "/game", label: "게임 소개" },
+  { href: "/about", label: "소개" },
+  { href: "/news", label: "소식" },
+  { href: "/support", label: "고객지원" },
 ];
 
 export default function Header() {
@@ -24,7 +24,7 @@ export default function Header() {
 
   return (
     <header className={`web-header ${scrolled ? "web-header-scrolled" : ""}`}>
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
         {/* Logo */}
         <Link
           href="/"
@@ -70,30 +70,30 @@ export default function Header() {
         {/* CTA */}
         <div className="hidden md:flex items-center gap-3">
           <Button variant="primary" size="sm" href="/login">
-            Play Now
+            지금 플레이
           </Button>
         </div>
 
         {/* Mobile hamburger */}
         <button
-          className="md:hidden flex flex-col gap-1 p-2"
+          className="md:hidden flex flex-col gap-1.5 p-3 -mr-2 touch-manipulation min-w-[44px] min-h-[44px] items-center justify-center"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Toggle menu"
         >
           <span
-            className="block w-5 h-0.5 bg-[#55EFC4] transition-all duration-300"
+            className="block w-5 h-0.5 bg-[#55EFC4] transition-all duration-300 rounded-full"
             style={{
-              transform: mobileOpen ? "rotate(45deg) translate(2px, 4px)" : "none",
+              transform: mobileOpen ? "rotate(45deg) translate(2px, 5px)" : "none",
             }}
           />
           <span
-            className="block w-5 h-0.5 bg-[#55EFC4] transition-all duration-300"
+            className="block w-5 h-0.5 bg-[#55EFC4] transition-all duration-300 rounded-full"
             style={{ opacity: mobileOpen ? 0 : 1 }}
           />
           <span
-            className="block w-5 h-0.5 bg-[#55EFC4] transition-all duration-300"
+            className="block w-5 h-0.5 bg-[#55EFC4] transition-all duration-300 rounded-full"
             style={{
-              transform: mobileOpen ? "rotate(-45deg) translate(2px, -4px)" : "none",
+              transform: mobileOpen ? "rotate(-45deg) translate(2px, -5px)" : "none",
             }}
           />
         </button>
@@ -104,29 +104,34 @@ export default function Header() {
         <div
           className="md:hidden web-glass-strong"
           style={{
-            padding: "16px 24px 24px",
+            padding: "12px 16px 20px",
             borderTop: "1px solid rgba(0, 210, 211, 0.1)",
           }}
         >
-          <nav className="flex flex-col gap-4">
+          <nav className="flex flex-col gap-1">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm font-semibold py-2"
+                className="text-sm font-semibold py-3 px-2 rounded-lg touch-manipulation"
                 style={{
                   color: "rgba(232, 236, 240, 0.8)",
                   textDecoration: "none",
                   borderBottom: "1px solid rgba(255, 255, 255, 0.04)",
+                  minHeight: "44px",
+                  display: "flex",
+                  alignItems: "center",
                 }}
                 onClick={() => setMobileOpen(false)}
               >
                 {link.label}
               </Link>
             ))}
-            <Button variant="primary" size="sm" href="/login">
-              Play Now
-            </Button>
+            <div className="pt-2">
+              <Button variant="primary" size="sm" href="/login" className="w-full">
+                지금 플레이
+              </Button>
+            </div>
           </nav>
         </div>
       )}

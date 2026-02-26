@@ -5,18 +5,18 @@ import { generateSlimeIconSvg } from "@/lib/slimeSvg";
 import ScrollFadeIn from "@/components/common/ScrollFadeIn";
 
 const ELEMENTS = [
-  { key: "all", label: "All", color: "#55EFC4" },
-  { key: "water", label: "Water", color: "#74B9FF" },
-  { key: "fire", label: "Fire", color: "#FF6B6B" },
-  { key: "grass", label: "Grass", color: "#55EFC4" },
-  { key: "light", label: "Light", color: "#FFEAA7" },
-  { key: "dark", label: "Dark", color: "#A29BFE" },
-  { key: "ice", label: "Ice", color: "#81ECEC" },
-  { key: "electric", label: "Electric", color: "#FDCB6E" },
-  { key: "poison", label: "Poison", color: "#6C5CE7" },
-  { key: "earth", label: "Earth", color: "#E17055" },
-  { key: "wind", label: "Wind", color: "#DFE6E9" },
-  { key: "celestial", label: "Celestial", color: "#FD79A8" },
+  { key: "all", label: "전체", color: "#55EFC4" },
+  { key: "water", label: "물", color: "#74B9FF" },
+  { key: "fire", label: "불", color: "#FF6B6B" },
+  { key: "grass", label: "풀", color: "#55EFC4" },
+  { key: "light", label: "빛", color: "#FFEAA7" },
+  { key: "dark", label: "어둠", color: "#A29BFE" },
+  { key: "ice", label: "얼음", color: "#81ECEC" },
+  { key: "electric", label: "번개", color: "#FDCB6E" },
+  { key: "poison", label: "독", color: "#6C5CE7" },
+  { key: "earth", label: "대지", color: "#E17055" },
+  { key: "wind", label: "바람", color: "#DFE6E9" },
+  { key: "celestial", label: "천상", color: "#FD79A8" },
 ];
 
 const GRADES = ["common", "uncommon", "rare", "epic", "legendary", "mythic"] as const;
@@ -78,36 +78,36 @@ export default function SlimeShowcase() {
   }, [filteredSlimes]);
 
   return (
-    <section className="relative py-32 overflow-hidden">
+    <section className="relative py-16 md:py-32 overflow-hidden">
       {/* Background element watermark */}
       <div
-        className="absolute right-0 top-1/2 -translate-y-1/2 text-[300px] font-black pointer-events-none select-none"
+        className="absolute right-0 top-1/2 -translate-y-1/2 text-[200px] md:text-[300px] font-black pointer-events-none select-none"
         style={{ color: "rgba(255, 255, 255, 0.01)" }}
       >
         S
       </div>
 
-      <div className="max-w-6xl mx-auto px-6">
-        <ScrollFadeIn className="text-center mb-12">
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-[#FFEAA7]/60 mb-3">
-            Collection
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <ScrollFadeIn className="text-center mb-8 md:mb-12">
+          <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.2em] text-[#FFEAA7]/60 mb-2 sm:mb-3">
+            컬렉션
           </p>
-          <h2 className="text-4xl md:text-5xl font-black web-text-glow-warm">
-            <CountUpNumber target={200} />+ Slime Species
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black web-text-glow-warm">
+            <CountUpNumber target={200} />종 이상의 슬라임
           </h2>
-          <p className="text-white/40 mt-4 max-w-xl mx-auto">
-            From common Water Slimes to mythical Celestial Dragons. Every slime
-            is unique with its own element, grade, and personality.
+          <p className="text-sm sm:text-base text-white/40 mt-3 sm:mt-4 max-w-xl mx-auto">
+            평범한 물 슬라임부터 신비로운 천상의 드래곤까지.
+            모든 슬라임은 고유한 속성, 등급, 성격을 가지고 있습니다.
           </p>
         </ScrollFadeIn>
 
         {/* Filter buttons */}
-        <ScrollFadeIn className="flex flex-wrap justify-center gap-2 mb-12">
+        <ScrollFadeIn className="flex flex-wrap justify-center gap-1.5 sm:gap-2 mb-8 md:mb-12">
           {ELEMENTS.map((el) => (
             <button
               key={el.key}
               onClick={() => setFilter(el.key)}
-              className="px-4 py-2 rounded-full text-xs font-bold transition-all duration-300 cursor-pointer"
+              className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-[11px] sm:text-xs font-bold transition-all duration-300 cursor-pointer touch-manipulation"
               style={{
                 background:
                   filter === el.key ? `${el.color}20` : "rgba(255,255,255,0.03)",
@@ -128,13 +128,13 @@ export default function SlimeShowcase() {
         <div className="relative">
           {/* Fade edges */}
           <div
-            className="absolute left-0 top-0 bottom-0 w-24 z-10 pointer-events-none"
+            className="absolute left-0 top-0 bottom-0 w-12 sm:w-24 z-10 pointer-events-none"
             style={{
               background: "linear-gradient(to right, #060a10, transparent)",
             }}
           />
           <div
-            className="absolute right-0 top-0 bottom-0 w-24 z-10 pointer-events-none"
+            className="absolute right-0 top-0 bottom-0 w-12 sm:w-24 z-10 pointer-events-none"
             style={{
               background: "linear-gradient(to left, #060a10, transparent)",
             }}
@@ -165,11 +165,11 @@ function SlimeCard({
 
   return (
     <div
-      className="flex-shrink-0 mx-3 group cursor-default"
-      style={{ width: 140 }}
+      className="flex-shrink-0 mx-1.5 sm:mx-3 group cursor-default"
+      style={{ width: 110 }}
     >
       <div
-        className="rounded-2xl p-4 flex flex-col items-center gap-3 transition-all duration-300"
+        className="rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col items-center gap-2 sm:gap-3 transition-all duration-300"
         style={{
           background: "rgba(14, 18, 30, 0.6)",
           border: "1px solid rgba(255, 255, 255, 0.04)",
@@ -184,7 +184,7 @@ function SlimeCard({
           <img
             src={svg}
             alt={slime.label}
-            className="w-16 h-16 transition-transform duration-300 group-hover:scale-110"
+            className="w-12 h-12 sm:w-16 sm:h-16 transition-transform duration-300 group-hover:scale-110"
             draggable={false}
           />
         </div>

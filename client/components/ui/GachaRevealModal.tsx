@@ -264,9 +264,9 @@ export default function GachaRevealModal({ results, onClose }: Props) {
             <div
               className="px-3 py-1 rounded-full font-bold text-xs"
               style={{
-                background: "rgba(162,155,254,0.1)",
-                border: "1px solid rgba(162,155,254,0.2)",
-                color: "#C8B6FF",
+                background: "rgba(201,168,76,0.1)",
+                border: "1px solid rgba(201,168,76,0.2)",
+                color: "#D4AF37",
               }}
             >
               {currentIdx + 1} / {results.length}

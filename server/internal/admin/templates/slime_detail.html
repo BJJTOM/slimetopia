@@ -3,116 +3,192 @@
 {{end}}
 
 {{define "content"}}
-{{if eq .Message "edited"}}
-<div class="msg-success">슬라임 정보가 수정되었습니다.</div>
-{{else if eq .Message "created"}}
-<div class="msg-success">슬라임이 생성되었습니다.</div>
-{{else if eq .Message "error"}}
-<div class="msg-error">오류가 발생했습니다.</div>
-{{end}}
+<!-- Header -->
+<div style="display: flex; align-items: center; gap: 20px; margin-bottom: 24px; background: rgba(255,255,255,0.02); border-radius: 12px; padding: 20px;">
+  <div style="flex-shrink: 0; background: rgba(255,255,255,0.04); border-radius: 16px; padding: 12px;">
+    <img src="/admin/slime-icon/{{.Species.ID}}?element={{.Species.Element}}&grade={{.Species.Grade}}" width="100" height="100" alt="{{.Species.Name}}" />
+  </div>
+  <div style="flex: 1;">
+    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+      <span style="font-size: 13px; color: #636e72;">#{{.Species.ID}}</span>
+      <span class="badge badge-{{.Species.Grade}}" style="font-size: 12px; padding: 3px 10px;">{{.Species.Grade}}</span>
+      {{if .IsStarter}}<span style="font-size: 11px; padding: 3px 8px; border-radius: 4px; background: #00b894; color: white;">스타터</span>{{end}}
+    </div>
+    <div style="font-size: 24px; font-weight: 700; color: #e8e4f0; margin-bottom: 2px;">{{.Species.Name}}</div>
+    <div style="font-size: 14px; color: #b2bec3;">{{.Species.NameEN}}</div>
+    {{if .Species.Description}}
+    <div style="font-size: 13px; color: #a0a8b0; margin-top: 10px; line-height: 1.6; max-width: 500px;">{{.Species.Description}}</div>
+    {{end}}
+  </div>
+</div>
 
-<!-- Slime Info -->
-<div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+<!-- 기본 정보 -->
+<div class="stats-grid" style="grid-template-columns: repeat(5, 1fr); margin-bottom: 20px;">
   <div class="stat-card">
-    <div class="label">종</div>
-    <div class="value" style="font-size: 18px; color: #e8e4f0;">{{.Slime.SpeciesName}}</div>
-    <div style="font-size: 11px; color: #636e72; margin-top: 4px;">Species ID: {{.Slime.SpeciesID}}</div>
-  </div>
-  <div class="stat-card">
-    <div class="label">원소</div>
-    <div class="value" style="font-size: 18px;">{{.Slime.Element}}</div>
-  </div>
-  <div class="stat-card">
-    <div class="label">등급</div>
-    <div class="value" style="font-size: 18px;"><span class="badge badge-{{.Slime.Grade}}">{{.Slime.Grade}}</span></div>
-  </div>
-  <div class="stat-card">
-    <div class="label">소유자</div>
-    <div class="value" style="font-size: 16px;"><a href="/admin/users/{{.Slime.OwnerID}}">{{.Slime.OwnerNick}}</a></div>
-  </div>
-  <div class="stat-card">
-    <div class="label">레벨</div>
-    <div class="value">{{.Slime.Level}}</div>
-  </div>
-  <div class="stat-card">
-    <div class="label">경험치</div>
-    <div class="value" style="color: #74b9ff;">{{.Slime.Exp}}</div>
-  </div>
-  <div class="stat-card">
-    <div class="label">성격</div>
-    <div class="value" style="font-size: 16px;">{{.Slime.Personality}}</div>
-  </div>
-  <div class="stat-card">
-    <div class="label">상태</div>
+    <div class="label">속성</div>
     <div class="value" style="font-size: 16px;">
-      {{if .Slime.IsSick}}<span style="color:#ff6b6b;">아픔</span>{{else}}<span style="color:#55efc4;">정상</span>{{end}}
+      {{if eq .Species.Element "water"}}💧{{else if eq .Species.Element "fire"}}🔥{{else if eq .Species.Element "grass"}}🌿{{else if eq .Species.Element "light"}}✨{{else if eq .Species.Element "dark"}}🌑{{else if eq .Species.Element "ice"}}❄️{{else if eq .Species.Element "electric"}}⚡{{else if eq .Species.Element "poison"}}☠️{{else if eq .Species.Element "earth"}}🪨{{else if eq .Species.Element "wind"}}🌪️{{else if eq .Species.Element "celestial"}}🌟{{end}}
+      {{.Species.Element}}
     </div>
   </div>
   <div class="stat-card">
-    <div class="label">호감도</div>
-    <div class="value" style="color: #ff6b6b;">{{.Slime.Affection}}</div>
+    <div class="label">등급</div>
+    <div class="value"><span class="badge badge-{{.Species.Grade}}">{{.Species.Grade}}</span></div>
   </div>
   <div class="stat-card">
-    <div class="label">배고픔</div>
-    <div class="value" style="color: #ffeaa7;">{{.Slime.Hunger}}</div>
+    <div class="label">진영</div>
+    <div class="value" style="font-size: 13px;">
+      {{if .Faction.Name}}{{.Faction.Name}}{{else}}-{{end}}
+    </div>
+    <div style="font-size: 11px; color: #636e72; margin-top: 2px;">{{.Faction.NameEN}}</div>
   </div>
   <div class="stat-card">
-    <div class="label">컨디션</div>
-    <div class="value" style="color: #55efc4;">{{.Slime.Condition}}</div>
+    <div class="label">진영 내 위치</div>
+    <div class="value" style="font-size: 16px; color: #74b9ff;">{{.PositionInFaction}} / {{.Faction.Count}}</div>
   </div>
   <div class="stat-card">
-    <div class="label">생성일</div>
-    <div class="value" style="font-size: 14px;">{{.Slime.CreatedAt.Format "2006-01-02 15:04"}}</div>
+    <div class="label">컬렉션 필요 레벨</div>
+    <div class="value" style="font-size: 20px; color: #fdcb6e;">Lv.{{.RequiredLevel}}</div>
+    <div style="font-size: 11px; color: #636e72; margin-top: 2px;">6성격 = 6엔트리</div>
   </div>
 </div>
 
-<!-- Edit Form -->
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+<!-- 성격 & 컬렉션 정보 -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+
+  <!-- 획득 방법 -->
   <div class="stat-card">
-    <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #55efc4;">슬라임 수정</div>
-    <form method="POST" action="/admin/slimes/{{.Slime.ID}}/edit">
-      <div class="form-row">
-        <label>레벨</label>
-        <input type="number" name="level" value="{{.Slime.Level}}" min="1" max="100" style="width: 100px;" />
+    <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #55efc4;">획득 방법</div>
+    {{if .IsStarter}}
+    <div style="display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06);">
+      <span style="font-size: 18px;">🎁</span>
+      <div>
+        <div style="font-size: 13px; color: #dfe6e9; font-weight: 600;">스타터 슬라임</div>
+        <div style="font-size: 11px; color: #636e72;">신규 유저 시작 시 지급</div>
       </div>
-      <div class="form-row">
-        <label>경험치</label>
-        <input type="number" name="exp" value="{{.Slime.Exp}}" min="0" style="width: 100px;" />
+    </div>
+    {{end}}
+    {{if .EggInfo}}
+    <div style="font-size: 12px; color: #b2bec3; margin-bottom: 8px; {{if .IsStarter}}margin-top: 12px;{{end}}">뽑기 (가챠)</div>
+    {{range .EggInfo}}
+    <div style="display: flex; align-items: center; gap: 8px; padding: 5px 0;">
+      <span style="font-size: 14px;">🥚</span>
+      <span style="font-size: 13px; color: #dfe6e9;">{{.}}</span>
+    </div>
+    {{end}}
+    {{end}}
+    {{if .Recipes}}
+    <div style="font-size: 12px; color: #b2bec3; margin-top: 12px; margin-bottom: 6px;">합성 레시피</div>
+    {{range .Recipes}}
+    {{if eq .Role "결과물"}}
+    <div style="padding: 8px; margin-bottom: 6px; background: rgba(255,255,255,0.03); border-radius: 6px;">
+      <div style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
+        <a href="/admin/slimes/{{.InputAID}}" style="color: #74b9ff; text-decoration: none;">{{.InputAName}}</a>
+        <span style="color: #636e72;">+</span>
+        <a href="/admin/slimes/{{.InputBID}}" style="color: #74b9ff; text-decoration: none;">{{.InputBName}}</a>
+        <span style="color: #636e72;">=</span>
+        <span style="color: #55efc4; font-weight: 600;">결과</span>
       </div>
-      <div class="form-row">
-        <label>호감도</label>
-        <input type="number" name="affection" value="{{.Slime.Affection}}" min="0" max="100" style="width: 100px;" />
-      </div>
-      <div class="form-row">
-        <label>배고픔</label>
-        <input type="number" name="hunger" value="{{.Slime.Hunger}}" min="0" max="100" style="width: 100px;" />
-      </div>
-      <div class="form-row">
-        <label>컨디션</label>
-        <input type="number" name="condition" value="{{.Slime.Condition}}" min="0" max="100" style="width: 100px;" />
-      </div>
-      <div class="form-row">
-        <label>아픔</label>
-        <select name="is_sick" style="width: 100px;">
-          <option value="false" {{if not .Slime.IsSick}}selected{{end}}>아니오</option>
-          <option value="true" {{if .Slime.IsSick}}selected{{end}}>예</option>
-        </select>
-      </div>
-      <button type="submit" class="btn btn-primary">수정</button>
-    </form>
+      {{if .Hidden}}<span style="font-size: 10px; padding: 1px 5px; border-radius: 3px; background: #6c5ce7; color: white; margin-top: 4px; display: inline-block;">히든</span>{{end}}
+      {{if .Hint}}<div style="font-size: 11px; color: #636e72; margin-top: 4px; font-style: italic;">{{.Hint}}</div>{{end}}
+    </div>
+    {{end}}
+    {{end}}
+    {{end}}
+    {{if and (not .IsStarter) (not .EggInfo) (not .Recipes)}}
+    <div style="color: #636e72; font-size: 13px; padding: 12px 0;">별도 획득 경로 없음</div>
+    {{end}}
   </div>
 
+  <!-- 관련 레시피 (이 종족이 재료인 경우) -->
   <div class="stat-card">
-    <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #ff6b6b;">위험 영역</div>
-    <p style="font-size: 12px; color: #b2bec3; margin-bottom: 16px;">이 슬라임을 삭제하면 되돌릴 수 없습니다.</p>
-    <form method="POST" action="/admin/slimes/{{.Slime.ID}}/delete">
-      <button type="submit" class="btn btn-danger" onclick="return confirm('정말 이 슬라임을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')">슬라임 삭제</button>
-    </form>
+    <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #fd79a8;">레시피 참여</div>
+    {{$hasInputRecipe := false}}
+    {{range .Recipes}}
+    {{if or (eq .Role "재료 A") (eq .Role "재료 B")}}
+    {{$hasInputRecipe = true}}
+    <div style="padding: 8px; margin-bottom: 6px; background: rgba(255,255,255,0.03); border-radius: 6px;">
+      <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; flex-wrap: wrap;">
+        {{if eq .Role "재료 A"}}
+        <span style="color: #fdcb6e; font-weight: 600;">이 종족</span>
+        <span style="color: #636e72;">+</span>
+        <a href="/admin/slimes/{{.InputBID}}" style="color: #74b9ff; text-decoration: none;">{{.InputBName}}</a>
+        {{else}}
+        <a href="/admin/slimes/{{.InputAID}}" style="color: #74b9ff; text-decoration: none;">{{.InputAName}}</a>
+        <span style="color: #636e72;">+</span>
+        <span style="color: #fdcb6e; font-weight: 600;">이 종족</span>
+        {{end}}
+        <span style="color: #636e72;">&rarr;</span>
+        <a href="/admin/slimes/{{.OutputID}}" style="color: #55efc4; text-decoration: none; font-weight: 600;">{{.OutputName}}</a>
+      </div>
+      {{if .Hidden}}<span style="font-size: 10px; padding: 1px 5px; border-radius: 3px; background: #6c5ce7; color: white; margin-top: 4px; display: inline-block;">히든</span>{{end}}
+      {{if .Hint}}<div style="font-size: 11px; color: #636e72; margin-top: 4px; font-style: italic;">{{.Hint}}</div>{{end}}
+    </div>
+    {{end}}
+    {{end}}
+    {{if not $hasInputRecipe}}
+    <div style="color: #636e72; font-size: 13px; padding: 12px 0;">이 종족이 재료로 사용되는 레시피 없음</div>
+    {{end}}
   </div>
 </div>
 
-<div style="margin-top: 8px;">
-  <a href="/admin/slimes" class="btn btn-sm" style="background: rgba(255,255,255,0.06); color: #b2bec3;">&larr; 슬라임 목록으로</a>
-  <a href="/admin/users/{{.Slime.OwnerID}}" class="btn btn-sm" style="background: rgba(255,255,255,0.06); color: #b2bec3; margin-left: 8px;">소유자 보기</a>
+<!-- 진영 동료 -->
+<div class="stat-card" style="margin-bottom: 20px;">
+  <div class="label" style="margin-bottom: 12px; font-size: 14px; color: #74b9ff;">
+    {{.Faction.Name}} 진영 ({{.Faction.Count}}종)
+    <span style="font-size: 11px; color: #636e72; font-weight: 400; margin-left: 8px;">#{{.Faction.RangeStart}} ~ #{{.Faction.RangeEnd}}</span>
+  </div>
+  <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+    {{range .Faction.Members}}
+    <a href="/admin/slimes/{{.ID}}" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; font-size: 12px; text-decoration: none; {{if eq .ID $.Species.ID}}background: rgba(116,185,255,0.2); color: #74b9ff; font-weight: 700; border: 1px solid rgba(116,185,255,0.3);{{else}}background: rgba(255,255,255,0.04); color: #b2bec3; border: 1px solid rgba(255,255,255,0.06);{{end}}">
+      <img src="/admin/slime-icon/{{.ID}}?element={{.Element}}&grade={{.Grade}}" width="20" height="20" alt="" style="vertical-align: middle;" />
+      {{.Name}}
+    </a>
+    {{end}}
+  </div>
+</div>
+
+<!-- 같은 속성 & 같은 등급 -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+  <div class="stat-card">
+    <div class="label" style="margin-bottom: 10px; font-size: 14px;">
+      {{if eq .Species.Element "water"}}💧{{else if eq .Species.Element "fire"}}🔥{{else if eq .Species.Element "grass"}}🌿{{else if eq .Species.Element "light"}}✨{{else if eq .Species.Element "dark"}}🌑{{else if eq .Species.Element "ice"}}❄️{{else if eq .Species.Element "electric"}}⚡{{else if eq .Species.Element "poison"}}☠️{{else if eq .Species.Element "earth"}}🪨{{else if eq .Species.Element "wind"}}🌪️{{else if eq .Species.Element "celestial"}}🌟{{end}}
+      같은 속성 ({{.Species.Element}}) — {{.TotalSameElement}}종
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+      {{range .SameElement}}
+      <a href="/admin/slimes/{{.ID}}" style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 4px; font-size: 11px; text-decoration: none; background: rgba(255,255,255,0.04); color: #b2bec3; border: 1px solid rgba(255,255,255,0.06);">
+        <img src="/admin/slime-icon/{{.ID}}?element={{$.Species.Element}}&grade={{.Grade}}" width="16" height="16" alt="" />
+        {{.Name}}
+      </a>
+      {{else}}
+      <span style="color: #636e72; font-size: 12px;">없음</span>
+      {{end}}
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="label" style="margin-bottom: 10px; font-size: 14px;">
+      <span class="badge badge-{{.Species.Grade}}" style="font-size: 10px; padding: 2px 6px;">{{.Species.Grade}}</span>
+      같은 등급 — {{.TotalSameGrade}}종
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+      {{range .SameGrade}}
+      <a href="/admin/slimes/{{.ID}}" style="padding: 3px 8px; border-radius: 4px; font-size: 11px; text-decoration: none; background: rgba(255,255,255,0.04); color: #b2bec3; border: 1px solid rgba(255,255,255,0.06);">
+        {{.Name}}
+      </a>
+      {{else}}
+      <span style="color: #636e72; font-size: 12px;">없음</span>
+      {{end}}
+    </div>
+  </div>
+</div>
+
+<!-- Navigation -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+  <a href="/admin/slimes" class="btn btn-sm" style="background: rgba(255,255,255,0.06); color: #b2bec3;">&larr; 슬라임 목록</a>
+  <div style="display: flex; gap: 8px;">
+    {{if .PrevID}}<a href="/admin/slimes/{{.PrevID}}" class="btn btn-sm" style="background: rgba(255,255,255,0.06); color: #b2bec3;">&laquo; #{{.PrevID}}</a>{{end}}
+    {{if .NextID}}<a href="/admin/slimes/{{.NextID}}" class="btn btn-sm" style="background: rgba(255,255,255,0.06); color: #b2bec3;">#{{.NextID}} &raquo;</a>{{end}}
+  </div>
 </div>
 {{end}}
