@@ -22,6 +22,34 @@ var gradeTrainingMultiplier = map[string]float64{
 	"mythic":    2.5,
 }
 
+// Training modes: each mode focuses on growing specific talents
+var trainingModes = map[string]struct {
+	Label     string
+	Primary   string // primary talent stat boosted
+	Secondary string // secondary talent stat boosted
+}{
+	"balanced":  {Label: "균형 훈련", Primary: "", Secondary: ""},
+	"strength":  {Label: "근력 훈련", Primary: "talent_str", Secondary: "talent_vit"},
+	"speed":     {Label: "속도 훈련", Primary: "talent_spd", Secondary: "talent_str"},
+	"intellect": {Label: "지능 훈련", Primary: "talent_int", Secondary: "talent_cha"},
+	"charisma":  {Label: "매력 훈련", Primary: "talent_cha", Secondary: "talent_lck"},
+	"luck":      {Label: "행운 훈련", Primary: "talent_lck", Secondary: "talent_int"},
+}
+
+// GetTrainingModes returns available training modes
+func (h *Handler) GetTrainingModes(c *fiber.Ctx) error {
+	modes := make([]fiber.Map, 0, len(trainingModes))
+	for key, mode := range trainingModes {
+		modes = append(modes, fiber.Map{
+			"id":        key,
+			"label":     mode.Label,
+			"primary":   mode.Primary,
+			"secondary": mode.Secondary,
+		})
+	}
+	return c.JSON(fiber.Map{"modes": modes})
+}
+
 // GetTrainingSlots returns the current training slots for a user
 func (h *Handler) GetTrainingSlots(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(string)
@@ -29,7 +57,7 @@ func (h *Handler) GetTrainingSlots(c *fiber.Ctx) error {
 	ctx := c.UserContext()
 
 	rows, err := pool.Query(ctx,
-		`SELECT t.id::text, t.slime_id::text, t.slot_number, t.started_at,
+		`SELECT t.id::text, t.slime_id::text, t.slot_number, t.started_at, t.training_mode,
 		        s.species_id, s.level, s.exp, s.element, s.personality, s.name,
 		        sp.name as species_name, sp.grade
 		 FROM training_slots t
@@ -46,13 +74,13 @@ func (h *Handler) GetTrainingSlots(c *fiber.Ctx) error {
 
 	slots := make([]fiber.Map, 0)
 	for rows.Next() {
-		var id, slimeID, element, personality string
+		var id, slimeID, element, personality, trainingMode string
 		var speciesName, grade string
 		var slotNumber, speciesID, level, exp int
 		var startedAt time.Time
 		var name *string
 
-		if err := rows.Scan(&id, &slimeID, &slotNumber, &startedAt, &speciesID, &level, &exp, &element, &personality, &name, &speciesName, &grade); err != nil {
+		if err := rows.Scan(&id, &slimeID, &slotNumber, &startedAt, &trainingMode, &speciesID, &level, &exp, &element, &personality, &name, &speciesName, &grade); err != nil {
 			continue
 		}
 
@@ -72,21 +100,25 @@ func (h *Handler) GetTrainingSlots(c *fiber.Ctx) error {
 			displayName = *name
 		}
 
+		modeInfo := trainingModes[trainingMode]
+
 		slots = append(slots, fiber.Map{
-			"id":           id,
-			"slime_id":     slimeID,
-			"slot_number":  slotNumber,
-			"started_at":   startedAt,
-			"species_id":   speciesID,
-			"level":        level,
-			"exp":          exp,
-			"element":      element,
-			"personality":  personality,
-			"name":         displayName,
-			"grade":        grade,
-			"elapsed_mins": elapsedMins,
-			"pending_exp":  pendingExp,
-			"multiplier":   mult,
+			"id":             id,
+			"slime_id":       slimeID,
+			"slot_number":    slotNumber,
+			"started_at":     startedAt,
+			"training_mode":  trainingMode,
+			"mode_label":     modeInfo.Label,
+			"species_id":     speciesID,
+			"level":          level,
+			"exp":            exp,
+			"element":        element,
+			"personality":    personality,
+			"name":           displayName,
+			"grade":          grade,
+			"elapsed_mins":   elapsedMins,
+			"pending_exp":    pendingExp,
+			"multiplier":     mult,
 		})
 	}
 
@@ -101,10 +133,17 @@ func (h *Handler) StartTraining(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(string)
 
 	var body struct {
-		SlimeID string `json:"slime_id"`
+		SlimeID      string `json:"slime_id"`
+		TrainingMode string `json:"training_mode"`
 	}
 	if err := c.BodyParser(&body); err != nil || body.SlimeID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "slime_id required"})
+	}
+	if body.TrainingMode == "" {
+		body.TrainingMode = "balanced"
+	}
+	if _, ok := trainingModes[body.TrainingMode]; !ok {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid training mode"})
 	}
 
 	pool := h.slimeRepo.Pool()
@@ -143,14 +182,14 @@ func (h *Handler) StartTraining(c *fiber.Ctx) error {
 	nextSlot := slotCount + 1
 
 	_, err = pool.Exec(ctx,
-		`INSERT INTO training_slots (user_id, slime_id, slot_number) VALUES ($1, $2, $3)`,
-		userID, body.SlimeID, nextSlot,
+		`INSERT INTO training_slots (user_id, slime_id, slot_number, training_mode) VALUES ($1, $2, $3, $4)`,
+		userID, body.SlimeID, nextSlot, body.TrainingMode,
 	)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to start training"})
 	}
 
-	return c.JSON(fiber.Map{"success": true, "slot_number": nextSlot})
+	return c.JSON(fiber.Map{"success": true, "slot_number": nextSlot, "training_mode": body.TrainingMode})
 }
 
 // CollectTraining collects EXP from a training slot and removes the slime
@@ -164,10 +203,11 @@ func (h *Handler) CollectTraining(c *fiber.Ctx) error {
 	// Atomically delete the training slot and return its data to prevent double-collection
 	var slimeID string
 	var startedAt time.Time
+	var trainingMode string
 	err := pool.QueryRow(ctx,
-		`DELETE FROM training_slots WHERE id = $1 AND user_id = $2 RETURNING slime_id::text, started_at`,
+		`DELETE FROM training_slots WHERE id = $1 AND user_id = $2 RETURNING slime_id::text, started_at, training_mode`,
 		slotID, userID,
-	).Scan(&slimeID, &startedAt)
+	).Scan(&slimeID, &startedAt, &trainingMode)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "training slot not found"})
 	}
@@ -203,9 +243,34 @@ func (h *Handler) CollectTraining(c *fiber.Ctx) error {
 	newLevel, newExp, leveledUp := checkLevelUp(slime.Level, slime.Exp+earnedExp)
 	h.slimeRepo.SetLevelAndExp(ctx, slimeID, newLevel, newExp)
 
+	// Apply talent growth based on training mode (1 talent point per 60 mins trained)
+	talentGrowth := elapsedMins / 60
+	if talentGrowth > 4 {
+		talentGrowth = 4 // cap at 4 per session
+	}
+	var grownStat string
+	if mode, ok := trainingModes[trainingMode]; ok && mode.Primary != "" && talentGrowth > 0 {
+		// Primary gets full growth, secondary gets half
+		pool.Exec(ctx,
+			`UPDATE slimes SET `+mode.Primary+` = LEAST(`+mode.Primary+` + $1, 31) WHERE id = $2`,
+			talentGrowth, slimeID,
+		)
+		grownStat = mode.Primary
+		if mode.Secondary != "" {
+			secondaryGrowth := talentGrowth / 2
+			if secondaryGrowth < 1 {
+				secondaryGrowth = 1
+			}
+			pool.Exec(ctx,
+				`UPDATE slimes SET `+mode.Secondary+` = LEAST(`+mode.Secondary+` + $1, 31) WHERE id = $2`,
+				secondaryGrowth, slimeID,
+			)
+		}
+	}
+
 	// Log training collect
 	LogGameAction(pool, userID, "training_collect", "training", 0, 0, 0, map[string]interface{}{
-		"slime_id": slimeID, "exp_gained": earnedExp,
+		"slime_id": slimeID, "exp_gained": earnedExp, "training_mode": trainingMode, "talent_growth": talentGrowth,
 	})
 
 	// Reorder remaining slots
@@ -220,10 +285,13 @@ func (h *Handler) CollectTraining(c *fiber.Ctx) error {
 	)
 
 	return c.JSON(fiber.Map{
-		"success":    true,
-		"exp_gained": earnedExp,
-		"new_level":  newLevel,
-		"new_exp":    newExp,
-		"level_up":   leveledUp,
+		"success":        true,
+		"exp_gained":     earnedExp,
+		"new_level":      newLevel,
+		"new_exp":        newExp,
+		"level_up":       leveledUp,
+		"training_mode":  trainingMode,
+		"talent_growth":  talentGrowth,
+		"grown_stat":     grownStat,
 	})
 }

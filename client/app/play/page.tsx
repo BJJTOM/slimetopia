@@ -87,6 +87,18 @@ export default function PlayPage() {
 
   const [showSplash, setShowSplash] = useState(true);
 
+  // Home background theme — must be before early returns to respect hooks rules
+  const [homeBgId, setHomeBgId] = useState(() => {
+    if (typeof window === "undefined") return "default";
+    return localStorage.getItem("home_background") || "default";
+  });
+  useEffect(() => {
+    const handler = () => setHomeBgId(localStorage.getItem("home_background") || "default");
+    window.addEventListener("storage", handler);
+    window.addEventListener("bg-change", handler);
+    return () => { window.removeEventListener("storage", handler); window.removeEventListener("bg-change", handler); };
+  }, []);
+
   useAndroidBackButton();
 
   useEffect(() => {
@@ -120,19 +132,6 @@ export default function PlayPage() {
 
   const hasFullOverlay = showCommunity || showProfile || showShorts || showMiniContents || showCollection;
 
-  // Home background theme
-  const [homeBgId, setHomeBgId] = useState(() => {
-    if (typeof window === "undefined") return "default";
-    return localStorage.getItem("home_background") || "default";
-  });
-  // Listen for background changes from HomePage (custom event + storage)
-  useEffect(() => {
-    const handler = () => setHomeBgId(localStorage.getItem("home_background") || "default");
-    window.addEventListener("storage", handler);
-    window.addEventListener("bg-change", handler);
-    return () => { window.removeEventListener("storage", handler); window.removeEventListener("bg-change", handler); };
-  }, []);
-
   const homeBg = HOME_BACKGROUNDS.find(b => b.id === homeBgId) || HOME_BACKGROUNDS[0];
 
   return (
@@ -140,7 +139,10 @@ export default function PlayPage() {
       <div className="game-frame">
         {/* Home background overlay */}
         {activePanel === "home" && homeBgId !== "default" && (
-          <div className="absolute inset-0 z-0 pointer-events-none opacity-60" style={{ background: homeBg.css }} />
+          <div
+            className={`absolute inset-0 z-0 pointer-events-none ${homeBg.animated || ""}`}
+            style={{ background: homeBg.css, opacity: homeBg.opacity ?? 0.55 }}
+          />
         )}
         {/* Canvas: always mounted, hidden when not on home tab */}
         <div style={{ display: activePanel === "home" ? "block" : "none" }} className="w-full h-full relative z-[1]">

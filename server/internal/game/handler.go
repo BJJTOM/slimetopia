@@ -241,8 +241,16 @@ func RegisterRoutes(router fiber.Router, h *Handler) {
 	// Training Grounds
 	training := router.Group("/training")
 	training.Get("/", h.GetTrainingSlots)
+	training.Get("/modes", h.GetTrainingModes)
 	training.Post("/start", h.StartTraining)
 	training.Post("/:id/collect", h.CollectTraining)
+
+	// Talent, Awakening, Skills
+	slimes.Get("/:id/skills", h.GetSlimeSkills)
+	slimes.Post("/:id/learn-skill", h.LearnSkill)
+	slimes.Get("/:id/awakening-cost", h.GetAwakeningCost)
+	slimes.Post("/:id/awaken", h.AwakenSlime)
+	slimes.Post("/merge-forecast", h.GetMergeForecast)
 
 	// Pity status
 	shop.Get("/pity", h.GetPityStatus)
@@ -849,20 +857,30 @@ func (h *Handler) GetRecipes(c *fiber.Ctx) error {
 
 func slimeToMap(s models.Slime) fiber.Map {
 	mood := deriveMood(s.Hunger, s.Condition, s.Affection, s.IsSick)
+	talentTotal := TalentTotal(s)
 	m := fiber.Map{
-		"id":          uuidToString(s.ID),
-		"species_id":  s.SpeciesID,
-		"level":       s.Level,
-		"exp":         s.Exp,
-		"element":     s.Element,
-		"personality": s.Personality,
-		"affection":   s.Affection,
-		"hunger":      s.Hunger,
-		"condition":   s.Condition,
-		"is_sick":     s.IsSick,
-		"mood":        mood,
-		"created_at":  s.CreatedAt,
-		"updated_at":  s.UpdatedAt,
+		"id":           uuidToString(s.ID),
+		"species_id":   s.SpeciesID,
+		"level":        s.Level,
+		"exp":          s.Exp,
+		"element":      s.Element,
+		"personality":  s.Personality,
+		"affection":    s.Affection,
+		"hunger":       s.Hunger,
+		"condition":    s.Condition,
+		"is_sick":      s.IsSick,
+		"mood":         mood,
+		"talent_str":   s.TalentStr,
+		"talent_vit":   s.TalentVit,
+		"talent_spd":   s.TalentSpd,
+		"talent_int":   s.TalentInt,
+		"talent_cha":   s.TalentCha,
+		"talent_lck":   s.TalentLck,
+		"talent_total": talentTotal,
+		"talent_grade": TalentGrade(talentTotal),
+		"star_level":   s.StarLevel,
+		"created_at":   s.CreatedAt,
+		"updated_at":   s.UpdatedAt,
 	}
 	if s.Name != nil {
 		m["name"] = *s.Name

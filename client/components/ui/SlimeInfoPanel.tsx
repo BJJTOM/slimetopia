@@ -229,6 +229,19 @@ export default function SlimeInfoPanel() {
               {slime.level}
             </div>
             <div className="text-[9px] text-[#B2BEC3] -mt-1">LEVEL</div>
+            {/* Star badge */}
+            {(slime.star_level ?? 0) > 0 && (
+              <div className="flex items-center justify-center gap-0.5 mt-0.5">
+                {Array.from({ length: slime.star_level ?? 0 }).map((_, i) => (
+                  <span key={i} className="text-[10px]" style={{ color: "#FFD700", textShadow: "0 0 4px rgba(255,215,0,0.6)" }}>
+                    {"\u2605"}
+                  </span>
+                ))}
+                {Array.from({ length: 3 - (slime.star_level ?? 0) }).map((_, i) => (
+                  <span key={i} className="text-[10px] opacity-20">{"\u2606"}</span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -265,6 +278,9 @@ export default function SlimeInfoPanel() {
             </div>
           )}
         </div>
+
+        {/* Talent Stats (IV) */}
+        <TalentSection slime={slime} color={color} />
 
         {/* Equipped accessories row */}
         {equipped.length > 0 && (
@@ -633,6 +649,87 @@ function StatBar({
       </div>
       {warn && warnText && (
         <div className="text-[8px] text-[#FF6B6B] font-bold ml-6 mt-0.5 animate-pulse">{warnText}</div>
+      )}
+    </div>
+  );
+}
+
+// ===== Talent Radar Section =====
+const TALENT_LABELS: { key: string; label: string; color: string }[] = [
+  { key: "talent_str", label: "STR", color: "#FF6B6B" },
+  { key: "talent_vit", label: "VIT", color: "#55EFC4" },
+  { key: "talent_spd", label: "SPD", color: "#74B9FF" },
+  { key: "talent_int", label: "INT", color: "#A29BFE" },
+  { key: "talent_cha", label: "CHA", color: "#FD79A8" },
+  { key: "talent_lck", label: "LCK", color: "#FFEAA7" },
+];
+
+const TALENT_GRADE_COLORS: Record<string, string> = {
+  S: "#FFD700",
+  A: "#55EFC4",
+  B: "#74B9FF",
+  C: "#B2BEC3",
+  D: "#636E72",
+};
+
+function TalentSection({ slime, color }: { slime: { talent_str?: number; talent_vit?: number; talent_spd?: number; talent_int?: number; talent_cha?: number; talent_lck?: number; talent_total?: number; talent_grade?: string }; color: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const talentGrade = slime.talent_grade || "D";
+  const talentTotal = slime.talent_total || 0;
+  const gradeColor = TALENT_GRADE_COLORS[talentGrade] || "#B2BEC3";
+  const talents = [slime.talent_str || 0, slime.talent_vit || 0, slime.talent_spd || 0, slime.talent_int || 0, slime.talent_cha || 0, slime.talent_lck || 0];
+  const maxTalent = 31;
+
+  return (
+    <div className="mb-3 rounded-xl overflow-hidden" style={{
+      background: "linear-gradient(135deg, rgba(61,32,23,0.4), rgba(44,24,16,0.3))",
+      border: "1px solid rgba(139,105,20,0.15)",
+    }}>
+      {/* Header — always visible */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between p-2.5 transition-colors hover:bg-white/[0.02]"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-xs">{"\uD83E\uDDEC"}</span>
+          <span className="text-[10px] font-bold" style={{ color: "#C9A84C" }}>재능 (Talent)</span>
+          <span className="text-[9px] px-1.5 py-0.5 rounded-full font-black"
+            style={{ backgroundColor: gradeColor + "20", color: gradeColor, border: `1px solid ${gradeColor}30` }}>
+            {talentGrade}
+          </span>
+          <span className="text-[9px] text-[#B2BEC3] tabular-nums">{talentTotal}/186</span>
+        </div>
+        <span className="text-[10px] text-[#B2BEC3] transition-transform" style={{ transform: expanded ? "rotate(180deg)" : "rotate(0)" }}>
+          {"\u25BC"}
+        </span>
+      </button>
+
+      {/* Expanded: hexagonal radar chart (simplified as bars) */}
+      {expanded && (
+        <div className="px-2.5 pb-2.5 space-y-1.5">
+          {TALENT_LABELS.map((t, i) => {
+            const val = talents[i];
+            const pct = (val / maxTalent) * 100;
+            return (
+              <div key={t.key} className="flex items-center gap-2">
+                <span className="text-[9px] w-7 font-bold tabular-nums" style={{ color: t.color }}>{t.label}</span>
+                <div className="flex-1 h-[5px] rounded-full overflow-hidden" style={{
+                  background: "rgba(26,14,8,0.8)",
+                  border: "1px solid rgba(139,105,20,0.08)",
+                }}>
+                  <div className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${pct}%`,
+                      background: `linear-gradient(90deg, ${t.color}, ${t.color}AA)`,
+                      boxShadow: `0 0 4px ${t.color}40`,
+                    }}
+                  />
+                </div>
+                <span className="text-[9px] w-5 text-right font-bold tabular-nums" style={{ color: t.color }}>{val}</span>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );

@@ -18,6 +18,17 @@ export interface Slime {
   mood: string;
   position_x?: number;
   position_y?: number;
+  // Talent (IV) system
+  talent_str?: number;
+  talent_vit?: number;
+  talent_spd?: number;
+  talent_int?: number;
+  talent_cha?: number;
+  talent_lck?: number;
+  talent_total?: number;
+  talent_grade?: string;
+  // Awakening (Star) system
+  star_level?: number;
 }
 
 export interface SlimeSpecies {

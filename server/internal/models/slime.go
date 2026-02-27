@@ -31,6 +31,13 @@ type Slime struct {
 	PositionY   *int        `json:"position_y"`
 	Accessories []byte      `json:"accessories"` // JSONB
 	IsSick      bool        `json:"is_sick"`
+	TalentStr   int         `json:"talent_str"`
+	TalentVit   int         `json:"talent_vit"`
+	TalentSpd   int         `json:"talent_spd"`
+	TalentInt   int         `json:"talent_int"`
+	TalentCha   int         `json:"talent_cha"`
+	TalentLck   int         `json:"talent_lck"`
+	StarLevel   int         `json:"star_level"`
 	CreatedAt   time.Time   `json:"created_at"`
 	UpdatedAt   time.Time   `json:"updated_at"`
 }

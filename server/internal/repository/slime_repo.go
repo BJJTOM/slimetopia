@@ -26,7 +26,9 @@ func (r *SlimeRepository) Pool() *pgxpool.Pool {
 func (r *SlimeRepository) FindByUser(ctx context.Context, userID string) ([]models.Slime, error) {
 	rows, err := r.pool.Query(ctx,
 		`SELECT id, user_id, species_id, name, level, exp, element, personality,
-		        affection, hunger, condition, position_x, position_y, accessories, is_sick, created_at, updated_at
+		        affection, hunger, condition, position_x, position_y, accessories, is_sick,
+		        talent_str, talent_vit, talent_spd, talent_int, talent_cha, talent_lck, star_level,
+		        created_at, updated_at
 		 FROM slimes WHERE user_id = $1 ORDER BY created_at DESC`,
 		userID,
 	)
@@ -41,7 +43,9 @@ func (r *SlimeRepository) FindByUser(ctx context.Context, userID string) ([]mode
 		if err := rows.Scan(
 			&s.ID, &s.UserID, &s.SpeciesID, &s.Name, &s.Level, &s.Exp,
 			&s.Element, &s.Personality, &s.Affection, &s.Hunger, &s.Condition,
-			&s.PositionX, &s.PositionY, &s.Accessories, &s.IsSick, &s.CreatedAt, &s.UpdatedAt,
+			&s.PositionX, &s.PositionY, &s.Accessories, &s.IsSick,
+			&s.TalentStr, &s.TalentVit, &s.TalentSpd, &s.TalentInt, &s.TalentCha, &s.TalentLck, &s.StarLevel,
+			&s.CreatedAt, &s.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -54,13 +58,17 @@ func (r *SlimeRepository) FindByID(ctx context.Context, id string) (*models.Slim
 	s := &models.Slime{}
 	err := r.pool.QueryRow(ctx,
 		`SELECT id, user_id, species_id, name, level, exp, element, personality,
-		        affection, hunger, condition, position_x, position_y, accessories, is_sick, created_at, updated_at
+		        affection, hunger, condition, position_x, position_y, accessories, is_sick,
+		        talent_str, talent_vit, talent_spd, talent_int, talent_cha, talent_lck, star_level,
+		        created_at, updated_at
 		 FROM slimes WHERE id = $1`,
 		id,
 	).Scan(
 		&s.ID, &s.UserID, &s.SpeciesID, &s.Name, &s.Level, &s.Exp,
 		&s.Element, &s.Personality, &s.Affection, &s.Hunger, &s.Condition,
-		&s.PositionX, &s.PositionY, &s.Accessories, &s.IsSick, &s.CreatedAt, &s.UpdatedAt,
+		&s.PositionX, &s.PositionY, &s.Accessories, &s.IsSick,
+		&s.TalentStr, &s.TalentVit, &s.TalentSpd, &s.TalentInt, &s.TalentCha, &s.TalentLck, &s.StarLevel,
+		&s.CreatedAt, &s.UpdatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -74,15 +82,48 @@ func (r *SlimeRepository) FindByID(ctx context.Context, id string) (*models.Slim
 func (r *SlimeRepository) Create(ctx context.Context, userID string, speciesID int, element, personality string) (*models.Slime, error) {
 	s := &models.Slime{}
 	err := r.pool.QueryRow(ctx,
-		`INSERT INTO slimes (user_id, species_id, element, personality)
-		 VALUES ($1, $2, $3, $4)
+		`INSERT INTO slimes (user_id, species_id, element, personality,
+		                     talent_str, talent_vit, talent_spd, talent_int, talent_cha, talent_lck)
+		 VALUES ($1, $2, $3, $4,
+		         floor(random()*32), floor(random()*32), floor(random()*32),
+		         floor(random()*32), floor(random()*32), floor(random()*32))
 		 RETURNING id, user_id, species_id, name, level, exp, element, personality,
-		           affection, hunger, condition, position_x, position_y, accessories, is_sick, created_at, updated_at`,
+		           affection, hunger, condition, position_x, position_y, accessories, is_sick,
+		           talent_str, talent_vit, talent_spd, talent_int, talent_cha, talent_lck, star_level,
+		           created_at, updated_at`,
 		userID, speciesID, element, personality,
 	).Scan(
 		&s.ID, &s.UserID, &s.SpeciesID, &s.Name, &s.Level, &s.Exp,
 		&s.Element, &s.Personality, &s.Affection, &s.Hunger, &s.Condition,
-		&s.PositionX, &s.PositionY, &s.Accessories, &s.IsSick, &s.CreatedAt, &s.UpdatedAt,
+		&s.PositionX, &s.PositionY, &s.Accessories, &s.IsSick,
+		&s.TalentStr, &s.TalentVit, &s.TalentSpd, &s.TalentInt, &s.TalentCha, &s.TalentLck, &s.StarLevel,
+		&s.CreatedAt, &s.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return s, nil
+}
+
+// CreateWithTalents creates a slime with specific talent values (used for merge inheritance)
+func (r *SlimeRepository) CreateWithTalents(ctx context.Context, userID string, speciesID int, element, personality string, talents [6]int) (*models.Slime, error) {
+	s := &models.Slime{}
+	err := r.pool.QueryRow(ctx,
+		`INSERT INTO slimes (user_id, species_id, element, personality,
+		                     talent_str, talent_vit, talent_spd, talent_int, talent_cha, talent_lck)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		 RETURNING id, user_id, species_id, name, level, exp, element, personality,
+		           affection, hunger, condition, position_x, position_y, accessories, is_sick,
+		           talent_str, talent_vit, talent_spd, talent_int, talent_cha, talent_lck, star_level,
+		           created_at, updated_at`,
+		userID, speciesID, element, personality,
+		talents[0], talents[1], talents[2], talents[3], talents[4], talents[5],
+	).Scan(
+		&s.ID, &s.UserID, &s.SpeciesID, &s.Name, &s.Level, &s.Exp,
+		&s.Element, &s.Personality, &s.Affection, &s.Hunger, &s.Condition,
+		&s.PositionX, &s.PositionY, &s.Accessories, &s.IsSick,
+		&s.TalentStr, &s.TalentVit, &s.TalentSpd, &s.TalentInt, &s.TalentCha, &s.TalentLck, &s.StarLevel,
+		&s.CreatedAt, &s.UpdatedAt,
 	)
 	if err != nil {
 		return nil, err

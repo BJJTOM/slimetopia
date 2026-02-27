@@ -136,6 +136,9 @@ func (h *Handler) MergeSlimes(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": result.Error})
 	}
 
+	// Inherit talents from parents
+	childTalents := InheritTalents(*slimeA, *slimeB)
+
 	// Delete both input slimes
 	if err := h.slimeRepo.Delete(ctx, body.SlimeIDA); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "merge failed"})
@@ -144,11 +147,14 @@ func (h *Handler) MergeSlimes(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "merge failed"})
 	}
 
-	// Create result slime
-	resultSlime, err := h.slimeRepo.Create(ctx, userID, result.SpeciesID, result.Element, result.Personality)
+	// Create result slime with inherited talents
+	resultSlime, err := h.slimeRepo.CreateWithTalents(ctx, userID, result.SpeciesID, result.Element, result.Personality, childTalents)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create result slime"})
 	}
+
+	// Inherit skills from parents (30% chance per skill)
+	InheritSkills(ctx, pool, body.SlimeIDA, body.SlimeIDB, uuidToString(resultSlime.ID))
 
 	// Add to codex
 	h.slimeRepo.AddCodexEntry(ctx, userID, result.SpeciesID)
