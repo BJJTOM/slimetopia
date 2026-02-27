@@ -406,13 +406,13 @@ export default function HomePage() {
       <div className="floating-menu-right pointer-events-auto">
         <div className="side-grid-2col">
           {([
-            { panel: "codex" as const, icon: "\uD83D\uDCD6", labelKey: "home_codex" },
-            { panel: "achievements" as const, icon: "\uD83C\uDFC6", labelKey: "home_achievements" },
-            { panel: "leaderboard" as const, icon: "\uD83D\uDC51", labelKey: "home_leaderboard" },
-            { panel: "inventory" as const, icon: "\uD83C\uDF92", labelKey: "home_inventory" },
-            { panel: "gacha" as const, icon: "\uD83E\uDD5A", labelKey: "home_gacha" },
-            { panel: "shop" as const, icon: "\uD83D\uDED2", labelKey: "home_shop" },
-          ] as const).map(({ panel, icon, labelKey }) => (
+            { panel: "codex" as const, labelKey: "home_codex" },
+            { panel: "achievements" as const, labelKey: "home_achievements" },
+            { panel: "leaderboard" as const, labelKey: "home_leaderboard" },
+            { panel: "inventory" as const, labelKey: "home_inventory" },
+            { panel: "gacha" as const, labelKey: "home_gacha" },
+            { panel: "shop" as const, labelKey: "home_shop" },
+          ] as const).map(({ panel, labelKey }) => (
             <button key={panel} onClick={() => setActivePanel(panel)} style={{
               display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2,
               width: 50, height: 50,
@@ -422,7 +422,7 @@ export default function HomePage() {
               boxShadow: "0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,235,180,0.08)",
               cursor: "pointer",
             }}>
-              <span style={{ fontSize: 20, lineHeight: 1 }}>{icon}</span>
+              <img src={getGameIcon(panel, 24)} alt="" style={{ width: 24, height: 24 }} />
               <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>{t(labelKey)}</span>
             </button>
           ))}
