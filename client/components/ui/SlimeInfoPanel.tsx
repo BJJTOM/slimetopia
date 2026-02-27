@@ -35,6 +35,9 @@ export default function SlimeInfoPanel() {
     collectionEntries,
     collectionRequirements,
     submitToCollection,
+    recipes,
+    setMergeSlot,
+    setActivePanel,
     activePanel,
     showCommunity,
     showProfile,
@@ -357,6 +360,58 @@ export default function SlimeInfoPanel() {
             <div className="text-[10px] font-semibold text-[#B2BEC3]">꾸미기</div>
           </button>
         </div>
+
+        {/* Merge recommendation card */}
+        {(() => {
+          const mergeRecommendation = recipes.find(r =>
+            !r.discovered && !r.hidden &&
+            (r.input_a === slime.species_id || r.input_b === slime.species_id)
+          );
+          const sameSpeciesSlime = slimes.find(s =>
+            s.id !== slime.id && s.species_id === slime.species_id
+          );
+          if (!mergeRecommendation && !sameSpeciesSlime) return null;
+          return (
+            <div className="mt-3 p-3 rounded-xl" style={{
+              background: "rgba(201,168,76,0.08)",
+              border: "1px solid rgba(201,168,76,0.18)",
+            }}>
+              <div className="text-[11px] font-bold mb-2" style={{ color: "#D4AF37" }}>
+                {mergeRecommendation ? "🧪 합성에 사용할 수 있어요!" : "🧪 동종 합성이 가능해요!"}
+              </div>
+              {mergeRecommendation && (
+                <div className="text-[10px] text-[#B2BEC3] mb-2">
+                  힌트: {mergeRecommendation.hint}
+                </div>
+              )}
+              <button
+                onClick={() => {
+                  const myId = slime.id;
+                  selectSlime(null);
+                  setActivePanel("merge");
+                  setMergeSlot("A", myId);
+                  if (mergeRecommendation) {
+                    const partnerSpeciesId = mergeRecommendation.input_a === slime.species_id
+                      ? mergeRecommendation.input_b
+                      : mergeRecommendation.input_a;
+                    const partner = slimes.find(s => s.species_id === partnerSpeciesId && s.id !== myId);
+                    if (partner) setMergeSlot("B", partner.id);
+                  } else if (sameSpeciesSlime) {
+                    setMergeSlot("B", sameSpeciesSlime.id);
+                  }
+                }}
+                className="w-full py-2 rounded-lg text-[11px] font-bold transition active:scale-[0.98]"
+                style={{
+                  background: "linear-gradient(135deg, rgba(201,168,76,0.2), rgba(201,168,76,0.08))",
+                  border: "1px solid rgba(201,168,76,0.3)",
+                  color: "#D4AF37",
+                }}
+              >
+                합성하러 가기 →
+              </button>
+            </div>
+          );
+        })()}
 
         {/* Collection submit button — compact in action area */}
         {(() => {

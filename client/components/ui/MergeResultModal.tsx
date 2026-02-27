@@ -54,7 +54,8 @@ function Confetti({ color, count }: { color: string; count: number }) {
 }
 
 export default function MergeResultModal() {
-  const { showMergeResult, clearMergeResult } = useGameStore();
+  const { showMergeResult, clearMergeResult, collectionEntries, setActivePanel,
+          recipes, slimes, setMergeSlot, selectSlime } = useGameStore();
   const [phase, setPhase] = useState<"burst" | "reveal" | "shown">("burst");
 
   useEffect(() => {
@@ -233,12 +234,62 @@ export default function MergeResultModal() {
           {/* Description */}
           <p className="text-[#B2BEC3] text-xs mb-6 leading-relaxed">{species.description}</p>
 
-          <button
-            onClick={clearMergeResult}
-            className="btn-primary w-full py-3 text-sm active:scale-95 transition-transform"
-          >
-            확인
-          </button>
+          {/* Flow connection buttons */}
+          {(() => {
+            const alreadySubmitted = collectionEntries.some(
+              (e) => e.species_id === slime.species_id && e.personality === slime.personality
+            );
+            const ownedSpeciesIds = new Set(slimes.map(s => s.species_id));
+            const nextRecipe = recipes.find(r =>
+              !r.discovered && !r.hidden &&
+              ownedSpeciesIds.has(r.input_a) && ownedSpeciesIds.has(r.input_b)
+            );
+            return (
+              <div className="flex flex-col gap-2 w-full">
+                {!alreadySubmitted && (
+                  <button
+                    onClick={() => {
+                      selectSlime(slime.id);
+                      clearMergeResult();
+                    }}
+                    className="w-full py-2.5 text-xs font-bold rounded-xl transition active:scale-95"
+                    style={{
+                      background: "rgba(85,239,196,0.1)",
+                      border: "1px solid rgba(85,239,196,0.2)",
+                      color: "#55EFC4",
+                    }}
+                  >
+                    컬렉션 등록 →
+                  </button>
+                )}
+                {nextRecipe && (
+                  <button
+                    onClick={() => {
+                      const slimeA = slimes.find(s => s.species_id === nextRecipe.input_a);
+                      const slimeB = slimes.find(s => s.species_id === nextRecipe.input_b && s.id !== slimeA?.id);
+                      if (slimeA) setMergeSlot("A", slimeA.id);
+                      if (slimeB) setMergeSlot("B", slimeB.id);
+                      clearMergeResult();
+                    }}
+                    className="w-full py-2.5 text-xs font-bold rounded-xl transition active:scale-95"
+                    style={{
+                      background: "rgba(201,168,76,0.12)",
+                      border: "1px solid rgba(201,168,76,0.25)",
+                      color: "#D4AF37",
+                    }}
+                  >
+                    추천 합성하기 →
+                  </button>
+                )}
+                <button
+                  onClick={clearMergeResult}
+                  className="btn-primary w-full py-3 text-sm active:scale-95 transition-transform"
+                >
+                  확인
+                </button>
+              </div>
+            );
+          })()}
         </div>
       </div>
     </div>

@@ -232,6 +232,15 @@ export interface MaterialInventoryItem {
   quantity: number;
 }
 
+export interface CollectionSubmitResult {
+  collection_count: number;
+  species_id: number;
+  personality: string;
+  gold_reward: number;
+  gem_reward: number;
+  is_first_of_species: boolean;
+}
+
 export interface CollectionScoreData {
   species_points: number;
   set_bonus: number;
@@ -326,7 +335,7 @@ interface GameState {
   mergeSlotA: string | null;
   mergeSlotB: string | null;
   showMergeResult: MergeResult | null;
-  activePanel: "home" | "inventory" | "codex" | "merge" | "explore" | "discovery" | "shop" | "gacha" | "achievements" | "leaderboard" | "collection";
+  activePanel: "home" | "inventory" | "codex" | "merge" | "explore" | "discovery" | "shop" | "gacha" | "achievements" | "leaderboard" | "slimes" | "collection";
   cooldowns: CooldownMap;
   reactionMessage: { slimeId: string; text: string } | null;
   levelUpInfo: LevelUpInfo | null;
@@ -402,6 +411,11 @@ interface GameState {
   // Shorts
   showShorts: boolean;
 
+  // Flow connection state
+  lastPulledSlimeIds: string[];
+  lastMergedSlimeId: string | null;
+  highlightSlimeId: string | null;
+
   // Mini Contents (Race, Fishing, Boss, Training)
   showMiniContents: boolean;
 
@@ -410,17 +424,15 @@ interface GameState {
 
   // More menu
   showMore: boolean;
-  setShowMore: (v: boolean) => void;
-
-  // Slime detail page
-  detailSlimeId: string | null;
-
   // Legacy overlays (used by MiniContentsPage internally)
   showPlaza: boolean;
   showWorldBoss: boolean;
   showTraining: boolean;
   showRace: boolean;
   showFishing: boolean;
+
+  // Slime detail page
+  detailSlimeId: string | null;
 
   // Effect callback
   nurtureEffectCallback: NurtureEffectCallback | null;
@@ -540,6 +552,9 @@ interface GameState {
   // Slime detail page
   setDetailSlimeId: (id: string | null) => void;
 
+  // More menu actions
+  setShowMore: (v: boolean) => void;
+
   // Legacy overlay actions (used internally by MiniContentsPage)
   setShowPlaza: (show: boolean) => void;
   setShowWorldBoss: (show: boolean) => void;
@@ -549,6 +564,11 @@ interface GameState {
 
   // Effect callback setter
   setNurtureEffectCallback: (cb: NurtureEffectCallback | null) => void;
+
+  // Flow connection setters
+  setLastPulledSlimeIds: (ids: string[]) => void;
+  setLastMergedSlimeId: (id: string | null) => void;
+  setHighlightSlimeId: (id: string | null) => void;
 }
 
 function handleNurtureResponse(
@@ -679,14 +699,16 @@ export const useGameStore = create<GameState>((set, get) => ({
   showCommunity: false,
   showProfile: false,
   showShorts: false,
+  lastPulledSlimeIds: [],
+  lastMergedSlimeId: null,
+  highlightSlimeId: null,
   showMiniContents: false,
   showCollection: false,
   showMore: false,
-  setShowMore: (v) => set({ showMore: v }),
-  detailSlimeId: null,
   showPlaza: false,
   showWorldBoss: false,
   showTraining: false,
+  detailSlimeId: null,
   nurtureEffectCallback: null,
 
   fetchSlimes: async (token) => {
@@ -1111,12 +1133,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       useAuthStore.getState().fetchUser();
       toastReward("컬렉션 제출 완료!", "📖");
       return {
+        collection_count: res.collection_count,
         species_id: res.species_id,
         personality: res.personality,
         gold_reward: res.gold_reward,
         gem_reward: res.gem_reward,
         is_first_of_species: res.is_first_of_species,
-        collection_count: res.collection_count,
       };
     } catch (err) {
       if (err instanceof ApiError) {
@@ -1405,6 +1427,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   // ===== Slime detail =====
   setDetailSlimeId: (id) => set({ detailSlimeId: id }),
 
+  // ===== More menu =====
+  setShowMore: (v) => set({ showMore: v }),
+
   // ===== Legacy overlays =====
   setShowPlaza: (show) => set({ showPlaza: show }),
   setShowWorldBoss: (show) => set({ showWorldBoss: show }),
@@ -1414,4 +1439,9 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   // ===== Effect Callback =====
   setNurtureEffectCallback: (cb) => set({ nurtureEffectCallback: cb }),
+
+  // ===== Flow Connection =====
+  setLastPulledSlimeIds: (ids) => set({ lastPulledSlimeIds: ids }),
+  setLastMergedSlimeId: (id) => set({ lastMergedSlimeId: id }),
+  setHighlightSlimeId: (id) => set({ highlightSlimeId: id }),
 }));

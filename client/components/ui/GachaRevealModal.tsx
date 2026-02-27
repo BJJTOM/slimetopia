@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { generateSlimeSvg, generateSlimeIconSvg } from "@/lib/slimeSvg";
 import { elementNames, personalityNames, gradeColors, gradeNames, gradeRank } from "@/lib/constants";
 import { toastReward } from "./Toast";
+import { useGameStore } from "@/lib/store/gameStore";
 import type { Slime, SlimeSpecies } from "@/lib/store/gameStore";
 
 interface Props {
@@ -168,13 +169,29 @@ export default function GachaRevealModal({ results, onClose }: Props) {
             })}
           </div>
 
-          {/* Close button */}
-          <button
-            onClick={onClose}
-            className="btn-primary py-2.5 px-12 text-sm active:scale-95 transition-transform font-bold"
-          >
-            확인
-          </button>
+          {/* Action buttons */}
+          <div className="flex gap-2 w-full max-w-[300px]">
+            <button
+              onClick={() => {
+                useGameStore.getState().setActivePanel("inventory");
+                onClose();
+              }}
+              className="flex-1 py-2.5 text-xs font-bold rounded-xl transition active:scale-95"
+              style={{
+                background: "rgba(201,168,76,0.12)",
+                border: "1px solid rgba(201,168,76,0.25)",
+                color: "#D4AF37",
+              }}
+            >
+              인벤토리 보기 →
+            </button>
+            <button
+              onClick={onClose}
+              className="flex-1 btn-primary py-2.5 text-sm active:scale-95 transition-transform font-bold"
+            >
+              확인
+            </button>
+          </div>
         </div>
 
         <style jsx>{`
@@ -436,7 +453,7 @@ export default function GachaRevealModal({ results, onClose }: Props) {
             </p>
 
             {/* Buttons */}
-            <div className="flex gap-2 w-full max-w-[260px]">
+            <div className="flex gap-2 w-full max-w-[260px] flex-wrap justify-center">
               {isMulti && currentIdx < results.length - 1 && (
                 <button
                   onClick={handleSkipAll}
@@ -445,6 +462,45 @@ export default function GachaRevealModal({ results, onClose }: Props) {
                   전체 보기
                 </button>
               )}
+              {/* Flow connection buttons on last single reveal */}
+              {!isMulti && currentIdx >= results.length - 1 && phase === "reveal" && (() => {
+                const { collectionEntries, setActivePanel, selectSlime } = useGameStore.getState();
+                const isNewSpecies = !collectionEntries.some(e => e.species_id === current.species.id);
+                return (
+                  <>
+                    <button
+                      onClick={() => {
+                        selectSlime(current.slime.id);
+                        onClose();
+                      }}
+                      className="flex-1 py-2.5 text-xs font-bold rounded-xl transition active:scale-95"
+                      style={{
+                        background: "rgba(201,168,76,0.12)",
+                        border: "1px solid rgba(201,168,76,0.25)",
+                        color: "#D4AF37",
+                      }}
+                    >
+                      슬라임 보러가기 →
+                    </button>
+                    {isNewSpecies && (
+                      <button
+                        onClick={() => {
+                          setActivePanel("codex");
+                          onClose();
+                        }}
+                        className="flex-1 py-2.5 text-xs font-bold rounded-xl transition active:scale-95"
+                        style={{
+                          background: "rgba(85,239,196,0.1)",
+                          border: "1px solid rgba(85,239,196,0.2)",
+                          color: "#55EFC4",
+                        }}
+                      >
+                        도감에서 확인 →
+                      </button>
+                    )}
+                  </>
+                );
+              })()}
               <button
                 onClick={handleNext}
                 className="flex-1 btn-primary py-2.5 text-sm active:scale-95 transition-transform font-bold"

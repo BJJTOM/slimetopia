@@ -176,9 +176,11 @@ export default function GachaPage() {
         if (res.type === "egg") {
           const result = res.result as { slime: SlimeResult["slime"]; species: SlimeResult["species"] };
           setGachaResults([{ slime: result.slime, species: result.species }]);
+          useGameStore.getState().setLastPulledSlimeIds([result.slime.id]);
         } else if (res.type === "multi_egg") {
           const result = res.result as { results: SlimeResult[] };
           setGachaResults(result.results);
+          useGameStore.getState().setLastPulledSlimeIds(result.results.map(r => r.slime.id));
         }
       }
     } catch (err: unknown) {
