@@ -292,6 +292,16 @@ const ICONS: Record<string, IconFn> = {
     `<polygon points="12,2 13,3.5 11,3.5" fill="#D4AF37" stroke="${O}" stroke-width=".4"/>`,
     a
   ),
+
+  /* ── More: three dots ── */
+  more: (a) =>
+    toUri(
+      `<linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#D4AF37"/><stop offset="100%" stop-color="#8B6914"/></linearGradient>`,
+      `<circle cx="6" cy="12" r="2.5" fill="url(#g1)" stroke="${O}" stroke-width="1"/>` +
+        `<circle cx="12" cy="12" r="2.5" fill="url(#g1)" stroke="${O}" stroke-width="1"/>` +
+        `<circle cx="18" cy="12" r="2.5" fill="url(#g1)" stroke="${O}" stroke-width="1"/>`,
+      a,
+    ),
 };
 
 /**

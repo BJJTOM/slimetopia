@@ -4,21 +4,29 @@ import { useGameStore } from "@/lib/store/gameStore";
 import { useLocaleStore } from "@/lib/store/localeStore";
 import { getGameIcon } from "@/lib/gameIcons";
 
-const navItems = [
-  { id: "home" as const, labelKey: "home" },
-  { id: "community" as const, labelKey: "community" },
-  { id: "merge" as const, labelKey: "merge" },
-  { id: "discovery" as const, labelKey: "explore" },
-] as const;
+type NavItem = { id: string; labelKey: string; panel: string | null };
+
+const navItems: NavItem[] = [
+  { id: "home", labelKey: "home", panel: "home" },
+  { id: "slimes", labelKey: "nav_slimes", panel: "inventory" },
+  { id: "merge", labelKey: "merge", panel: "merge" },
+  { id: "collection", labelKey: "nav_collection", panel: "collection" },
+  { id: "more", labelKey: "nav_more", panel: null },
+];
 
 export default function BottomNav() {
-  const {
-    activePanel, setActivePanel,
-    setShowCommunity, setShowProfile,
-    setShowShorts, setShowMiniContents, setShowCollection,
-    slimes, explorations, dailyMissions, unreadMailCount,
-    showProfile, showCommunity, showShorts, showMiniContents, showCollection,
-  } = useGameStore();
+  const activePanel = useGameStore((s) => s.activePanel);
+  const setActivePanel = useGameStore((s) => s.setActivePanel);
+  const setShowCommunity = useGameStore((s) => s.setShowCommunity);
+  const setShowProfile = useGameStore((s) => s.setShowProfile);
+  const setShowShorts = useGameStore((s) => s.setShowShorts);
+  const setShowMiniContents = useGameStore((s) => s.setShowMiniContents);
+  const setShowCollection = useGameStore((s) => s.setShowCollection);
+  const setShowMore = useGameStore((s) => s.setShowMore);
+  const showMore = useGameStore((s) => s.showMore);
+  const slimes = useGameStore((s) => s.slimes);
+  const dailyMissions = useGameStore((s) => s.dailyMissions);
+  const unreadMailCount = useGameStore((s) => s.unreadMailCount);
   const t = useLocaleStore((s) => s.t);
 
   const closeOverlays = () => {
@@ -27,42 +35,42 @@ export default function BottomNav() {
     setShowShorts(false);
     setShowMiniContents(false);
     setShowCollection(false);
-  };
-
-  const handleNav = (panel: string) => {
-    closeOverlays();
-    if (panel === "community") {
-      setActivePanel("home");
-      setTimeout(() => setShowCommunity(true), 50);
-    } else {
-      setActivePanel(panel as typeof activePanel);
-    }
+    setShowMore(false);
   };
 
   const hungryCount = slimes.filter((s) => s.hunger < 20).length;
-  const readyExplorations = explorations.filter((e) => !e.claimed && new Date(e.ends_at).getTime() <= Date.now()).length;
   const unclaimedMissions = dailyMissions.filter((m) => m.completed && !m.claimed).length;
 
   const getBadge = (id: string): number => {
     switch (id) {
-      case "discovery": return readyExplorations;
-      case "home": return unclaimedMissions + unreadMailCount + hungryCount;
+      case "home": return unclaimedMissions + unreadMailCount;
+      case "slimes": return hungryCount;
       default: return 0;
     }
   };
 
-  const isOverlayActive = (id: string) => {
-    if (id === "community") return showCommunity;
-    return false;
+  const getIsActive = (item: NavItem): boolean => {
+    if (item.id === "more") return showMore;
+    if (item.id === "slimes") return activePanel === "inventory" && !showMore;
+    if (item.id === "collection") return activePanel === "collection" && !showMore;
+    return activePanel === item.panel && !showMore;
   };
 
-  const overlayButtons = [
-    { id: "mini", labelKey: "nav_mini_games", active: showMiniContents, action: () => { closeOverlays(); setShowMiniContents(true); } },
-    { id: "collection", labelKey: "nav_collection", active: showCollection, action: () => { closeOverlays(); setShowCollection(true); } },
-    { id: "profile", labelKey: "nav_profile", active: showProfile, action: () => { closeOverlays(); setShowProfile(true); } },
-  ];
+  const handleNav = (item: NavItem) => {
+    if (item.id === "more") {
+      setShowMore(!showMore);
+      return;
+    }
+    closeOverlays();
+    if (item.panel) {
+      setActivePanel(item.panel as Parameters<typeof setActivePanel>[0]);
+    }
+  };
 
-  const anyOverlay = showCommunity || showProfile || showShorts || showMiniContents || showCollection;
+  const getIconName = (id: string): string => {
+    if (id === "slimes") return "inventory";
+    return id;
+  };
 
   return (
     <div style={{
@@ -78,11 +86,11 @@ export default function BottomNav() {
     }}>
       <div className="flex justify-around items-center h-full px-1" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         {navItems.map((item) => {
-          const isActive = (activePanel === item.id && !anyOverlay) || isOverlayActive(item.id);
+          const isActive = getIsActive(item);
           const badge = getBadge(item.id);
 
           return (
-            <button key={item.id} onClick={() => handleNav(item.id)}
+            <button key={item.id} onClick={() => handleNav(item)}
               className="flex flex-col items-center justify-center gap-1 min-w-0 flex-1 relative py-1"
               style={{ WebkitTapHighlightColor: "transparent" }}>
               {isActive && (
@@ -99,7 +107,7 @@ export default function BottomNav() {
                 boxShadow: isActive ? "0 2px 8px rgba(201,168,76,0.15), inset 0 1px 0 rgba(245,230,200,0.05)" : "none",
                 transition: "all 0.2s ease",
               }}>
-                <img src={getGameIcon(item.id, 22, isActive)} alt="" style={{
+                <img src={getGameIcon(getIconName(item.id), 22, isActive)} alt="" style={{
                   width: isActive ? 22 : 19,
                   height: isActive ? 22 : 19,
                   transition: "all 0.2s ease",
@@ -128,41 +136,6 @@ export default function BottomNav() {
             </button>
           );
         })}
-
-        {overlayButtons.map((btn) => (
-          <button key={btn.id} onClick={btn.action}
-            className="flex flex-col items-center justify-center gap-1 min-w-0 flex-1 relative py-1"
-            style={{ WebkitTapHighlightColor: "transparent" }}>
-            {btn.active && (
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-[2px] rounded-b-full"
-                style={{ background: "linear-gradient(90deg, transparent, #D4AF37, transparent)", boxShadow: "0 2px 10px rgba(212,175,55,0.5)" }} />
-            )}
-
-            <div style={{
-              width: 36, height: 36, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center",
-              background: btn.active
-                ? "linear-gradient(135deg, rgba(201,168,76,0.2), rgba(139,105,20,0.12))"
-                : "linear-gradient(135deg, rgba(61,32,23,0.5), rgba(44,24,16,0.3))",
-              border: btn.active ? "1.5px solid rgba(201,168,76,0.35)" : "1px solid rgba(139,105,20,0.12)",
-              boxShadow: btn.active ? "0 2px 8px rgba(201,168,76,0.15), inset 0 1px 0 rgba(245,230,200,0.05)" : "none",
-              transition: "all 0.2s ease",
-            }}>
-              <img src={getGameIcon(btn.id, 22, btn.active)} alt="" style={{
-                width: btn.active ? 22 : 19,
-                height: btn.active ? 22 : 19,
-                transition: "all 0.2s ease",
-              }} />
-            </div>
-
-            <span style={{
-              fontSize: 9, fontWeight: 700, lineHeight: 1,
-              fontFamily: "Georgia, serif",
-              color: btn.active ? "#D4AF37" : "rgba(201,168,76,0.35)",
-              textShadow: btn.active ? "0 0 6px rgba(212,175,55,0.3)" : "none",
-              transition: "all 0.2s ease",
-            }}>{t(btn.labelKey)}</span>
-          </button>
-        ))}
       </div>
     </div>
   );

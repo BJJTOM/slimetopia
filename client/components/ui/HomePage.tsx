@@ -22,196 +22,45 @@ export type HomeBg = {
   price: number;
   currency: "gold" | "gems";
   icon: string;
-  animated?: string; // CSS class name for animated overlay
-  opacity?: number;  // custom overlay opacity (default 0.55)
+  animated?: string;
+  opacity?: number;
   tier: "free" | "basic" | "premium" | "legendary";
 };
 
 export const HOME_BACKGROUNDS: HomeBg[] = [
-  // ─── Free ───
-  {
-    id: "default",
-    nameKey: "bg_default",
-    css: "linear-gradient(180deg, #080816 0%, #0f0f2a 100%)",
-    price: 0, currency: "gold", icon: "\uD83C\uDF11", tier: "free",
-  },
-  // ─── Basic (Gold) ───
-  {
-    id: "sunset_meadow",
-    nameKey: "bg_sunset_meadow",
-    css: "linear-gradient(180deg, #2D1B4E 0%, #FF6B35 25%, #F7C948 50%, #8BC34A 70%, #2D5016 85%, #1A3A0A 100%)",
-    price: 500, currency: "gold", icon: "\uD83C\uDF05", tier: "basic",
-  },
-  {
-    id: "deep_ocean",
-    nameKey: "bg_deep_ocean",
-    css: "linear-gradient(180deg, #000428 0%, #003366 20%, #004E92 40%, #006699 55%, #003355 70%, #001428 100%)",
-    price: 500, currency: "gold", icon: "\uD83C\uDF0A", tier: "basic",
-    animated: "bg-anim-underwater",
-  },
-  {
-    id: "cherry_blossom",
-    nameKey: "bg_cherry_blossom",
-    css: "linear-gradient(180deg, #FFD1DC 0%, #FFB7C5 15%, #FF69B4 35%, #DB7093 55%, #C44569 70%, #8B2252 85%, #4A0E2B 100%)",
-    price: 800, currency: "gold", icon: "\uD83C\uDF38", tier: "basic",
-    animated: "bg-anim-particles",
-  },
-  {
-    id: "aurora",
-    nameKey: "bg_aurora",
-    css: "linear-gradient(180deg, #0B0B2B 0%, #0D2137 12%, #1B4332 28%, #2D6A4F 42%, #52B788 55%, #1B4332 70%, #081C15 85%, #040D08 100%)",
-    price: 800, currency: "gold", icon: "\uD83C\uDF0C", tier: "basic",
-    animated: "bg-anim-aurora", opacity: 0.65,
-  },
-  {
-    id: "lava_cave",
-    nameKey: "bg_lava_cave",
-    css: "linear-gradient(180deg, #1A0A00 0%, #3D1503 15%, #8B2500 35%, #CC4400 50%, #8B2500 65%, #3D1503 80%, #1A0A00 100%)",
-    price: 1000, currency: "gold", icon: "\uD83C\uDF0B", tier: "basic",
-    animated: "bg-anim-fire-glow", opacity: 0.6,
-  },
-  {
-    id: "crystal_cave",
-    nameKey: "bg_crystal_cave",
-    css: "linear-gradient(180deg, #0A0A2E 0%, #141450 18%, #1E1E80 32%, #3838C0 48%, #5050E0 55%, #3838C0 62%, #1E1E80 78%, #0A0A2E 100%)",
-    price: 1000, currency: "gold", icon: "\uD83D\uDC8E", tier: "basic",
-    animated: "bg-anim-shimmer",
-  },
-  {
-    id: "bamboo_grove",
-    nameKey: "bg_bamboo_grove",
-    css: "linear-gradient(180deg, #1A2F1A 0%, #2D4A2D 15%, #3D6B3D 30%, #4A8C4A 45%, #3D6B3D 60%, #2D4A2D 75%, #1A2F1A 90%, #0D1A0D 100%)",
-    price: 600, currency: "gold", icon: "\uD83C\uDF8D", tier: "basic",
-  },
-  {
-    id: "desert_mirage",
-    nameKey: "bg_desert_mirage",
-    css: "linear-gradient(180deg, #87CEEB 0%, #F4A460 20%, #DEB887 35%, #D2B48C 50%, #C8A876 65%, #8B7355 80%, #4A3728 100%)",
-    price: 600, currency: "gold", icon: "\uD83C\uDFDC\uFE0F", tier: "basic",
-    animated: "bg-anim-heat-shimmer",
-  },
-  {
-    id: "frozen_tundra",
-    nameKey: "bg_frozen_tundra",
-    css: "linear-gradient(180deg, #E8F4FD 0%, #B3D9F2 15%, #87CEEB 30%, #5DADE2 45%, #3498DB 55%, #2471A3 70%, #1A5276 85%, #0E2F44 100%)",
-    price: 700, currency: "gold", icon: "\u2744\uFE0F", tier: "basic",
-    animated: "bg-anim-frost",
-  },
-  {
-    id: "twilight_garden",
-    nameKey: "bg_twilight_garden",
-    css: "linear-gradient(180deg, #1A0533 0%, #2D1B69 15%, #4A2C8A 30%, #6B3FA0 45%, #8B5CF6 55%, #A78BFA 65%, #7C3AED 78%, #3B0764 100%)",
-    price: 800, currency: "gold", icon: "\uD83C\uDF1C", tier: "basic",
-    animated: "bg-anim-fireflies",
-  },
-  {
-    id: "thunderstorm",
-    nameKey: "bg_thunderstorm",
-    css: "linear-gradient(180deg, #0A0A12 0%, #1A1A2E 15%, #2C2C4A 30%, #1F1F35 45%, #333355 55%, #1A1A2E 70%, #0D0D1A 85%, #050510 100%)",
-    price: 900, currency: "gold", icon: "\u26A1", tier: "basic",
-    animated: "bg-anim-lightning",
-  },
-  // ─── Premium (Gems) ───
-  {
-    id: "starlight",
-    nameKey: "bg_starlight",
-    css: "radial-gradient(ellipse at 50% 20%, #1B2735 0%, #12192B 30%, #0C1220 55%, #090A0F 80%)",
-    price: 3, currency: "gems", icon: "\u2B50", tier: "premium",
-    animated: "bg-anim-stars", opacity: 0.7,
-  },
-  {
-    id: "cosmic_nebula",
-    nameKey: "bg_cosmic_nebula",
-    css: "radial-gradient(ellipse at 30% 30%, #4A0E4E 0%, transparent 50%), radial-gradient(ellipse at 70% 60%, #0E2F44 0%, transparent 50%), radial-gradient(ellipse at 50% 80%, #2D1B4E 0%, transparent 40%), linear-gradient(180deg, #0A0015 0%, #150028 50%, #0A0015 100%)",
-    price: 5, currency: "gems", icon: "\uD83C\uDF0C", tier: "premium",
-    animated: "bg-anim-nebula", opacity: 0.7,
-  },
-  {
-    id: "rainbow_field",
-    nameKey: "bg_rainbow_field",
-    css: "linear-gradient(180deg, #667eea 0%, #764ba2 16%, #f093fb 32%, #f5576c 48%, #feca57 60%, #4facfe 74%, #00f2fe 88%, #1A3A0A 100%)",
-    price: 5, currency: "gems", icon: "\uD83C\uDF08", tier: "premium",
-    animated: "bg-anim-rainbow",
-  },
-  {
-    id: "enchanted_forest",
-    nameKey: "bg_enchanted_forest",
-    css: "linear-gradient(180deg, #001A0A 0%, #003318 15%, #004D25 28%, #006B3A 40%, #008F4F 52%, #006B3A 64%, #003318 78%, #001A0A 100%)",
-    price: 5, currency: "gems", icon: "\uD83C\uDF32", tier: "premium",
-    animated: "bg-anim-fireflies", opacity: 0.65,
-  },
-  {
-    id: "sakura_night",
-    nameKey: "bg_sakura_night",
-    css: "linear-gradient(180deg, #0D0015 0%, #1A0A2E 15%, #2D1B4E 30%, #4A2040 45%, #6B2D5A 55%, #4A2040 68%, #1A0A2E 85%, #0D0015 100%)",
-    price: 5, currency: "gems", icon: "\uD83C\uDF19", tier: "premium",
-    animated: "bg-anim-particles", opacity: 0.65,
-  },
-  {
-    id: "underwater_temple",
-    nameKey: "bg_underwater_temple",
-    css: "radial-gradient(ellipse at 50% 70%, #005577 0%, transparent 60%), linear-gradient(180deg, #001A28 0%, #002B44 20%, #003D5C 40%, #004466 55%, #003D5C 70%, #001A28 100%)",
-    price: 8, currency: "gems", icon: "\uD83C\uDFDB\uFE0F", tier: "premium",
-    animated: "bg-anim-underwater", opacity: 0.65,
-  },
-  {
-    id: "blood_moon",
-    nameKey: "bg_blood_moon",
-    css: "radial-gradient(ellipse at 50% 15%, #8B0000 0%, transparent 45%), linear-gradient(180deg, #0A0000 0%, #1A0505 20%, #2D0A0A 40%, #1A0505 65%, #0A0000 100%)",
-    price: 8, currency: "gems", icon: "\uD83C\uDF11", tier: "premium",
-    animated: "bg-anim-fire-glow", opacity: 0.7,
-  },
-  // ─── Legendary (Gems) ───
-  {
-    id: "void_realm",
-    nameKey: "bg_void_realm",
-    css: "radial-gradient(ellipse at 30% 50%, #2D0053 0%, transparent 40%), radial-gradient(ellipse at 70% 30%, #1A0033 0%, transparent 35%), radial-gradient(ellipse at 50% 80%, #0D001A 0%, transparent 50%), linear-gradient(180deg, #0A0010 0%, #050008 100%)",
-    price: 10, currency: "gems", icon: "\uD83D\uDD73\uFE0F", tier: "legendary",
-    animated: "bg-anim-nebula", opacity: 0.75,
-  },
-  {
-    id: "golden_palace",
-    nameKey: "bg_golden_palace",
-    css: "radial-gradient(ellipse at 50% 30%, #8B6914 0%, transparent 50%), linear-gradient(180deg, #1A1200 0%, #2D1F00 15%, #4A3300 30%, #6B4C00 45%, #8B6914 55%, #6B4C00 68%, #2D1F00 85%, #1A1200 100%)",
-    price: 15, currency: "gems", icon: "\uD83D\uDC51", tier: "legendary",
-    animated: "bg-anim-gold-sparkle", opacity: 0.65,
-  },
-  {
-    id: "emerald_valley",
-    nameKey: "bg_emerald_valley",
-    css: "radial-gradient(ellipse at 50% 40%, #00A86B 0%, transparent 50%), linear-gradient(180deg, #001A0D 0%, #003320 15%, #005533 30%, #008855 45%, #00AA6B 55%, #005533 70%, #002D1A 85%, #001208 100%)",
-    price: 12, currency: "gems", icon: "\uD83D\uDC9A", tier: "legendary",
-    animated: "bg-anim-shimmer", opacity: 0.65,
-  },
-  {
-    id: "celestial_throne",
-    nameKey: "bg_celestial_throne",
-    css: "radial-gradient(ellipse at 50% 20%, #FFD700 0%, transparent 35%), radial-gradient(ellipse at 30% 70%, #FF69B4 0%, transparent 30%), radial-gradient(ellipse at 70% 60%, #87CEEB 0%, transparent 35%), linear-gradient(180deg, #0A0020 0%, #150040 30%, #1A0050 50%, #150040 70%, #0A0020 100%)",
-    price: 20, currency: "gems", icon: "\uD83D\uDC7C", tier: "legendary",
-    animated: "bg-anim-celestial", opacity: 0.75,
-  },
-  {
-    id: "atlantis",
-    nameKey: "bg_atlantis",
-    css: "radial-gradient(ellipse at 50% 60%, #00CED1 0%, transparent 45%), radial-gradient(ellipse at 30% 30%, #006994 0%, transparent 40%), linear-gradient(180deg, #000A14 0%, #001428 20%, #002244 40%, #003366 55%, #002244 70%, #000A14 100%)",
-    price: 15, currency: "gems", icon: "\uD83C\uDFF0", tier: "legendary",
-    animated: "bg-anim-underwater", opacity: 0.7,
-  },
-  {
-    id: "dragon_realm",
-    nameKey: "bg_dragon_realm",
-    css: "radial-gradient(ellipse at 50% 30%, #FF4500 0%, transparent 40%), radial-gradient(ellipse at 30% 70%, #8B0000 0%, transparent 35%), linear-gradient(180deg, #0A0000 0%, #1A0505 15%, #2D0A0A 30%, #4A1010 45%, #2D0A0A 65%, #0A0000 100%)",
-    price: 20, currency: "gems", icon: "\uD83D\uDC09", tier: "legendary",
-    animated: "bg-anim-fire-glow", opacity: 0.7,
-  },
+  { id: "default", nameKey: "bg_default", css: "linear-gradient(180deg, #080816 0%, #0f0f2a 100%)", price: 0, currency: "gold", icon: "\uD83C\uDF11", tier: "free" },
+  { id: "sunset_meadow", nameKey: "bg_sunset_meadow", css: "linear-gradient(180deg, #2D1B4E 0%, #FF6B35 25%, #F7C948 50%, #8BC34A 70%, #2D5016 85%, #1A3A0A 100%)", price: 500, currency: "gold", icon: "\uD83C\uDF05", tier: "basic" },
+  { id: "deep_ocean", nameKey: "bg_deep_ocean", css: "linear-gradient(180deg, #000428 0%, #003366 20%, #004E92 40%, #006699 55%, #003355 70%, #001428 100%)", price: 500, currency: "gold", icon: "\uD83C\uDF0A", tier: "basic", animated: "bg-anim-underwater" },
+  { id: "cherry_blossom", nameKey: "bg_cherry_blossom", css: "linear-gradient(180deg, #FFD1DC 0%, #FFB7C5 15%, #FF69B4 35%, #DB7093 55%, #C44569 70%, #8B2252 85%, #4A0E2B 100%)", price: 800, currency: "gold", icon: "\uD83C\uDF38", tier: "basic", animated: "bg-anim-particles" },
+  { id: "aurora", nameKey: "bg_aurora", css: "linear-gradient(180deg, #0B0B2B 0%, #0D2137 12%, #1B4332 28%, #2D6A4F 42%, #52B788 55%, #1B4332 70%, #081C15 85%, #040D08 100%)", price: 800, currency: "gold", icon: "\uD83C\uDF0C", tier: "basic", animated: "bg-anim-aurora", opacity: 0.65 },
+  { id: "lava_cave", nameKey: "bg_lava_cave", css: "linear-gradient(180deg, #1A0A00 0%, #3D1503 15%, #8B2500 35%, #CC4400 50%, #8B2500 65%, #3D1503 80%, #1A0A00 100%)", price: 1000, currency: "gold", icon: "\uD83C\uDF0B", tier: "basic", animated: "bg-anim-fire-glow", opacity: 0.6 },
+  { id: "crystal_cave", nameKey: "bg_crystal_cave", css: "linear-gradient(180deg, #0A0A2E 0%, #141450 18%, #1E1E80 32%, #3838C0 48%, #5050E0 55%, #3838C0 62%, #1E1E80 78%, #0A0A2E 100%)", price: 1000, currency: "gold", icon: "\uD83D\uDC8E", tier: "basic", animated: "bg-anim-shimmer" },
+  { id: "bamboo_grove", nameKey: "bg_bamboo_grove", css: "linear-gradient(180deg, #1A2F1A 0%, #2D4A2D 15%, #3D6B3D 30%, #4A8C4A 45%, #3D6B3D 60%, #2D4A2D 75%, #1A2F1A 90%, #0D1A0D 100%)", price: 600, currency: "gold", icon: "\uD83C\uDF8D", tier: "basic" },
+  { id: "desert_mirage", nameKey: "bg_desert_mirage", css: "linear-gradient(180deg, #87CEEB 0%, #F4A460 20%, #DEB887 35%, #D2B48C 50%, #C8A876 65%, #8B7355 80%, #4A3728 100%)", price: 600, currency: "gold", icon: "\uD83C\uDFDC\uFE0F", tier: "basic", animated: "bg-anim-heat-shimmer" },
+  { id: "frozen_tundra", nameKey: "bg_frozen_tundra", css: "linear-gradient(180deg, #E8F4FD 0%, #B3D9F2 15%, #87CEEB 30%, #5DADE2 45%, #3498DB 55%, #2471A3 70%, #1A5276 85%, #0E2F44 100%)", price: 700, currency: "gold", icon: "\u2744\uFE0F", tier: "basic", animated: "bg-anim-frost" },
+  { id: "twilight_garden", nameKey: "bg_twilight_garden", css: "linear-gradient(180deg, #1A0533 0%, #2D1B69 15%, #4A2C8A 30%, #6B3FA0 45%, #8B5CF6 55%, #A78BFA 65%, #7C3AED 78%, #3B0764 100%)", price: 800, currency: "gold", icon: "\uD83C\uDF1C", tier: "basic", animated: "bg-anim-fireflies" },
+  { id: "thunderstorm", nameKey: "bg_thunderstorm", css: "linear-gradient(180deg, #0A0A12 0%, #1A1A2E 15%, #2C2C4A 30%, #1F1F35 45%, #333355 55%, #1A1A2E 70%, #0D0D1A 85%, #050510 100%)", price: 900, currency: "gold", icon: "\u26A1", tier: "basic", animated: "bg-anim-lightning" },
+  { id: "starlight", nameKey: "bg_starlight", css: "radial-gradient(ellipse at 50% 20%, #1B2735 0%, #12192B 30%, #0C1220 55%, #090A0F 80%)", price: 3, currency: "gems", icon: "\u2B50", tier: "premium", animated: "bg-anim-stars", opacity: 0.7 },
+  { id: "cosmic_nebula", nameKey: "bg_cosmic_nebula", css: "radial-gradient(ellipse at 30% 30%, #4A0E4E 0%, transparent 50%), radial-gradient(ellipse at 70% 60%, #0E2F44 0%, transparent 50%), radial-gradient(ellipse at 50% 80%, #2D1B4E 0%, transparent 40%), linear-gradient(180deg, #0A0015 0%, #150028 50%, #0A0015 100%)", price: 5, currency: "gems", icon: "\uD83C\uDF0C", tier: "premium", animated: "bg-anim-nebula", opacity: 0.7 },
+  { id: "rainbow_field", nameKey: "bg_rainbow_field", css: "linear-gradient(180deg, #667eea 0%, #764ba2 16%, #f093fb 32%, #f5576c 48%, #feca57 60%, #4facfe 74%, #00f2fe 88%, #1A3A0A 100%)", price: 5, currency: "gems", icon: "\uD83C\uDF08", tier: "premium", animated: "bg-anim-rainbow" },
+  { id: "enchanted_forest", nameKey: "bg_enchanted_forest", css: "linear-gradient(180deg, #001A0A 0%, #003318 15%, #004D25 28%, #006B3A 40%, #008F4F 52%, #006B3A 64%, #003318 78%, #001A0A 100%)", price: 5, currency: "gems", icon: "\uD83C\uDF32", tier: "premium", animated: "bg-anim-fireflies", opacity: 0.65 },
+  { id: "sakura_night", nameKey: "bg_sakura_night", css: "linear-gradient(180deg, #0D0015 0%, #1A0A2E 15%, #2D1B4E 30%, #4A2040 45%, #6B2D5A 55%, #4A2040 68%, #1A0A2E 85%, #0D0015 100%)", price: 5, currency: "gems", icon: "\uD83C\uDF19", tier: "premium", animated: "bg-anim-particles", opacity: 0.65 },
+  { id: "underwater_temple", nameKey: "bg_underwater_temple", css: "radial-gradient(ellipse at 50% 70%, #005577 0%, transparent 60%), linear-gradient(180deg, #001A28 0%, #002B44 20%, #003D5C 40%, #004466 55%, #003D5C 70%, #001A28 100%)", price: 8, currency: "gems", icon: "\uD83C\uDFDB\uFE0F", tier: "premium", animated: "bg-anim-underwater", opacity: 0.65 },
+  { id: "blood_moon", nameKey: "bg_blood_moon", css: "radial-gradient(ellipse at 50% 15%, #8B0000 0%, transparent 45%), linear-gradient(180deg, #0A0000 0%, #1A0505 20%, #2D0A0A 40%, #1A0505 65%, #0A0000 100%)", price: 8, currency: "gems", icon: "\uD83C\uDF11", tier: "premium", animated: "bg-anim-fire-glow", opacity: 0.7 },
+  { id: "void_realm", nameKey: "bg_void_realm", css: "radial-gradient(ellipse at 30% 50%, #2D0053 0%, transparent 40%), radial-gradient(ellipse at 70% 30%, #1A0033 0%, transparent 35%), radial-gradient(ellipse at 50% 80%, #0D001A 0%, transparent 50%), linear-gradient(180deg, #0A0010 0%, #050008 100%)", price: 10, currency: "gems", icon: "\uD83D\uDD73\uFE0F", tier: "legendary", animated: "bg-anim-nebula", opacity: 0.75 },
+  { id: "golden_palace", nameKey: "bg_golden_palace", css: "radial-gradient(ellipse at 50% 30%, #8B6914 0%, transparent 50%), linear-gradient(180deg, #1A1200 0%, #2D1F00 15%, #4A3300 30%, #6B4C00 45%, #8B6914 55%, #6B4C00 68%, #2D1F00 85%, #1A1200 100%)", price: 15, currency: "gems", icon: "\uD83D\uDC51", tier: "legendary", animated: "bg-anim-gold-sparkle", opacity: 0.65 },
+  { id: "emerald_valley", nameKey: "bg_emerald_valley", css: "radial-gradient(ellipse at 50% 40%, #00A86B 0%, transparent 50%), linear-gradient(180deg, #001A0D 0%, #003320 15%, #005533 30%, #008855 45%, #00AA6B 55%, #005533 70%, #002D1A 85%, #001208 100%)", price: 12, currency: "gems", icon: "\uD83D\uDC9A", tier: "legendary", animated: "bg-anim-shimmer", opacity: 0.65 },
+  { id: "celestial_throne", nameKey: "bg_celestial_throne", css: "radial-gradient(ellipse at 50% 20%, #FFD700 0%, transparent 35%), radial-gradient(ellipse at 30% 70%, #FF69B4 0%, transparent 30%), radial-gradient(ellipse at 70% 60%, #87CEEB 0%, transparent 35%), linear-gradient(180deg, #0A0020 0%, #150040 30%, #1A0050 50%, #150040 70%, #0A0020 100%)", price: 20, currency: "gems", icon: "\uD83D\uDC7C", tier: "legendary", animated: "bg-anim-celestial", opacity: 0.75 },
+  { id: "atlantis", nameKey: "bg_atlantis", css: "radial-gradient(ellipse at 50% 60%, #00CED1 0%, transparent 45%), radial-gradient(ellipse at 30% 30%, #006994 0%, transparent 40%), linear-gradient(180deg, #000A14 0%, #001428 20%, #002244 40%, #003366 55%, #002244 70%, #000A14 100%)", price: 15, currency: "gems", icon: "\uD83C\uDFF0", tier: "legendary", animated: "bg-anim-underwater", opacity: 0.7 },
+  { id: "dragon_realm", nameKey: "bg_dragon_realm", css: "radial-gradient(ellipse at 50% 30%, #FF4500 0%, transparent 40%), radial-gradient(ellipse at 30% 70%, #8B0000 0%, transparent 35%), linear-gradient(180deg, #0A0000 0%, #1A0505 15%, #2D0A0A 30%, #4A1010 45%, #2D0A0A 65%, #0A0000 100%)", price: 20, currency: "gems", icon: "\uD83D\uDC09", tier: "legendary", animated: "bg-anim-fire-glow", opacity: 0.7 },
 ];
 
 export default function HomePage() {
-  // Individual selectors to avoid unnecessary re-renders
   const setShowMissionModal = useGameStore((s) => s.setShowMissionModal);
   const setShowAttendanceModal = useGameStore((s) => s.setShowAttendanceModal);
   const setActivePanel = useGameStore((s) => s.setActivePanel);
   const setShowMailbox = useGameStore((s) => s.setShowMailbox);
+  const setShowMiniContents = useGameStore((s) => s.setShowMiniContents);
   const dailyMissions = useGameStore((s) => s.dailyMissions);
   const slimes = useGameStore((s) => s.slimes);
   const unreadMailCount = useGameStore((s) => s.unreadMailCount);
@@ -229,17 +78,11 @@ export default function HomePage() {
     () => dailyMissions.filter((m) => m.completed && !m.claimed).length,
     [dailyMissions]
   );
-  const slimeCount = slimes.length;
-  const needsCareCount = useMemo(
-    () => slimes.filter((s) => s.hunger < 20 || s.condition < 20 || s.is_sick).length,
-    [slimes]
-  );
   const hungryCount = useMemo(
     () => slimes.filter((s) => s.hunger < 80).length,
     [slimes]
   );
   const hasFood = foodInventory.length > 0;
-  const showCareButton = hungryCount > 0 && hasFood;
 
   const handleFeedAll = async (itemId: number) => {
     if (!token || feedingItemId) return;
@@ -251,13 +94,11 @@ export default function HomePage() {
       if (result.levelUps > 0) parts.push(`${result.levelUps}\uB9C8\uB9AC \uB808\uBCA8\uC5C5!`);
       toastSuccess(parts.join(" + "), "\uD83C\uDF56");
       await fetchFoodInventory(token);
-      // Close sheet if no food left
       const remaining = useGameStore.getState().foodInventory;
       if (remaining.length === 0) setShowCareSheet(false);
     }
   };
 
-  // Get owned backgrounds from localStorage
   const getOwned = (): string[] => {
     if (typeof window === "undefined") return ["default"];
     const saved = localStorage.getItem("owned_backgrounds");
@@ -273,13 +114,11 @@ export default function HomePage() {
 
   const handleBuyBg = (bg: typeof HOME_BACKGROUNDS[0]) => {
     if (ownedBgs.includes(bg.id)) {
-      // Already owned, just equip
       setCurrentBg(bg.id);
       localStorage.setItem("home_background", bg.id);
       window.dispatchEvent(new Event("bg-change"));
       return;
     }
-    // Buy it (client-side for now — price deduction via shop later)
     const newOwned = [...ownedBgs, bg.id];
     setOwnedBgs(newOwned);
     localStorage.setItem("owned_backgrounds", JSON.stringify(newOwned));
@@ -288,142 +127,77 @@ export default function HomePage() {
     window.dispatchEvent(new Event("bg-change"));
   };
 
+  // NextAction cards data
+  const nextActions: { icon: string; label: string; badge?: number; action: () => void }[] = [];
+  if (hungryCount > 0 && hasFood) {
+    nextActions.push({ icon: "care", label: t("home_care") || "\uB3CC\uBD04", badge: hungryCount, action: () => setShowCareSheet(true) });
+  }
+  if (unclaimedCount > 0) {
+    nextActions.push({ icon: "mission", label: t("home_mission"), badge: unclaimedCount, action: () => setShowMissionModal(true) });
+  }
+  if (unreadMailCount > 0) {
+    nextActions.push({ icon: "mailbox", label: t("home_mailbox"), badge: unreadMailCount, action: () => setShowMailbox(true) });
+  }
+  nextActions.push({ icon: "attendance", label: t("home_attendance"), action: () => setShowAttendanceModal(true) });
+
   return (
-    <div className="absolute inset-0 z-10 pointer-events-none" style={{ top: "calc(env(safe-area-inset-top, 0px) + 84px)", bottom: 76 }}>
+    <div className="absolute inset-0 z-10 pointer-events-none" style={{ top: "calc(env(safe-area-inset-top, 0px) + 52px)", bottom: 76 }}>
 
-      {/* ===== LEFT SIDE — Info badges + Daily buttons ===== */}
-      <div className="floating-menu-left pointer-events-auto">
-        {/* Slime count + care alert */}
-        <div className="relative" style={{
-          display: "flex", alignItems: "center", gap: 6,
-          background: "linear-gradient(145deg, #3D2017, #2C1810)",
-          border: "1.5px solid rgba(139,105,20,0.35)",
-          borderRadius: 14, padding: "6px 10px",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,235,180,0.08)",
-        }}>
-          <img src={getGameIcon("slime_count", 24)} alt="" style={{ width: 22, height: 22 }} />
-          <span style={{ fontSize: 11, color: "#E8D5A3", fontFamily: "Georgia, serif", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
-            {slimeCount}<span style={{ color: "rgba(232,213,163,0.3)" }}>/30</span>
-          </span>
-          {needsCareCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full text-[9px] font-bold text-white animate-pulse"
-              style={{ background: "#FF6B6B", boxShadow: "0 0 6px rgba(255,107,107,0.5)" }}>
-              {needsCareCount}
-            </span>
-          )}
-        </div>
-
-        {/* Attendance */}
-        <button onClick={() => setShowAttendanceModal(true)} style={{
-          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2,
-          width: 50, height: 50,
-          background: "linear-gradient(145deg, #3D2017, #2C1810)",
-          border: "1.5px solid rgba(139,105,20,0.3)",
-          borderRadius: 14,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,235,180,0.08)",
-          cursor: "pointer",
-        }}>
-          <img src={getGameIcon("attendance", 24)} alt="" style={{ width: 24, height: 24 }} />
-          <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>{t("home_attendance")}</span>
-        </button>
-
-        {/* Mission */}
-        <button onClick={() => setShowMissionModal(true)} className="relative" style={{
-          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2,
-          width: 50, height: 50,
-          background: "linear-gradient(145deg, #3D2017, #2C1810)",
-          border: "1.5px solid rgba(139,105,20,0.3)",
-          borderRadius: 14,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,235,180,0.08)",
-          cursor: "pointer",
-        }}>
-          <img src={getGameIcon("mission", 24)} alt="" style={{ width: 24, height: 24 }} />
-          <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>{t("home_mission")}</span>
-          {unclaimedCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full text-[9px] font-bold text-white animate-pulse"
-              style={{ background: "linear-gradient(135deg, #D4AF37, #8B6914)", boxShadow: "0 0 6px rgba(212,175,55,0.5)", border: "1px solid rgba(255,235,180,0.3)" }}>
-              {unclaimedCount}
-            </span>
-          )}
-        </button>
-
-        {/* Mailbox */}
-        <button onClick={() => setShowMailbox(true)} className="relative" style={{
-          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2,
-          width: 50, height: 50,
-          background: "linear-gradient(145deg, #3D2017, #2C1810)",
-          border: "1.5px solid rgba(139,105,20,0.3)",
-          borderRadius: 14,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,235,180,0.08)",
-          cursor: "pointer",
-        }}>
-          <img src={getGameIcon("mailbox", 24)} alt="" style={{ width: 24, height: 24 }} />
-          <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>{t("home_mailbox")}</span>
-          {unreadMailCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full text-[9px] font-bold text-white animate-pulse"
-              style={{ background: "linear-gradient(135deg, #D4AF37, #8B6914)", boxShadow: "0 0 6px rgba(212,175,55,0.5)", border: "1px solid rgba(255,235,180,0.3)" }}>
-              {unreadMailCount}
-            </span>
-          )}
-        </button>
-
-        {/* Background changer */}
-        <button onClick={() => setShowBgPicker(!showBgPicker)} style={{
-          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2,
-          width: 50, height: 50,
-          background: "linear-gradient(145deg, #3D2017, #2C1810)",
-          border: "1.5px solid rgba(139,105,20,0.3)",
-          borderRadius: 14,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,235,180,0.08)",
-          cursor: "pointer",
-        }}>
-          <img src={getGameIcon("background", 24)} alt="" style={{ width: 24, height: 24 }} />
-          <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>{t("home_background")}</span>
-        </button>
-
-        {/* Quick Care button — shown when hungry slimes exist and food is available */}
-        {showCareButton && (
-          <button onClick={() => setShowCareSheet(true)} className="relative" style={{
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2,
-            width: 50, height: 50,
-            background: "linear-gradient(145deg, #4A2010, #3D1A0C)",
-            border: "1.5px solid rgba(212,175,55,0.4)",
-            borderRadius: 14,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,235,180,0.1), 0 0 8px rgba(212,175,55,0.15)",
-            cursor: "pointer",
-          }}>
-            <img src={getGameIcon("care", 24)} alt="" style={{ width: 24, height: 24 }} />
-            <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>{"\uB3CC\uBD04"}</span>
-            <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full text-[9px] font-bold text-white"
-              style={{ background: "#FF6B6B", boxShadow: "0 0 6px rgba(255,107,107,0.5)" }}>
-              {hungryCount}
-            </span>
-          </button>
-        )}
-      </div>
-
-      {/* ===== RIGHT SIDE — 2-column grid ===== */}
-      <div className="floating-menu-right pointer-events-auto">
-        <div className="side-grid-2col">
-          {([
-            { panel: "codex" as const, labelKey: "home_codex" },
-            { panel: "achievements" as const, labelKey: "home_achievements" },
-            { panel: "leaderboard" as const, labelKey: "home_leaderboard" },
-            { panel: "inventory" as const, labelKey: "home_inventory" },
-            { panel: "gacha" as const, labelKey: "home_gacha" },
-            { panel: "shop" as const, labelKey: "home_shop" },
-          ] as const).map(({ panel, labelKey }) => (
-            <button key={panel} onClick={() => setActivePanel(panel)} style={{
-              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2,
-              width: 50, height: 50,
-              background: "linear-gradient(145deg, #3D2017, #2C1810)",
+      {/* ===== NextAction horizontal scroll cards ===== */}
+      <div className="pointer-events-auto" style={{ padding: "8px 12px 0" }}>
+        <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+          {nextActions.map((card) => (
+            <button key={card.icon} onClick={card.action}
+              className="shrink-0 flex items-center gap-2 rounded-xl px-3 py-2 transition-all active:scale-[0.97]"
+              style={{
+                width: 140, height: 56,
+                background: "linear-gradient(145deg, rgba(61,32,23,0.85), rgba(44,24,16,0.85))",
+                border: "1.5px solid rgba(139,105,20,0.3)",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,235,180,0.06)",
+                backdropFilter: "blur(8px)",
+                cursor: "pointer",
+              }}>
+              <img src={getGameIcon(card.icon, 24)} alt="" style={{ width: 28, height: 28, flexShrink: 0 }} />
+              <div className="flex flex-col items-start min-w-0">
+                <span style={{ fontSize: 11, color: "#E8D5A3", fontFamily: "Georgia, serif", fontWeight: 700, lineHeight: 1.2 }}>{card.label}</span>
+                {card.badge !== undefined && card.badge > 0 && (
+                  <span style={{ fontSize: 9, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>{card.badge}</span>
+                )}
+              </div>
+            </button>
+          ))}
+          {/* Background changer card */}
+          <button onClick={() => setShowBgPicker(!showBgPicker)}
+            className="shrink-0 flex items-center gap-2 rounded-xl px-3 py-2 transition-all active:scale-[0.97]"
+            style={{
+              width: 140, height: 56,
+              background: "linear-gradient(145deg, rgba(61,32,23,0.85), rgba(44,24,16,0.85))",
               border: "1.5px solid rgba(139,105,20,0.3)",
-              borderRadius: 14,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,235,180,0.08)",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,235,180,0.06)",
+              backdropFilter: "blur(8px)",
               cursor: "pointer",
             }}>
-              <img src={getGameIcon(panel, 24)} alt="" style={{ width: 24, height: 24 }} />
-              <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>{t(labelKey)}</span>
+            <img src={getGameIcon("background", 24)} alt="" style={{ width: 28, height: 28, flexShrink: 0 }} />
+            <span style={{ fontSize: 11, color: "#E8D5A3", fontFamily: "Georgia, serif", fontWeight: 700, lineHeight: 1.2 }}>{t("home_background")}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ===== Quick Action bar (bottom) ===== */}
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-auto" style={{ height: 52 }}>
+        <div className="flex justify-around items-center h-full px-2">
+          {([
+            { icon: "gacha", labelKey: "more_gacha", panel: "gacha" as const },
+            { icon: "shop", labelKey: "more_shop", panel: "shop" as const },
+            { icon: "discovery", labelKey: "more_discovery", panel: "discovery" as const },
+            { icon: "mini", labelKey: "more_mini", panel: null },
+          ]).map((btn) => (
+            <button key={btn.icon}
+              onClick={() => btn.panel ? setActivePanel(btn.panel) : setShowMiniContents(true)}
+              className="flex flex-col items-center gap-0.5 transition-all active:scale-95"
+              style={{ cursor: "pointer", background: "none", border: "none" }}>
+              <img src={getGameIcon(btn.icon, 20)} alt="" style={{ width: 20, height: 20 }} />
+              <span style={{ fontSize: 9, color: "rgba(212,175,55,0.6)", fontFamily: "Georgia, serif", fontWeight: 700 }}>{t(btn.labelKey)}</span>
             </button>
           ))}
         </div>
@@ -562,13 +336,10 @@ export default function HomePage() {
                         cursor: "pointer",
                         position: "relative",
                       }}>
-                      {/* Preview */}
                       <div style={{ height: 80, width: "100%", background: bg.css, position: "relative", overflow: "hidden" }}>
-                        {/* Animated overlay preview */}
                         {bg.animated && (
                           <div className={bg.animated} style={{ position: "absolute", inset: 0 }} />
                         )}
-                        {/* Tier badge */}
                         {bg.tier !== "free" && bg.tier !== "basic" && (
                           <span style={{
                             position: "absolute", top: 4, right: 4,

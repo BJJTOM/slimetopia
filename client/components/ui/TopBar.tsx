@@ -1,25 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useAuthStore } from "@/lib/store/authStore";
-import { useGameStore } from "@/lib/store/gameStore";
-import { authApi, resolveMediaUrl } from "@/lib/api/client";
-import { generateSlimeIconSvg } from "@/lib/slimeSvg";
-import { useLocaleStore } from "@/lib/store/localeStore";
+import { authApi } from "@/lib/api/client";
 
 interface ActiveBooster {
   type: string;
   remaining_seconds: number;
 }
 
-const boosterConfig: Record<string, { icon: string; labelKey: string; color: string }> = {
-  exp_2x: { icon: "\uD83D\uDCD6", labelKey: "exp", color: "#D4AF37" },
-  gold_2x: { icon: "\uD83D\uDCB0", labelKey: "booster_gold", color: "#C9A84C" },
-  luck_up: { icon: "\uD83C\uDF40", labelKey: "booster_luck", color: "#8B6914" },
-};
-
-const GRADE_PRIORITY: Record<string, number> = {
-  common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 4, mythic: 5,
+const boosterConfig: Record<string, { icon: string; color: string }> = {
+  exp_2x: { icon: "\uD83D\uDCD6", color: "#D4AF37" },
+  gold_2x: { icon: "\uD83D\uDCB0", color: "#C9A84C" },
+  luck_up: { icon: "\uD83C\uDF40", color: "#8B6914" },
 };
 
 function formatBoosterTime(seconds: number): string {
@@ -34,27 +27,6 @@ function formatBoosterTime(seconds: number): string {
 
 export default function TopBar() {
   const user = useAuthStore((s) => s.user);
-  const slimes = useGameStore((s) => s.slimes);
-  const species = useGameStore((s) => s.species);
-  const equippedAccessories = useGameStore((s) => s.equippedAccessories);
-
-  const t = useLocaleStore((s) => s.t);
-
-  const { bestSlime } = useMemo(() => {
-    let hg = "common";
-    let bs = slimes[0];
-    for (const sl of slimes) {
-      const sp = species.find((s) => s.id === sl.species_id);
-      if (sp && (GRADE_PRIORITY[sp.grade] || 0) > (GRADE_PRIORITY[hg] || 0)) {
-        hg = sp.grade;
-        bs = sl;
-      }
-    }
-    return { bestSlime: bs };
-  }, [slimes, species]);
-
-  const bestSpecies = bestSlime ? species.find(s => s.id === bestSlime.species_id) : undefined;
-
   const token = useAuthStore((s) => s.accessToken);
   const [boosters, setBoosters] = useState<ActiveBooster[]>([]);
   const [liveBoosterSeconds, setLiveBoosterSeconds] = useState<Record<string, number>>({});
@@ -99,120 +71,57 @@ export default function TopBar() {
   }, [boosters]);
 
   const levelProgress = user ? Math.min((user.level * 15) % 100, 100) : 0;
+  const activeBoosters = boosters.filter(b => (liveBoosterSeconds[b.type] ?? b.remaining_seconds) > 0);
 
   if (!user) return null;
 
   return (
     <div className="top-hud">
-      <div className="flex items-center justify-between w-full gap-2">
-        {/* Left: Avatar + Name — Leather-framed gold collection style */}
-        <div className="profile-section pointer-events-auto shrink-0">
-          <div className="relative">
-            {/* Leather-bordered gold frame with decorative corner accents */}
-            <div
-              className="w-[50px] h-[50px] rounded-xl flex items-center justify-center overflow-hidden relative"
-              style={{
-                background: "#2C1810",
-                border: "2.5px solid #8B6914",
-                boxShadow:
-                  `0 0 0 1px #1A0E08, 0 4px 16px rgba(0,0,0,0.5), inset 0 1px 2px rgba(139,105,20,0.3)`,
-              }}
-            >
-              {/* Corner accents */}
-              <div className="absolute top-0 left-0 w-[6px] h-[6px] border-t-2 border-l-2 rounded-tl-md" style={{ borderColor: "#D4AF37" }} />
-              <div className="absolute top-0 right-0 w-[6px] h-[6px] border-t-2 border-r-2 rounded-tr-md" style={{ borderColor: "#D4AF37" }} />
-              <div className="absolute bottom-0 left-0 w-[6px] h-[6px] border-b-2 border-l-2 rounded-bl-md" style={{ borderColor: "#D4AF37" }} />
-              <div className="absolute bottom-0 right-0 w-[6px] h-[6px] border-b-2 border-r-2 rounded-br-md" style={{ borderColor: "#D4AF37" }} />
-
-              {user.profile_image_url ? (
-                <img
-                  src={resolveMediaUrl(user.profile_image_url)}
-                  alt="" className="w-full h-full object-cover" draggable={false}
-                />
-              ) : bestSlime ? (
-                <img
-                  src={generateSlimeIconSvg(bestSlime.element, 36, bestSpecies?.grade, (equippedAccessories[bestSlime.id] || []).map(e => e.svg_overlay).filter(Boolean), bestSlime.species_id)}
-                  alt="" className="w-[36px] h-[36px] drop-shadow-lg" draggable={false}
-                />
-              ) : (
-                <span className="text-lg font-bold" style={{ color: "#D4AF37", fontFamily: "Georgia, 'Times New Roman', serif" }}>
-                  {user.nickname[0]}
+      <div className="flex items-center w-full gap-2">
+        {/* Left: Lv + Boosters */}
+        <div className="flex items-center gap-1.5 pointer-events-auto shrink-0">
+          <span
+            className="text-[11px] font-black tracking-wider"
+            style={{
+              color: "#D4AF37",
+              fontFamily: "Georgia, 'Times New Roman', serif",
+              textShadow: "0 0 6px rgba(212,175,55,0.4)",
+            }}
+          >
+            Lv.{user.level}
+          </span>
+          {activeBoosters.map((b) => {
+            const config = boosterConfig[b.type] || { icon: "\u26A1", color: "#C9A84C" };
+            const secs = liveBoosterSeconds[b.type] ?? b.remaining_seconds;
+            const isLow = secs < 300;
+            return (
+              <div
+                key={b.type}
+                className="rounded-md px-1.5 py-[2px] flex items-center gap-0.5"
+                style={{
+                  background: "linear-gradient(135deg, #2C1810, #1A0E08)",
+                  border: `1px solid ${isLow ? "rgba(255,107,107,0.4)" : "#8B691440"}`,
+                  boxShadow: "inset 0 1px 2px rgba(0,0,0,0.3)",
+                }}
+              >
+                <span className="text-[7px]">{config.icon}</span>
+                <span
+                  className={`text-[7px] font-bold tabular-nums ${isLow ? "animate-pulse" : ""}`}
+                  style={{
+                    color: isLow ? "#FF6B6B" : "#D4AF37",
+                    fontFamily: "Georgia, 'Times New Roman', serif",
+                  }}
+                >
+                  {formatBoosterTime(secs)}
                 </span>
-              )}
-            </div>
-            {/* Level badge — gold medallion */}
-            <div
-              className="absolute -bottom-1.5 -right-1.5 rounded-full w-[22px] h-[22px] flex items-center justify-center"
-              style={{
-                background: "linear-gradient(135deg, #D4AF37 0%, #C9A84C 40%, #8B6914 100%)",
-                border: "2px solid #2C1810",
-                boxShadow: "0 2px 8px rgba(139,105,20,0.5), inset 0 1px 0 rgba(255,234,167,0.4)",
-              }}
-            >
-              <span className="text-[8px] font-black" style={{ color: "#2C1810", textShadow: "0 0.5px 0 rgba(255,234,167,0.3)" }}>
-                {user.level}
-              </span>
-            </div>
-          </div>
-
-          <div className="min-w-0 flex flex-col justify-center gap-0.5">
-            {/* Nickname — Georgia serif, parchment color */}
-            <span
-              className="font-extrabold text-[13px] truncate max-w-[75px] leading-tight"
-              style={{
-                color: "#F5E6C8",
-                fontFamily: "Georgia, 'Times New Roman', serif",
-                textShadow: "0 1px 2px rgba(0,0,0,0.5)",
-              }}
-            >
-              {user.nickname}
-            </span>
-            {/* Boosters — gold leather style */}
-            <div className="flex items-center gap-1 flex-wrap">
-              {boosters.filter(b => (liveBoosterSeconds[b.type] ?? b.remaining_seconds) > 0).map((b) => {
-                const config = boosterConfig[b.type] || { icon: "\u26A1", labelKey: "booster_default", color: "#C9A84C" };
-                const secs = liveBoosterSeconds[b.type] ?? b.remaining_seconds;
-                const isLow = secs < 300;
-                return (
-                  <div
-                    key={b.type}
-                    className="rounded-md px-1.5 py-[2px] flex items-center gap-0.5"
-                    style={{
-                      background: "linear-gradient(135deg, #2C1810, #1A0E08)",
-                      border: `1px solid ${isLow ? "rgba(255,107,107,0.4)" : "#8B691440"}`,
-                      boxShadow: "inset 0 1px 2px rgba(0,0,0,0.3)",
-                    }}
-                  >
-                    <span className="text-[7px]">{config.icon}</span>
-                    <span
-                      className={`text-[7px] font-bold tabular-nums ${isLow ? "animate-pulse" : ""}`}
-                      style={{
-                        color: isLow ? "#FF6B6B" : "#D4AF37",
-                        fontFamily: "Georgia, 'Times New Roman', serif",
-                      }}
-                    >
-                      {formatBoosterTime(secs)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+              </div>
+            );
+          })}
         </div>
 
-        {/* Center: EXP bar — premium leather track with gold ornamental edges */}
+        {/* Center: EXP bar */}
         <div className="pointer-events-auto flex-1 min-w-0 flex flex-col justify-center mx-1">
-          <div className="flex items-center justify-between mb-[2px]">
-            <span
-              className="text-[10px] font-black tracking-wider"
-              style={{
-                color: "#D4AF37",
-                fontFamily: "Georgia, 'Times New Roman', serif",
-                textShadow: "0 0 6px rgba(212,175,55,0.4)",
-              }}
-            >
-              Lv.{user.level}
-            </span>
+          <div className="flex items-center justify-end mb-[2px]">
             <span
               className="text-[10px] font-bold tabular-nums"
               style={{
@@ -224,21 +133,18 @@ export default function TopBar() {
             </span>
           </div>
           <div className="relative">
-            {/* Gold ornamental edge — top */}
             <div
               className="absolute -top-[1px] left-1 right-1 h-[1px]"
               style={{ background: "linear-gradient(90deg, transparent, #8B691460, #D4AF3740, #8B691460, transparent)" }}
             />
-            {/* Leather track */}
             <div
-              className="w-full h-[12px] rounded-lg overflow-hidden"
+              className="w-full h-[10px] rounded-lg overflow-hidden"
               style={{
                 background: "linear-gradient(180deg, #1A0E08 0%, #2C1810 40%, #1A0E08 100%)",
                 border: "1.5px solid #8B691440",
                 boxShadow: "inset 0 2px 4px rgba(0,0,0,0.6), 0 1px 0 rgba(139,105,20,0.1)",
               }}
             >
-              {/* Gold fill */}
               <div
                 className="h-full rounded-md transition-all duration-700 relative overflow-hidden"
                 style={{
@@ -247,7 +153,6 @@ export default function TopBar() {
                   boxShadow: "0 0 8px rgba(212,175,55,0.4), inset 0 1px 0 rgba(255,234,167,0.4), inset 0 -1px 0 rgba(0,0,0,0.2)",
                 }}
               >
-                {/* Gold shine sweep */}
                 <div className="absolute inset-0"
                   style={{
                     background: "linear-gradient(90deg, transparent 0%, rgba(255,234,167,0.25) 50%, transparent 100%)",
@@ -255,15 +160,14 @@ export default function TopBar() {
                   }} />
               </div>
             </div>
-            {/* Gold ornamental edge — bottom */}
             <div
               className="absolute -bottom-[1px] left-1 right-1 h-[1px]"
-              style={{ background: "linear-gradient(90deg, transparent, #8B691440, #D4AF3740, #8B691460, transparent)" }}
+              style={{ background: "linear-gradient(90deg, transparent, #8B691460, #D4AF3740, #8B691460, transparent)" }}
             />
           </div>
         </div>
 
-        {/* Right: Currency — elegant leather pouch style */}
+        {/* Right: Currency */}
         <div className="flex flex-col gap-1.5 pointer-events-auto shrink-0">
           <CurrencyPill type="gold" value={user.gold} />
           <CurrencyPill type="gem" value={user.gems} />
@@ -332,7 +236,6 @@ function CurrencyPill({ type, value }: { type: "gold" | "gem"; value: number }) 
         minWidth: 90,
       }}
     >
-      {/* Icon */}
       <div
         className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${bumping ? "animate-squish" : ""}`}
         style={{

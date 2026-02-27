@@ -32,6 +32,7 @@ import DiscoveryPage from "@/components/ui/DiscoveryPage";
 import MiniContentsPage from "@/components/ui/MiniContentsPage";
 import CollectionPage from "@/components/ui/CollectionPage";
 import GachaPage from "@/components/ui/GachaPage";
+import MoreMenuSheet from "@/components/ui/MoreMenuSheet";
 import SplashScreen from "@/components/ui/SplashScreen";
 import { useAndroidBackButton } from "@/lib/useBackButton";
 
@@ -63,6 +64,7 @@ export default function PlayPage() {
 
   // UI state — individual selectors to avoid cross-property re-renders
   const activePanel = useGameStore((s) => s.activePanel);
+  const setActivePanel = useGameStore((s) => s.setActivePanel);
   const selectedSlimeId = useGameStore((s) => s.selectedSlimeId);
   const showMergeResult = useGameStore((s) => s.showMergeResult);
   const levelUpInfo = useGameStore((s) => s.levelUpInfo);
@@ -84,6 +86,8 @@ export default function PlayPage() {
   const setShowMiniContents = useGameStore((s) => s.setShowMiniContents);
   const showCollection = useGameStore((s) => s.showCollection);
   const setShowCollection = useGameStore((s) => s.setShowCollection);
+  const showMore = useGameStore((s) => s.showMore);
+  const setShowMore = useGameStore((s) => s.setShowMore);
 
   const [showSplash, setShowSplash] = useState(true);
 
@@ -130,7 +134,7 @@ export default function PlayPage() {
   if (!user) return <SplashScreen onFinished={() => {}} minDuration={3000} />;
   if (showSplash) return <SplashScreen onFinished={() => setShowSplash(false)} minDuration={1500} />;
 
-  const hasFullOverlay = showCommunity || showProfile || showShorts || showMiniContents || showCollection;
+  const hasFullOverlay = showCommunity || showProfile || showShorts || showMiniContents;
 
   const homeBg = HOME_BACKGROUNDS.find(b => b.id === homeBgId) || HOME_BACKGROUNDS[0];
 
@@ -161,6 +165,11 @@ export default function PlayPage() {
         {activePanel === "codex" && <CodexPage />}
         {activePanel === "achievements" && <AchievementPage />}
         {activePanel === "leaderboard" && <LeaderboardPage />}
+        {activePanel === "collection" && (
+          <div className="absolute inset-0 z-50 bg-[#0a0a1a]" style={{ bottom: 76 }}>
+            <CollectionPage onClose={() => setActivePanel("home")} />
+          </div>
+        )}
 
         {/* Modals (above all pages) */}
         {selectedSlimeId && <SlimeInfoPanel />}
@@ -199,11 +208,7 @@ export default function PlayPage() {
           </div>
         )}
 
-        {showCollection && (
-          <div className="absolute inset-0 z-50 bg-[#0a0a1a]" style={{ bottom: 76 }}>
-            <CollectionPage onClose={() => setShowCollection(false)} />
-          </div>
-        )}
+        {showMore && <MoreMenuSheet onClose={() => setShowMore(false)} />}
 
         <WelcomeBackModal />
         <BottomNav />

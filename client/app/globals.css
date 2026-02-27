@@ -92,7 +92,7 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  padding: calc(env(safe-area-inset-top, 0px) + 14px) 12px 8px;
+  padding: calc(env(safe-area-inset-top, 0px) + 6px) 12px 4px;
   display: flex;
   align-items: center;
   z-index: 100;

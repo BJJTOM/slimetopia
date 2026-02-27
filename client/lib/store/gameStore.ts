@@ -252,6 +252,16 @@ export interface SlimeSetProgress {
   buff: { type: string; value: number; label: string };
 }
 
+// ===== Collection Submit Result =====
+export interface CollectionSubmitResult {
+  species_id: number;
+  personality: string;
+  gold_reward: number;
+  gem_reward: number;
+  is_first_of_species: boolean;
+  collection_count: number;
+}
+
 // ===== Mailbox Types =====
 export interface MailItem {
   id: string;
@@ -316,7 +326,7 @@ interface GameState {
   mergeSlotA: string | null;
   mergeSlotB: string | null;
   showMergeResult: MergeResult | null;
-  activePanel: "home" | "inventory" | "codex" | "merge" | "explore" | "discovery" | "shop" | "gacha" | "achievements" | "leaderboard";
+  activePanel: "home" | "inventory" | "codex" | "merge" | "explore" | "discovery" | "shop" | "gacha" | "achievements" | "leaderboard" | "collection";
   cooldowns: CooldownMap;
   reactionMessage: { slimeId: string; text: string } | null;
   levelUpInfo: LevelUpInfo | null;
@@ -398,6 +408,10 @@ interface GameState {
   // Collection (main feature)
   showCollection: boolean;
 
+  // More menu
+  showMore: boolean;
+  setShowMore: (v: boolean) => void;
+
   // Legacy overlays (used by MiniContentsPage internally)
   showPlaza: boolean;
   showWorldBoss: boolean;
@@ -476,7 +490,7 @@ interface GameState {
   fetchCollectionCount: (token: string) => Promise<void>;
   fetchCollectionEntries: (token: string) => Promise<void>;
   fetchCollectionRequirements: (token: string) => Promise<void>;
-  submitToCollection: (token: string, slimeId: string) => Promise<boolean>;
+  submitToCollection: (token: string, slimeId: string) => Promise<CollectionSubmitResult | null>;
   fetchCollectionScore: (token: string) => Promise<void>;
   fetchSlimeSets: (token: string) => Promise<void>;
   fetchCollectionMilestones: (token: string) => Promise<void>;
@@ -661,6 +675,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   showShorts: false,
   showMiniContents: false,
   showCollection: false,
+  showMore: false,
+  setShowMore: (v) => set({ showMore: v }),
   showPlaza: false,
   showWorldBoss: false,
   showTraining: false,
@@ -1070,17 +1086,31 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   submitToCollection: async (token, slimeId) => {
     try {
-      const res = await authApi<{ success: boolean; collection_count: number; species_id: number; personality: string }>(
-        "/api/collection/submit", token, { method: "POST", body: { slime_id: slimeId } }
-      );
+      const res = await authApi<{
+        success: boolean;
+        collection_count: number;
+        species_id: number;
+        personality: string;
+        gold_reward: number;
+        gem_reward: number;
+        is_first_of_species: boolean;
+      }>("/api/collection/submit", token, { method: "POST", body: { slime_id: slimeId } });
       set((s) => ({
         selectedSlimeId: null,
         collectionCount: res.collection_count,
         collectionEntries: [...s.collectionEntries, { species_id: res.species_id, personality: res.personality }],
       }));
       await get().fetchSlimes(token);
+      useAuthStore.getState().fetchUser();
       toastReward("컬렉션 제출 완료!", "📖");
-      return true;
+      return {
+        species_id: res.species_id,
+        personality: res.personality,
+        gold_reward: res.gold_reward,
+        gem_reward: res.gem_reward,
+        is_first_of_species: res.is_first_of_species,
+        collection_count: res.collection_count,
+      };
     } catch (err) {
       if (err instanceof ApiError) {
         const errCode = err.data.error as string;
@@ -1094,7 +1124,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           toastError(errCode || "제출 실패");
         }
       }
-      return false;
+      return null;
     }
   },
 
