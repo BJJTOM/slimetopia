@@ -168,6 +168,7 @@ export default function ExplorePage() {
   const [claimResult, setClaimResult] = useState<ClaimResultData | null>(null);
   const [claimingAll, setClaimingAll] = useState(false);
   const [, setTick] = useState(0);
+  const [materialDetail, setMaterialDetail] = useState<number | null>(null);
 
   useEffect(() => {
     if (token) { fetchDestinations(token); fetchExplorations(token); }
@@ -608,12 +609,17 @@ export default function ExplorePage() {
                             {dest.material_drops.slice(0, 4).map((md) => {
                               const mat = materialInfo[md.material_id];
                               if (!mat) return null;
+                              const probLabel = md.chance >= 0.4 ? "높음" : md.chance >= 0.1 ? "중간" : "낮음";
+                              const probColor = md.chance >= 0.4 ? "#55EFC4" : md.chance >= 0.1 ? "#FFEAA7" : "#FF6B6B";
                               return (
-                                <span key={md.material_id} className="text-[9px] rounded-full px-1.5 py-0.5 flex items-center gap-0.5"
+                                <button key={md.material_id}
+                                  onClick={(e) => { e.stopPropagation(); setMaterialDetail(md.material_id); }}
+                                  className="text-[9px] rounded-full px-1.5 py-0.5 flex items-center gap-0.5 transition-all active:scale-95"
                                   style={{ background: `${rarityColors[mat.rarity] || "#B2BEC3"}10`, border: `1px solid ${rarityColors[mat.rarity] || "#B2BEC3"}15` }}
                                   title={`${mat.name} (${Math.round(md.chance * 100)}%)`}>
                                   <span className="text-[8px]">{mat.icon}</span>
-                                </span>
+                                  <span className="text-[6px] font-bold" style={{ color: probColor }}>{probLabel}</span>
+                                </button>
                               );
                             })}
                             {dest.material_drops.length > 4 && (
@@ -632,6 +638,132 @@ export default function ExplorePage() {
           </div>
         )}
       </div>
+
+      {/* Material Detail Bottom Sheet */}
+      {materialDetail !== null && (() => {
+        const mat = materialInfo[materialDetail];
+        if (!mat) return null;
+        const rc = rarityColors[mat.rarity] || "#B2BEC3";
+        const dropZones = destinations.filter(d => d.material_drops?.some(md => md.material_id === materialDetail));
+        return (
+          <>
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 z-50"
+              style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(2px)" }}
+              onClick={() => setMaterialDetail(null)}
+            />
+            {/* Sheet */}
+            <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl max-h-[70vh] overflow-y-auto animate-fade-in-up"
+              style={{
+                background: "linear-gradient(180deg, #2C1F15 0%, #1A0E08 100%)",
+                border: "1px solid rgba(139,105,20,0.3)",
+                borderBottom: "none",
+                boxShadow: "0 -8px 32px rgba(0,0,0,0.5)",
+              }}>
+              {/* Handle bar */}
+              <div className="flex justify-center pt-3 pb-2">
+                <div className="w-10 h-1 rounded-full" style={{ background: "rgba(139,105,20,0.3)" }} />
+              </div>
+
+              <div className="px-5 pb-6">
+                {/* Material icon and name */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl"
+                    style={{
+                      background: `radial-gradient(circle, ${rc}15, transparent 70%)`,
+                      border: `1.5px solid ${rc}30`,
+                    }}>
+                    {mat.icon}
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold" style={{ color: "#F5E6C8", fontFamily: "Georgia, serif" }}>{mat.name}</h3>
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-sm" style={{
+                      background: `${rc}15`,
+                      color: rc,
+                      border: `1px solid ${rc}25`,
+                    }}>{mat.rarity}</span>
+                  </div>
+                </div>
+
+                {/* Drop zones section */}
+                {dropZones.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="flex-1 h-px" style={{ background: "linear-gradient(90deg, #8B6914, transparent)" }} />
+                      <span className="text-[9px] tracking-[0.1em] font-bold" style={{ color: "#C9A84C", fontFamily: "Georgia, serif" }}>
+                        획득 가능 탐험지
+                      </span>
+                      <div className="flex-1 h-px" style={{ background: "linear-gradient(90deg, transparent, #8B6914)" }} />
+                    </div>
+                    <div className="space-y-1.5">
+                      {dropZones.map(zone => {
+                        const theme = destThemes[zone.id] || defaultTheme;
+                        const dropInfo = zone.material_drops?.find(md => md.material_id === materialDetail);
+                        const chance = dropInfo ? Math.round(dropInfo.chance * 100) : 0;
+                        const probLabel = (dropInfo?.chance ?? 0) >= 0.4 ? "높음" : (dropInfo?.chance ?? 0) >= 0.1 ? "중간" : "낮음";
+                        const probColor = (dropInfo?.chance ?? 0) >= 0.4 ? "#55EFC4" : (dropInfo?.chance ?? 0) >= 0.1 ? "#FFEAA7" : "#FF6B6B";
+                        return (
+                          <div key={zone.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg"
+                            style={{
+                              background: theme.gradient,
+                              border: "1px solid rgba(255,255,255,0.06)",
+                            }}>
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base" style={{ background: `${theme.iconColor}15` }}>
+                              {theme.emoji}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <span className="text-[11px] font-bold text-white block truncate">{zone.name}</span>
+                              <span className="text-[9px] text-white/40">{zone.duration_minutes}분</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-bold tabular-nums" style={{ color: probColor }}>{chance}%</span>
+                              <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-sm" style={{ background: `${probColor}15`, color: probColor }}>{probLabel}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Usage section */}
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="flex-1 h-px" style={{ background: "linear-gradient(90deg, #8B6914, transparent)" }} />
+                    <span className="text-[9px] tracking-[0.1em] font-bold" style={{ color: "#C9A84C", fontFamily: "Georgia, serif" }}>
+                      사용처
+                    </span>
+                    <div className="flex-1 h-px" style={{ background: "linear-gradient(90deg, transparent, #8B6914)" }} />
+                  </div>
+                  <div className="px-3 py-2 rounded-lg" style={{
+                    background: "linear-gradient(160deg, rgba(139,105,20,0.06), rgba(0,0,0,0.1))",
+                    border: "1px solid rgba(139,105,20,0.15)",
+                  }}>
+                    <p className="text-[10px]" style={{ color: "rgba(245,230,200,0.6)", fontFamily: "Georgia, serif" }}>
+                      합성 재료로 사용하여 합성 효과를 강화하거나, 제작 워크샵에서 아이템 제작에 활용할 수 있습니다.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Close button */}
+                <button
+                  onClick={() => setMaterialDetail(null)}
+                  className="w-full py-2.5 rounded-lg text-xs font-bold transition-all active:scale-95"
+                  style={{
+                    background: "linear-gradient(135deg, #6B3A2A, #3D2017)",
+                    color: "#F5E6C8",
+                    border: "1px solid #8B6914",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.2), inset 0 1px 0 rgba(139,105,20,0.3)",
+                    fontFamily: "Georgia, serif",
+                  }}>
+                  닫기
+                </button>
+              </div>
+            </div>
+          </>
+        );
+      })()}
     </PageLayout>
   );
 }

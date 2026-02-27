@@ -353,16 +353,41 @@ func (h *Handler) AttackWorldBoss(c *fiber.Ctx) error {
 		}
 	}
 
-	// Participation reward (gold based on damage dealt)
-	participationGold := int64(float64(totalDamage/10) * stageGoldMult[stageIdx])
-	if participationGold < 10 {
-		participationGold = 10
-	}
+	// Participation reward: flat 200 gold
+	participationGold := int64(200)
 	h.userRepo.AddCurrency(ctx, userID, participationGold, 0, 0)
 
+	// Rank-based gem bonus on boss defeat
+	var rankGems int
+	if defeated {
+		// Query damage ranking for this boss
+		var userRank int
+		pool.QueryRow(ctx,
+			`SELECT COUNT(*) + 1 FROM (
+				SELECT user_id, SUM(damage) as total_dmg FROM world_boss_attacks
+				WHERE boss_id = $1 GROUP BY user_id
+			) sub WHERE sub.total_dmg > (
+				SELECT COALESCE(SUM(damage), 0) FROM world_boss_attacks WHERE boss_id = $1 AND user_id = $2
+			)`,
+			bossID, userID,
+		).Scan(&userRank)
+
+		switch userRank {
+		case 1:
+			rankGems = 10
+		case 2:
+			rankGems = 5
+		case 3:
+			rankGems = 3
+		}
+		if rankGems > 0 {
+			h.userRepo.AddCurrency(ctx, userID, 0, rankGems, 0)
+		}
+	}
+
 	// Log boss reward
-	LogGameAction(pool, userID, "boss_reward", "boss", participationGold+bonusGold, bonusGems, 0, map[string]interface{}{
-		"boss_id": bossID, "damage": totalDamage, "defeated": defeated, "gold": participationGold + bonusGold, "gems": bonusGems,
+	LogGameAction(pool, userID, "boss_reward", "boss", participationGold+bonusGold, bonusGems+rankGems, 0, map[string]interface{}{
+		"boss_id": bossID, "damage": totalDamage, "defeated": defeated, "gold": participationGold + bonusGold, "gems": bonusGems + rankGems, "rank_gems": rankGems,
 	})
 
 	return c.JSON(fiber.Map{
@@ -372,6 +397,7 @@ func (h *Handler) AttackWorldBoss(c *fiber.Ctx) error {
 		"participation_gold": participationGold,
 		"bonus_gold":         bonusGold,
 		"bonus_gems":         bonusGems,
+		"rank_gems":          rankGems,
 		"slime_exp":          totalDamage / 5,
 		"slime_results":      slimeResults,
 		"combo_multiplier":   comboMultiplier,

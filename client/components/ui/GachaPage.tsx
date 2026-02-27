@@ -130,6 +130,8 @@ interface SlimeResult {
   species: { id: number; name: string; name_en: string; element: string; grade: string; description: string };
 }
 
+const MULTI_PULL_MAP: Record<number, number> = { 1: 17, 2: 18, 6: 19 };
+
 export default function GachaPage() {
   const token = useAuthStore((s) => s.accessToken);
   const user = useAuthStore((s) => s.user);
@@ -315,6 +317,11 @@ export default function GachaPage() {
                       onPull={handleEggPull}
                       canAffordMulti={item ? (qty: number) => canAffordMulti(item, qty) : () => true}
                       pulling={pulling}
+                      shopItems={shopItems}
+                      canAffordItem={(itemId: number, qty: number) => {
+                        const si = shopItems.find(i => i.id === itemId);
+                        return si ? canAffordMulti(si, qty) : false;
+                      }}
                     />
                   );
                 })}
@@ -387,7 +394,7 @@ function SectionHeader({ icon, title, subtitle }: { icon: string; title: string;
 }
 
 // ===== Featured Banner Card =====
-function FeaturedBannerCard({ banner, item, idx, expanded, onToggle, onPull, canAffordMulti, pulling }: {
+function FeaturedBannerCard({ banner, item, idx, expanded, onToggle, onPull, canAffordMulti, pulling, shopItems, canAffordItem }: {
   banner: EggBanner;
   item?: ShopItem;
   idx: number;
@@ -396,9 +403,13 @@ function FeaturedBannerCard({ banner, item, idx, expanded, onToggle, onPull, can
   onPull: (itemId: number, qty: number) => void;
   canAffordMulti: (qty: number) => boolean;
   pulling: boolean;
+  shopItems: ShopItem[];
+  canAffordItem: (itemId: number, qty: number) => boolean;
 }) {
   const cost = item?.cost || { gold: 0, gems: 0 };
   const isFree = cost.gold === 0 && cost.gems === 0;
+  const priceLabel = isFree ? "무료" : cost.gold > 0 ? `\uD83E\uDE99 ${cost.gold.toLocaleString()}` : `\uD83D\uDC8E ${cost.gems.toLocaleString()}`;
+  const multiItemId = MULTI_PULL_MAP[banner.itemId];
 
   return (
     <div
@@ -463,10 +474,20 @@ function FeaturedBannerCard({ banner, item, idx, expanded, onToggle, onPull, can
               ))}
             </div>
           </div>
-          <div className={`w-6 h-6 flex items-center justify-center transition-transform duration-200 shrink-0 ${expanded ? "rotate-180" : ""}`}>
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M3 5L6 8L9 5" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {!expanded && (
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-md" style={{
+                background: "linear-gradient(135deg, rgba(201,168,76,0.12), rgba(139,105,20,0.08))",
+                color: "#D4AF37",
+                border: "1px solid rgba(139,105,20,0.3)",
+                fontFamily: "Georgia, serif",
+              }}>{priceLabel}</span>
+            )}
+            <div className={`w-6 h-6 flex items-center justify-center transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M3 5L6 8L9 5" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
           </div>
         </div>
       </button>
@@ -550,6 +571,8 @@ function FeaturedBannerCard({ banner, item, idx, expanded, onToggle, onPull, can
                       <span className="inline-flex items-center gap-1">
                         <span className="animate-spin text-[10px]">{"\uD83E\uDD5A"}</span>
                       </span>
+                    ) : !affordable && !pulling ? (
+                      <span>{qty}회 <span style={{ color: "#E74C3C", fontSize: "9px" }}>부족</span></span>
                     ) : (
                       `${qty}회 뽑기`
                     )}
@@ -561,6 +584,56 @@ function FeaturedBannerCard({ banner, item, idx, expanded, onToggle, onPull, can
               );
             })}
           </div>
+
+          {/* 10x Multi-pull button */}
+          {multiItemId && (() => {
+            const multiItem = shopItems.find(i => i.id === multiItemId);
+            if (!multiItem) return null;
+            const multiCost = multiItem.cost;
+            const multiAffordable = canAffordItem(multiItemId, 1);
+            const multiIsFree = multiCost.gold === 0 && multiCost.gems === 0;
+            return (
+              <button
+                onClick={() => onPull(multiItemId, 1)}
+                disabled={!multiAffordable || pulling}
+                className="w-full mt-2 rounded-md py-2.5 text-center transition-all active:scale-[0.97] relative overflow-hidden"
+                style={{
+                  background: multiAffordable
+                    ? "linear-gradient(135deg, #4A2515, #3D2017)"
+                    : "rgba(44,24,16,0.5)",
+                  border: multiAffordable
+                    ? "1.5px solid #C9A84C"
+                    : "1px solid rgba(139,105,20,0.1)",
+                  boxShadow: multiAffordable
+                    ? "0 2px 12px rgba(201,168,76,0.15), inset 0 1px 0 rgba(139,105,20,0.2)"
+                    : "none",
+                }}
+              >
+                <div className="absolute top-0 right-0 text-[7px] font-black px-1.5 py-0.5 rounded-bl-md"
+                  style={{
+                    background: "linear-gradient(135deg, #55EFC4, #00B894)",
+                    color: "#1A0E08",
+                  }}>
+                  -10%
+                </div>
+                <div className="text-[11px] font-bold" style={{
+                  color: multiAffordable ? "#F5E6C8" : "rgba(139,105,20,0.3)",
+                  fontFamily: "Georgia, serif",
+                }}>
+                  {pulling ? (
+                    <span className="animate-spin text-[10px]">{"\uD83E\uDD5A"}</span>
+                  ) : !multiAffordable && !pulling ? (
+                    <span>10회 뽑기 <span style={{ color: "#E74C3C", fontSize: "9px" }}>부족</span></span>
+                  ) : (
+                    "10회 뽑기"
+                  )}
+                </div>
+                <div className="text-[9px] mt-0.5" style={{ color: multiAffordable ? "#C9A84C" : "rgba(139,105,20,0.25)" }}>
+                  {multiIsFree ? "무료" : multiCost.gold > 0 ? `\uD83E\uDE99 ${multiCost.gold.toLocaleString()}` : `\uD83D\uDC8E ${multiCost.gems.toLocaleString()}`}
+                </div>
+              </button>
+            );
+          })()}
         </div>
       )}
     </div>
@@ -624,6 +697,9 @@ function ElementEggCard({ banner, item, idx, onPull, canAffordMulti, pulling }: 
               {elName} 원소
             </span>
           </div>
+          {!canAffordMulti(1) && (
+            <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-sm shrink-0" style={{ color: "#E74C3C", background: "rgba(231,76,60,0.1)", border: "1px solid rgba(231,76,60,0.2)" }}>부족</span>
+          )}
         </div>
         {/* Probability badges */}
         <div className="flex items-center gap-1 flex-wrap">
@@ -633,6 +709,17 @@ function ElementEggCard({ banner, item, idx, onPull, canAffordMulti, pulling }: 
               {gradeNames[r.grade]} {r.pct}%
             </span>
           ))}
+        </div>
+        {/* Price badge */}
+        <div className="mt-1.5">
+          <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-sm" style={{
+            background: "linear-gradient(135deg, rgba(201,168,76,0.1), rgba(139,105,20,0.06))",
+            color: "#D4AF37",
+            border: "1px solid rgba(139,105,20,0.2)",
+            fontFamily: "Georgia, serif",
+          }}>
+            {isFree ? "무료" : cost.gold > 0 ? `\uD83E\uDE99 ${cost.gold.toLocaleString()}` : `\uD83D\uDC8E ${cost.gems.toLocaleString()}`}
+          </span>
         </div>
       </button>
 
@@ -658,7 +745,11 @@ function ElementEggCard({ banner, item, idx, onPull, canAffordMulti, pulling }: 
                   color: affordable ? "#F5E6C8" : "rgba(139,105,20,0.3)",
                   fontFamily: "Georgia, serif",
                 }}>
-                  {qty}회 뽑기
+                  {!affordable && !pulling ? (
+                    <span>{qty}회 <span style={{ color: "#E74C3C", fontSize: "9px" }}>부족</span></span>
+                  ) : (
+                    `${qty}회 뽑기`
+                  )}
                 </span>
                 <span className="text-[9px] font-bold" style={{
                   color: affordable ? "#C9A84C" : "rgba(139,105,20,0.25)",

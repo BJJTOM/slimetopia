@@ -9,13 +9,13 @@ import { authApi } from "@/lib/api/client";
 import SeasonBanner from "./SeasonBanner";
 import { toastReward, toastSuccess, toastError } from "./Toast";
 
-type ShopTab = "all" | "food" | "special" | "gems";
+type ShopTab = "food" | "booster" | "deco" | "gems";
 
 const TABS: { id: ShopTab; label: string; icon: string }[] = [
-  { id: "all", label: "전체", icon: "🏪" },
   { id: "food", label: "먹이", icon: "🍖" },
-  { id: "special", label: "특별", icon: "✨" },
-  { id: "gems", label: "보석", icon: "💎" },
+  { id: "booster", label: "부스터", icon: "\u26A1" },
+  { id: "deco", label: "꾸미기", icon: "🎀" },
+  { id: "gems", label: "재화", icon: "\uD83D\uDC8E" },
 ];
 
 // Booster / decoration color themes
@@ -41,7 +41,7 @@ export default function ShopPage() {
   const user = useAuthStore((s) => s.user);
   const { shopItems, slimes, species, fetchShopItems, buyItem } = useGameStore();
 
-  const [activeTab, setActiveTab] = useState<ShopTab>("all");
+  const [activeTab, setActiveTab] = useState<ShopTab>("food");
   const [buyResult, setBuyResult] = useState<{
     type: string;
     slime?: Slime;
@@ -58,15 +58,10 @@ export default function ShopPage() {
     }
   }, [token, fetchShopItems]);
 
-  const filteredItems = activeTab === "all"
-    ? shopItems
-    : shopItems.filter((item) => item.category === activeTab);
-
-  const nonEggItems = filteredItems.filter((item) => item.type !== "egg" && item.type !== "multi_egg");
+  const nonEggItems = shopItems.filter((item) => item.type !== "egg" && item.type !== "multi_egg");
   const foodItems = nonEggItems.filter((item) => item.type === "food");
   const boosterItems = nonEggItems.filter((item) => item.type === "booster");
   const decoItems = nonEggItems.filter((item) => item.type === "decoration");
-  const otherItems = nonEggItems.filter((item) => !["food", "booster", "decoration"].includes(item.type));
 
   const handleBuy = async (item: ShopItem, slimeId?: string, quantity?: number) => {
     if (!token || pulling) return;
@@ -244,7 +239,7 @@ export default function ShopPage() {
         </div>
 
         {/* Hungry slimes alert */}
-        {hungrySlimes.length > 0 && (activeTab === "all" || activeTab === "food") && (
+        {hungrySlimes.length > 0 && activeTab === "food" && (
           <div className="mb-3 flex items-center gap-2 px-3 py-2.5 rounded-lg animate-pulse-slow"
             style={{
               background: "linear-gradient(135deg, rgba(192,57,43,0.1), rgba(231,76,60,0.06))",
@@ -290,7 +285,7 @@ export default function ShopPage() {
           {!selectingFood && (
             <>
               {/* ===== FOOD ITEMS ===== */}
-              {(activeTab === "all" || activeTab === "food") && foodItems.length > 0 && (
+              {activeTab === "food" && foodItems.length > 0 && (
                 <section>
                   <SectionHeader icon="🍖" title="먹이" subtitle="슬라임에게 먹여주세요" />
                   <div className="grid grid-cols-2 gap-2.5">
@@ -308,9 +303,9 @@ export default function ShopPage() {
               )}
 
               {/* ===== BOOSTERS ===== */}
-              {(activeTab === "all" || activeTab === "special") && boosterItems.length > 0 && (
+              {activeTab === "booster" && boosterItems.length > 0 && (
                 <section>
-                  <SectionHeader icon="⚡" title="부스터" subtitle="일정 시간 동안 효과 적용" />
+                  <SectionHeader icon="\u26A1" title="부스터" subtitle="일정 시간 동안 효과 적용" />
                   <div className="grid grid-cols-2 gap-2.5">
                     {boosterItems.map((item, idx) => (
                       <SpecialItemCard key={item.id} item={item} idx={idx} variant="booster" canAfford={canAfford(item)} onBuy={() => handleBuy(item)} />
@@ -320,24 +315,12 @@ export default function ShopPage() {
               )}
 
               {/* ===== DECORATIONS ===== */}
-              {(activeTab === "all" || activeTab === "special") && decoItems.length > 0 && (
+              {activeTab === "deco" && decoItems.length > 0 && (
                 <section>
-                  <SectionHeader icon="🎀" title="장식" subtitle="마을과 슬라임을 꾸며보세요" />
+                  <SectionHeader icon="🎀" title="꾸미기" subtitle="마을과 슬라임을 꾸며보세요" />
                   <div className="grid grid-cols-2 gap-2.5">
                     {decoItems.map((item, idx) => (
                       <SpecialItemCard key={item.id} item={item} idx={idx} variant="deco" canAfford={canAfford(item)} onBuy={() => handleBuy(item)} />
-                    ))}
-                  </div>
-                </section>
-              )}
-
-              {/* ===== OTHER ===== */}
-              {otherItems.length > 0 && (
-                <section>
-                  <SectionHeader icon="📦" title="기타" subtitle="" />
-                  <div className="grid grid-cols-2 gap-2.5">
-                    {otherItems.map((item, idx) => (
-                      <SpecialItemCard key={item.id} item={item} idx={idx} variant="default" canAfford={canAfford(item)} onBuy={() => handleBuy(item)} />
                     ))}
                   </div>
                 </section>
@@ -349,7 +332,7 @@ export default function ShopPage() {
               )}
 
               {/* Empty state */}
-              {nonEggItems.length === 0 && activeTab !== "gems" && (
+              {((activeTab === "food" && foodItems.length === 0) || (activeTab === "booster" && boosterItems.length === 0) || (activeTab === "deco" && decoItems.length === 0)) && (
                 <div className="text-center py-16">
                   <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
                     style={{

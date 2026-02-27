@@ -25,8 +25,8 @@ var personalities = []string{
 	models.PersonalityCurious,
 }
 
-// GrantStarterPack gives a new user their first slimes
-func GrantStarterPack(ctx context.Context, slimeRepo *repository.SlimeRepository, userID string) {
+// GrantStarterPack gives a new user their first slimes, currency, and food
+func GrantStarterPack(ctx context.Context, slimeRepo *repository.SlimeRepository, userRepo *repository.UserRepository, userID string) {
 	// Check if user already has slimes
 	count, err := slimeRepo.CountByUser(ctx, userID)
 	if err != nil || count > 0 {
@@ -46,8 +46,21 @@ func GrantStarterPack(ctx context.Context, slimeRepo *repository.SlimeRepository
 		slimeRepo.AddCodexEntry(ctx, userID, starter.SpeciesID)
 	}
 
-	// Give starting gold
-	log.Info().Str("user_id", userID).Msg("Starter pack granted: 3 slimes")
+	// Grant starting currency: 3000 gold + 50 gems
+	if err := userRepo.AddCurrency(ctx, userID, 3000, 50, 0); err != nil {
+		log.Error().Err(err).Str("user_id", userID).Msg("Failed to grant starter currency")
+	}
+
+	// Grant 10x Tasty Food (food_id=3)
+	_, err = slimeRepo.Pool().Exec(ctx,
+		"INSERT INTO food_inventory (user_id, food_id, quantity) VALUES ($1, 3, 10) ON CONFLICT (user_id, food_id) DO UPDATE SET quantity = food_inventory.quantity + 10",
+		userID,
+	)
+	if err != nil {
+		log.Error().Err(err).Str("user_id", userID).Msg("Failed to grant starter food")
+	}
+
+	log.Info().Str("user_id", userID).Msg("Starter pack granted: 3 slimes + 3000 gold + 50 gems + 10 food")
 }
 
 // GrantRandomSlime gives a random common slime (for testing)

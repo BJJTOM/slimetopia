@@ -68,6 +68,8 @@ export default function MergePage() {
     fetchCraftingRecipes,
     craftItem,
     equippedAccessories,
+    destinations,
+    setActivePanel,
   } = useGameStore();
 
   const [tab, setTab] = useState<MergeTab>("manual");
@@ -233,6 +235,8 @@ export default function MergePage() {
             synthesisMaterialId={synthesisMaterialId}
             setSynthesisMaterial={setSynthesisMaterial}
             recipes={recipes}
+            destinations={destinations}
+            setActivePanel={setActivePanel}
           />
         ) : (
           <BatchMergeTab
@@ -294,6 +298,8 @@ function ManualMergeTab({
   synthesisMaterialId,
   setSynthesisMaterial,
   recipes,
+  destinations,
+  setActivePanel,
 }: {
   slimeA: Slime | undefined;
   slimeB: Slime | undefined;
@@ -312,6 +318,8 @@ function ManualMergeTab({
   synthesisMaterialId: number | null;
   setSynthesisMaterial: (id: number | null) => void;
   recipes: ReturnType<typeof useGameStore.getState>["recipes"];
+  destinations: ReturnType<typeof useGameStore.getState>["destinations"];
+  setActivePanel: ReturnType<typeof useGameStore.getState>["setActivePanel"];
 }) {
   const [recipePage, setRecipePage] = useState(0);
 
@@ -565,6 +573,7 @@ function ManualMergeTab({
               const isSelected = synthesisMaterialId === mat.id;
               const color = rarityColors[mat.rarity] || "#B2BEC3";
               const effectDesc = getEffectDescription(mat.effects);
+              const dropZone = destinations.find(d => d.material_drops?.some(md => md.material_id === mat.id));
               return (
                 <button
                   key={mat.id}
@@ -606,10 +615,71 @@ function ManualMergeTab({
                   {effectDesc && (
                     <p className="text-[8px] leading-tight pl-7" style={{ color: "rgba(201,168,76,0.5)" }}>{effectDesc}</p>
                   )}
+                  {dropZone && inv.quantity <= 2 && (
+                    <p className="text-[7px] leading-tight pl-7" style={{ color: "rgba(85,239,196,0.6)", fontFamily: "Georgia, serif" }}>
+                      {"\uD83D\uDCCD"} {dropZone.name}에서 획득
+                    </p>
+                  )}
                 </button>
               );
             })}
           </div>
+
+          {/* Missing materials with drop zones */}
+          {(() => {
+            const ownedIds = new Set(materialInventory.map(inv => inv.material_id));
+            const missingWithZones = materialDefs
+              .filter(mat => !ownedIds.has(mat.id))
+              .filter(mat => destinations.some(d => d.material_drops?.some(md => md.material_id === mat.id)))
+              .slice(0, 4);
+            if (missingWithZones.length === 0) return null;
+            return (
+              <div className="mt-2">
+                <p className="text-[9px] mb-1.5 font-medium" style={{ color: "rgba(201,168,76,0.4)", fontFamily: "Georgia, serif" }}>
+                  미보유 재료
+                </p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {missingWithZones.map(mat => {
+                    const zone = destinations.find(d => d.material_drops?.some(md => md.material_id === mat.id));
+                    return (
+                      <div
+                        key={mat.id}
+                        className="flex flex-col gap-1 p-2.5 rounded-lg"
+                        style={{
+                          background: "linear-gradient(160deg, #2C1F15, #1E140D)",
+                          border: "1.5px dashed rgba(139,105,20,0.2)",
+                        }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-base opacity-40">{mat.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-[10px] font-medium truncate block" style={{ color: "rgba(245,230,200,0.4)", fontFamily: "Georgia, serif" }}>{mat.name}</span>
+                            {zone && (
+                              <span className="text-[8px]" style={{ color: "rgba(85,239,196,0.5)" }}>
+                                {"\uD83D\uDCCD"} {zone.name}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setActivePanel("discovery"); }}
+                          className="text-[8px] font-bold py-1 rounded-md transition-all active:scale-95 w-full"
+                          style={{
+                            background: "linear-gradient(135deg, rgba(85,239,196,0.08), rgba(85,239,196,0.04))",
+                            color: "#55EFC4",
+                            border: "1px solid rgba(85,239,196,0.2)",
+                            fontFamily: "Georgia, serif",
+                          }}
+                        >
+                          {"\u27A1"} 탐험
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
 

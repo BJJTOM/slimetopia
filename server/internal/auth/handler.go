@@ -137,7 +137,7 @@ func (h *Handler) Callback(c *fiber.Ctx) error {
 		log.Info().Str("nickname", nickname).Msg("New user created via OAuth")
 
 		// Grant starter pack
-		game.GrantStarterPack(ctx, h.slimeRepo, uuidToString(user.ID))
+		game.GrantStarterPack(ctx, h.slimeRepo, h.userRepo, uuidToString(user.ID))
 	}
 
 	// Generate JWT
@@ -230,7 +230,7 @@ func (h *Handler) DevLogin(c *fiber.Ctx) error {
 		}
 
 		// Grant starter pack for new dev user
-		game.GrantStarterPack(ctx, h.slimeRepo, uuidToString(user.ID))
+		game.GrantStarterPack(ctx, h.slimeRepo, h.userRepo, uuidToString(user.ID))
 	}
 
 	userIDStr := uuidToString(user.ID)
@@ -278,7 +278,7 @@ func (h *Handler) GuestLogin(c *fiber.Ctx) error {
 	userIDStr := uuidToString(user.ID)
 
 	// Grant starter pack
-	game.GrantStarterPack(ctx, h.slimeRepo, userIDStr)
+	game.GrantStarterPack(ctx, h.slimeRepo, h.userRepo, userIDStr)
 
 	tokenPair, err := h.jwtManager.GenerateTokenPair(userIDStr, user.Nickname)
 	if err != nil {
@@ -350,7 +350,7 @@ func (h *Handler) Register(c *fiber.Ctx) error {
 	}
 
 	// Grant starter pack
-	game.GrantStarterPack(ctx, h.slimeRepo, userIDStr)
+	game.GrantStarterPack(ctx, h.slimeRepo, h.userRepo, userIDStr)
 
 	log.Info().Str("email", body.Email).Str("nickname", nickname).Msg("New user registered via email")
 

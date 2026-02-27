@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/rs/zerolog/log"
 )
 
 // POST /api/race/start — request to start a race (unlimited)
@@ -51,17 +52,26 @@ func (h *Handler) FinishRace(c *fiber.Ctx) error {
 		body.Score = 0
 	}
 
-	// Calculate rewards (score/10 gold, score/20 exp, capped at 500G/100exp)
-	goldReward := body.Score / 10
-	if goldReward > 500 {
-		goldReward = 500
-	}
+	// Calculate rewards: base 50 + score/100 gold, score/20 exp (capped at 100exp)
+	goldReward := 50 + body.Score/100
 	expReward := body.Score / 20
 	if expReward > 100 {
 		expReward = 100
 	}
 
 	ctx := c.Context()
+
+	// Daily gold cap of 2000 via Redis
+	today := time.Now().Format("2006-01-02")
+	dailyKey := fmt.Sprintf("race_gold:%s:%s", userID, today)
+	currentDaily, _ := h.rdb.Get(c.Context(), dailyKey).Int()
+	dailyRemaining := 2000 - currentDaily
+	if dailyRemaining < 0 {
+		dailyRemaining = 0
+	}
+	if goldReward > dailyRemaining {
+		goldReward = dailyRemaining
+	}
 
 	// Record result
 	h.slimeRepo.Pool().Exec(ctx,
@@ -73,6 +83,13 @@ func (h *Handler) FinishRace(c *fiber.Ctx) error {
 	// Grant rewards
 	if goldReward > 0 {
 		h.userRepo.AddCurrency(ctx, userID, int64(goldReward), 0, 0)
+		// Track daily gold in Redis (expire at end of day)
+		h.rdb.IncrBy(c.Context(), dailyKey, int64(goldReward))
+		ttl := time.Duration(24-time.Now().Hour())*time.Hour - time.Duration(time.Now().Minute())*time.Minute
+		if ttl <= 0 {
+			ttl = 24 * time.Hour
+		}
+		h.rdb.Expire(c.Context(), dailyKey, ttl)
 	}
 	if expReward > 0 && body.SlimeID != "" {
 		slime, err := h.slimeRepo.FindByID(ctx, body.SlimeID)
@@ -83,11 +100,18 @@ func (h *Handler) FinishRace(c *fiber.Ctx) error {
 	}
 
 	user, _ := h.userRepo.FindByID(ctx, userID)
+	dailyGoldRemaining := 2000 - currentDaily - goldReward
+	if dailyGoldRemaining < 0 {
+		dailyGoldRemaining = 0
+	}
+
+	log.Debug().Str("user_id", userID).Int("gold_reward", goldReward).Int("daily_remaining", dailyGoldRemaining).Msg("Race finished")
 
 	return c.JSON(fiber.Map{
-		"score":       body.Score,
-		"gold_reward": goldReward,
-		"exp_reward":  expReward,
+		"score":                body.Score,
+		"gold_reward":          goldReward,
+		"exp_reward":           expReward,
+		"daily_gold_remaining": dailyGoldRemaining,
 		"user": fiber.Map{
 			"gold": user.Gold,
 		},
