@@ -232,6 +232,15 @@ export interface MaterialInventoryItem {
   quantity: number;
 }
 
+export interface CollectionSubmitResult {
+  collection_count: number;
+  species_id: number;
+  personality: string;
+  gold_reward: number;
+  gem_reward: number;
+  is_first_of_species: boolean;
+}
+
 export interface CollectionScoreData {
   species_points: number;
   set_bonus: number;
@@ -316,7 +325,7 @@ interface GameState {
   mergeSlotA: string | null;
   mergeSlotB: string | null;
   showMergeResult: MergeResult | null;
-  activePanel: "home" | "inventory" | "codex" | "merge" | "explore" | "discovery" | "shop" | "gacha" | "achievements" | "leaderboard";
+  activePanel: "home" | "inventory" | "codex" | "merge" | "explore" | "discovery" | "shop" | "gacha" | "achievements" | "leaderboard" | "slimes" | "collection";
   cooldowns: CooldownMap;
   reactionMessage: { slimeId: string; text: string } | null;
   levelUpInfo: LevelUpInfo | null;
@@ -392,11 +401,19 @@ interface GameState {
   // Shorts
   showShorts: boolean;
 
+  // Flow connection state
+  lastPulledSlimeIds: string[];
+  lastMergedSlimeId: string | null;
+  highlightSlimeId: string | null;
+
   // Mini Contents (Race, Fishing, Boss, Training)
   showMiniContents: boolean;
 
   // Collection (main feature)
   showCollection: boolean;
+
+  // More menu
+  showMore: boolean;
 
   // Legacy overlays (used by MiniContentsPage internally)
   showPlaza: boolean;
@@ -404,6 +421,9 @@ interface GameState {
   showTraining: boolean;
   showRace: boolean;
   showFishing: boolean;
+
+  // Slime detail page
+  detailSlimeId: string | null;
 
   // Effect callback
   nurtureEffectCallback: NurtureEffectCallback | null;
@@ -476,7 +496,7 @@ interface GameState {
   fetchCollectionCount: (token: string) => Promise<void>;
   fetchCollectionEntries: (token: string) => Promise<void>;
   fetchCollectionRequirements: (token: string) => Promise<void>;
-  submitToCollection: (token: string, slimeId: string) => Promise<boolean>;
+  submitToCollection: (token: string, slimeId: string) => Promise<CollectionSubmitResult | null>;
   fetchCollectionScore: (token: string) => Promise<void>;
   fetchSlimeSets: (token: string) => Promise<void>;
   fetchCollectionMilestones: (token: string) => Promise<void>;
@@ -520,6 +540,9 @@ interface GameState {
   // Collection actions (main feature)
   setShowCollection: (show: boolean) => void;
 
+  // More menu actions
+  setShowMore: (v: boolean) => void;
+
   // Legacy overlay actions (used internally by MiniContentsPage)
   setShowPlaza: (show: boolean) => void;
   setShowWorldBoss: (show: boolean) => void;
@@ -527,8 +550,16 @@ interface GameState {
   setShowRace: (show: boolean) => void;
   setShowFishing: (show: boolean) => void;
 
+  // Slime detail page
+  setDetailSlimeId: (id: string | null) => void;
+
   // Effect callback setter
   setNurtureEffectCallback: (cb: NurtureEffectCallback | null) => void;
+
+  // Flow connection setters
+  setLastPulledSlimeIds: (ids: string[]) => void;
+  setLastMergedSlimeId: (id: string | null) => void;
+  setHighlightSlimeId: (id: string | null) => void;
 }
 
 function handleNurtureResponse(
@@ -659,11 +690,16 @@ export const useGameStore = create<GameState>((set, get) => ({
   showCommunity: false,
   showProfile: false,
   showShorts: false,
+  lastPulledSlimeIds: [],
+  lastMergedSlimeId: null,
+  highlightSlimeId: null,
   showMiniContents: false,
   showCollection: false,
+  showMore: false,
   showPlaza: false,
   showWorldBoss: false,
   showTraining: false,
+  detailSlimeId: null,
   nurtureEffectCallback: null,
 
   fetchSlimes: async (token) => {
@@ -1070,7 +1106,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   submitToCollection: async (token, slimeId) => {
     try {
-      const res = await authApi<{ success: boolean; collection_count: number; species_id: number; personality: string }>(
+      const res = await authApi<{ success: boolean; collection_count: number; species_id: number; personality: string; gold_reward: number; gem_reward: number; is_first_of_species: boolean }>(
         "/api/collection/submit", token, { method: "POST", body: { slime_id: slimeId } }
       );
       set((s) => ({
@@ -1079,8 +1115,15 @@ export const useGameStore = create<GameState>((set, get) => ({
         collectionEntries: [...s.collectionEntries, { species_id: res.species_id, personality: res.personality }],
       }));
       await get().fetchSlimes(token);
-      toastReward("컬렉션 제출 완료!", "📖");
-      return true;
+      useAuthStore.getState().fetchUser();
+      return {
+        collection_count: res.collection_count,
+        species_id: res.species_id,
+        personality: res.personality,
+        gold_reward: res.gold_reward,
+        gem_reward: res.gem_reward,
+        is_first_of_species: res.is_first_of_species,
+      };
     } catch (err) {
       if (err instanceof ApiError) {
         const errCode = err.data.error as string;
@@ -1094,7 +1137,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           toastError(errCode || "제출 실패");
         }
       }
-      return false;
+      return null;
     }
   },
 
@@ -1365,6 +1408,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   // ===== Collection =====
   setShowCollection: (show) => set({ showCollection: show }),
 
+  // ===== More menu =====
+  setShowMore: (v) => set({ showMore: v }),
+
   // ===== Legacy overlays =====
   setShowPlaza: (show) => set({ showPlaza: show }),
   setShowWorldBoss: (show) => set({ showWorldBoss: show }),
@@ -1373,5 +1419,11 @@ export const useGameStore = create<GameState>((set, get) => ({
   setShowFishing: (show) => set({ showFishing: show }),
 
   // ===== Effect Callback =====
+  setDetailSlimeId: (id) => set({ detailSlimeId: id }),
   setNurtureEffectCallback: (cb) => set({ nurtureEffectCallback: cb }),
+
+  // ===== Flow Connection =====
+  setLastPulledSlimeIds: (ids) => set({ lastPulledSlimeIds: ids }),
+  setLastMergedSlimeId: (id) => set({ lastMergedSlimeId: id }),
+  setHighlightSlimeId: (id) => set({ highlightSlimeId: id }),
 }));
