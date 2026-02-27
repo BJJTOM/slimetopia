@@ -27,6 +27,7 @@ const CONTENTS = [
     desc: "장애물을 피하고 코인을 모아 최고 점수에 도전!",
     emoji: "🏃",
     accent: "#C9A84C",
+    bg: "/assets/bg/grassland.png",
     reward: "Gold + EXP",
     limit: "무제한",
     bestKey: BEST_KEYS.race,
@@ -39,6 +40,7 @@ const CONTENTS = [
     desc: "릴링 미니게임으로 희귀한 물고기를 낚아올려요!",
     emoji: "🎣",
     accent: "#74B9FF",
+    bg: "/assets/bg/clear_lake.png",
     reward: "Gold + Gems",
     limit: "일 10회",
     bestKey: BEST_KEYS.fishing,
@@ -51,6 +53,7 @@ const CONTENTS = [
     desc: "5단계 보스를 파티로 공격! 속성 유리를 활용하세요",
     emoji: "⚔️",
     accent: "#FF6B6B",
+    bg: "/assets/bg/red_volcano.png",
     reward: "Gold + Gems",
     limit: "일 10회",
     bestKey: BEST_KEYS.boss,
@@ -63,6 +66,7 @@ const CONTENTS = [
     desc: "슬라임을 방치 훈련! 최대 8시간 EXP 자동 획득",
     emoji: "🏋️",
     accent: "#FDCB6E",
+    bg: "/assets/bg/starlight_cave.png",
     reward: "EXP",
     limit: "3슬롯",
     bestKey: BEST_KEYS.training,
@@ -107,59 +111,73 @@ export default function MiniContentsPage({ onClose }: { onClose: () => void }) {
             <button
               key={c.id}
               onClick={() => setActive(c.id)}
-              className="w-full text-left rounded-xl flex items-center gap-3 px-3.5 py-3 active:scale-[0.98] transition-transform"
+              className="w-full text-left rounded-xl overflow-hidden active:scale-[0.98] transition-transform relative"
               style={{
-                background: "linear-gradient(135deg, rgba(44,24,16,0.85), rgba(30,16,10,0.95))",
-                border: "1px solid rgba(201,168,76,0.12)",
+                height: 100,
+                border: "1px solid rgba(201,168,76,0.15)",
                 animation: `codex-stagger 0.35s ease-out ${idx * 60}ms both`,
               }}
             >
-              {/* Icon */}
-              <div className="relative shrink-0">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
-                  style={{
-                    background: `linear-gradient(135deg, ${c.accent}18, ${c.accent}08)`,
-                    border: `1px solid ${c.accent}25`,
-                  }}>
-                  {c.emoji}
-                </div>
-                {c.tag && (
-                  <span className="absolute -top-1 -right-1 text-[7px] font-bold px-1 py-px rounded-full"
-                    style={{
-                      background: c.tag === "HOT" ? "#FF6B6B" : "#00B894",
-                      color: "white",
-                    }}>
-                    {c.tag}
-                  </span>
-                )}
-              </div>
+              {/* Background image */}
+              <div className="absolute inset-0" style={{
+                backgroundImage: `url(${c.bg})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }} />
+              {/* Dark overlay for readability */}
+              <div className="absolute inset-0" style={{
+                background: "linear-gradient(90deg, rgba(20,10,5,0.88) 0%, rgba(20,10,5,0.65) 50%, rgba(20,10,5,0.4) 100%)",
+              }} />
 
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-[13px]" style={{ color: "#F5E6C8", fontFamily: "Georgia, serif" }}>
-                    {c.name}
-                  </span>
-                  <span className="text-[8px] px-1.5 py-0.5 rounded font-medium"
-                    style={{ color: "rgba(245,230,200,0.35)", background: "rgba(245,230,200,0.05)" }}>
-                    {c.limit}
-                  </span>
-                </div>
-                <p className="text-[10px] mt-0.5 leading-snug truncate" style={{ color: "rgba(245,230,200,0.35)" }}>
-                  {c.desc}
-                </p>
-                <div className="flex items-center gap-2.5 mt-1.5">
-                  <span className="text-[9px]" style={{ color: c.accent }}>{c.reward}</span>
-                  {best > 0 && (
-                    <span className="text-[9px] tabular-nums" style={{ color: "rgba(255,234,167,0.6)" }}>
-                      {c.bestLabel} {best.toLocaleString()}
+              {/* Content */}
+              <div className="relative h-full flex items-center gap-3 px-3.5">
+                {/* Icon */}
+                <div className="relative shrink-0">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl backdrop-blur-sm"
+                    style={{
+                      background: "rgba(0,0,0,0.3)",
+                      border: `1px solid ${c.accent}40`,
+                    }}>
+                    {c.emoji}
+                  </div>
+                  {c.tag && (
+                    <span className="absolute -top-1 -right-1 text-[7px] font-bold px-1 py-px rounded-full"
+                      style={{
+                        background: c.tag === "HOT" ? "#FF6B6B" : "#00B894",
+                        color: "white",
+                      }}>
+                      {c.tag}
                     </span>
                   )}
                 </div>
-              </div>
 
-              {/* Arrow */}
-              <span className="text-[11px] shrink-0" style={{ color: "rgba(201,168,76,0.3)" }}>{"›"}</span>
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-[13px]" style={{ color: "#F5E6C8", fontFamily: "Georgia, serif", textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                      {c.name}
+                    </span>
+                    <span className="text-[8px] px-1.5 py-0.5 rounded font-medium"
+                      style={{ color: "rgba(245,230,200,0.5)", background: "rgba(0,0,0,0.3)" }}>
+                      {c.limit}
+                    </span>
+                  </div>
+                  <p className="text-[10px] mt-0.5 leading-snug" style={{ color: "rgba(245,230,200,0.55)", textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}>
+                    {c.desc}
+                  </p>
+                  <div className="flex items-center gap-2.5 mt-1.5">
+                    <span className="text-[9px] font-bold" style={{ color: c.accent, textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}>{c.reward}</span>
+                    {best > 0 && (
+                      <span className="text-[9px] tabular-nums" style={{ color: "rgba(255,234,167,0.7)", textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}>
+                        {c.bestLabel} {best.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Arrow */}
+                <span className="text-sm shrink-0" style={{ color: "rgba(201,168,76,0.4)" }}>{"›"}</span>
+              </div>
             </button>
           );
         })}
