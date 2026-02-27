@@ -44,6 +44,11 @@ export default function ShortsUploadModal({ onClose }: Props) {
   const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const allowedTypes = ["video/mp4", "video/webm", "video/quicktime"];
+    if (!allowedTypes.includes(file.type)) {
+      toastError("지원하는 형식: MP4, WebM, MOV");
+      return;
+    }
     if (file.size > 50 * 1024 * 1024) {
       toastError("50MB 이하의 영상만 업로드할 수 있어요");
       return;
@@ -96,23 +101,6 @@ export default function ShortsUploadModal({ onClose }: Props) {
           token,
           (pct) => setProgress(pct),
         );
-      } else {
-        // Text-only short (no video)
-        const formData = new FormData();
-        formData.append("title", title.trim());
-        formData.append("description", description);
-        formData.append("category", category);
-        formData.append("visibility", visibility);
-        if (tags.length > 0) {
-          formData.append("tags", tags.join(","));
-        }
-
-        await uploadApi<{ id: string }>(
-          "/api/shorts/upload",
-          formData,
-          token,
-          (pct) => setProgress(pct),
-        );
       }
 
       toastSuccess("쇼츠가 업로드되었어요!");
@@ -152,7 +140,7 @@ export default function ShortsUploadModal({ onClose }: Props) {
           <h2 className="font-bold" style={{ color: "#F5E6C8", fontFamily: "Georgia, 'Times New Roman', serif" }}>쇼츠 업로드</h2>
           <button
             onClick={handleUpload}
-            disabled={!title.trim() || uploading}
+            disabled={!title.trim() || !videoFile || uploading}
             className="text-sm font-bold px-4 py-1.5 rounded-full text-white disabled:opacity-30 transition active:scale-95"
             style={{ background: "linear-gradient(135deg, #C9A84C, #8B6914)" }}
           >
@@ -161,7 +149,7 @@ export default function ShortsUploadModal({ onClose }: Props) {
         </div>
 
         <div className="px-5 py-4 space-y-4">
-          {/* Video picker — optional */}
+          {/* Video picker — required */}
           {!videoPreview ? (
             <div className="rounded-2xl overflow-hidden" style={{ border: "2px dashed rgba(139,105,20,0.3)", background: "rgba(245,230,200,0.03)" }}>
               <button
@@ -169,8 +157,8 @@ export default function ShortsUploadModal({ onClose }: Props) {
                 className="w-full py-8 flex flex-col items-center justify-center gap-2"
               >
                 <span className="text-4xl">🎬</span>
-                <span className="text-sm" style={{ color: "rgba(245,230,200,0.5)" }}>영상 추가 (선택사항)</span>
-                <span className="text-xs" style={{ color: "rgba(245,230,200,0.25)" }}>최대 50MB · 영상 없이 텍스트만으로도 올릴 수 있어요</span>
+                <span className="text-sm" style={{ color: "rgba(245,230,200,0.5)" }}>영상 추가 (필수)</span>
+                <span className="text-xs" style={{ color: "rgba(245,230,200,0.25)" }}>MP4, WebM, MOV · 최대 50MB</span>
               </button>
             </div>
           ) : (

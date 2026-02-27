@@ -62,7 +62,7 @@ func (h *Handler) SeedShorts(c *fiber.Ctx) error {
 
 		_, err := pool.Exec(ctx,
 			`INSERT INTO shorts (user_id, title, description, video_url, thumbnail_url, tags, category, visibility, views, likes, comment_count, status, created_at)
-			 VALUES ($1, $2, $3, $4, '', $5, $6, 'public', $7, $8, $9, 'active', $10)`,
+			 VALUES ($1, $2, $3, $4, '', $5, $6, 'public', $7, $8, $9, 'draft', $10)`,
 			userID,
 			s.Title,
 			s.Description,

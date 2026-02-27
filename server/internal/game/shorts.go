@@ -75,43 +75,48 @@ func (h *Handler) UploadShort(c *fiber.Ctx) error {
 
 	linkedSpeciesID := c.FormValue("linked_species_id")
 
-	// Get video file (optional — text-only shorts allowed)
-	videoURL := ""
-	videoPath := ""
+	// Get video file (required)
 	videoID := uuid.New().String()
 
 	videoFile, err := c.FormFile("video")
-	if err == nil && videoFile != nil {
-		if videoFile.Size > maxVideoSize {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "video too large (max 50MB)"})
-		}
+	if err != nil || videoFile == nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "video is required"})
+	}
 
-		// Ensure uploads directory exists
-		os.MkdirAll(uploadsDir, 0755)
+	if videoFile.Size > maxVideoSize {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "video too large (max 50MB)"})
+	}
 
-		ext := filepath.Ext(videoFile.Filename)
-		if ext == "" {
-			ext = ".mp4"
-		}
-		videoFilename := videoID + ext
-		videoPath = filepath.Join(uploadsDir, videoFilename)
-		videoURL = "/uploads/shorts/" + videoFilename
+	ext := strings.ToLower(filepath.Ext(videoFile.Filename))
+	if ext == "" {
+		ext = ".mp4"
+	}
+	allowedExts := map[string]bool{".mp4": true, ".webm": true, ".mov": true, ".m4v": true}
+	if !allowedExts[ext] {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "allowed formats: mp4, webm, mov, m4v"})
+	}
 
-		src, err := videoFile.Open()
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to read video"})
-		}
-		defer src.Close()
+	// Ensure uploads directory exists
+	os.MkdirAll(uploadsDir, 0755)
 
-		dst, err := os.Create(videoPath)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save video"})
-		}
-		defer dst.Close()
+	videoFilename := videoID + ext
+	videoPath := filepath.Join(uploadsDir, videoFilename)
+	videoURL := "/uploads/shorts/" + videoFilename
 
-		if _, err := io.Copy(dst, src); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to write video"})
-		}
+	src, err := videoFile.Open()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to read video"})
+	}
+	defer src.Close()
+
+	dst, err := os.Create(videoPath)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save video"})
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, src); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to write video"})
 	}
 
 	// Handle optional thumbnail

@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useAuthStore } from "@/lib/store/authStore";
 import { useShortsStore, type Short } from "@/lib/store/shortsStore";
+import { resolveMediaUrl } from "@/lib/api/client";
 import ShortsUploadModal from "./ShortsUploadModal";
 import ShortsCommentSheet from "./ShortsCommentSheet";
 import ShortsGiftSheet from "./ShortsGiftSheet";
@@ -14,7 +15,7 @@ function formatCount(n: number): string {
   return String(n);
 }
 
-/* Card colors for shorts without video */
+/* Card colors for shorts without video (fallback) */
 const CARD_GRADIENTS = [
   "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
   "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
@@ -52,11 +53,13 @@ function ShortsSkeleton() {
   );
 }
 
-/* ─── ShortsCard — renders a content card for shorts ───────────────── */
+/* ─── ShortsCard — renders a video/content card for shorts ───────────────── */
 interface ShortsCardProps {
   short: Short;
   index: number;
   isActive: boolean;
+  isMuted: boolean;
+  onMuteToggle: () => void;
   onLike: () => void;
   onUnlike: () => void;
   onComment: () => void;
@@ -65,11 +68,21 @@ interface ShortsCardProps {
   onView: () => void;
 }
 
-function ShortsCard({ short, index, isActive, onLike, onUnlike, onComment, onGift, onShare, onView }: ShortsCardProps) {
+function ShortsCard({ short, index, isActive, isMuted, onMuteToggle, onLike, onUnlike, onComment, onGift, onShare, onView }: ShortsCardProps) {
   const [showHeart, setShowHeart] = useState(false);
+  const [showMuteIndicator, setShowMuteIndicator] = useState(false);
+  const [buffering, setBuffering] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [needsManualPlay, setNeedsManualPlay] = useState(false);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
   const lastTapRef = useRef(0);
   const viewedRef = useRef(false);
+  const muteIndicatorTimer = useRef<NodeJS.Timeout | null>(null);
 
+  const hasVideo = !!short.video_url;
+
+  // Record view when active
   useEffect(() => {
     if (isActive && !viewedRef.current) {
       viewedRef.current = true;
@@ -77,27 +90,157 @@ function ShortsCard({ short, index, isActive, onLike, onUnlike, onComment, onGif
     }
   }, [isActive, onView]);
 
+  // Auto play/pause based on isActive
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !hasVideo) return;
+
+    if (isActive) {
+      video.currentTime = 0;
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Autoplay blocked — show manual play button
+          setNeedsManualPlay(true);
+        });
+      }
+    } else {
+      video.pause();
+    }
+  }, [isActive, hasVideo]);
+
+  // Sync muted state
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) video.muted = isMuted;
+  }, [isMuted]);
+
   const handleTap = useCallback(() => {
     const now = Date.now();
-    if (now - lastTapRef.current < 300) {
+    const isDoubleTap = now - lastTapRef.current < 300;
+    lastTapRef.current = now;
+
+    if (isDoubleTap) {
+      // Double tap — like
       if (!short.liked) onLike();
       setShowHeart(true);
       setTimeout(() => setShowHeart(false), 800);
       if (navigator.vibrate) navigator.vibrate(50);
+    } else {
+      // Single tap — mute/unmute toggle (delayed to distinguish from double tap)
+      setTimeout(() => {
+        if (Date.now() - lastTapRef.current >= 280) {
+          if (hasVideo) {
+            onMuteToggle();
+            setShowMuteIndicator(true);
+            if (muteIndicatorTimer.current) clearTimeout(muteIndicatorTimer.current);
+            muteIndicatorTimer.current = setTimeout(() => setShowMuteIndicator(false), 1000);
+          }
+        }
+      }, 300);
     }
-    lastTapRef.current = now;
-  }, [short.liked, onLike]);
+  }, [short.liked, onLike, onMuteToggle, hasVideo]);
+
+  const handleManualPlay = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.play().then(() => setNeedsManualPlay(false)).catch(() => {});
+  }, []);
+
+  const handleTimeUpdate = useCallback(() => {
+    const video = videoRef.current;
+    if (!video || !video.duration) return;
+    setProgress((video.currentTime / video.duration) * 100);
+  }, []);
 
   const emoji = CARD_EMOJIS[index % CARD_EMOJIS.length];
 
+  /* ─── Fallback: text card (no video) ───────────────────── */
+  if (!hasVideo) {
+    return (
+      <div className="absolute inset-0" style={getCardStyle(index)} onClick={handleTap}>
+        {/* Decorative pattern overlay */}
+        <div className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: "radial-gradient(circle at 25% 25%, white 1px, transparent 1px), radial-gradient(circle at 75% 75%, white 1px, transparent 1px)",
+            backgroundSize: "40px 40px",
+          }}
+        />
+
+        {/* Double-tap heart animation */}
+        {showHeart && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+            <div className="text-7xl opacity-90" style={{ animation: "heartBurst 0.8s ease-out forwards" }}>
+              ❤️
+            </div>
+          </div>
+        )}
+
+        {/* Center content */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center px-8 z-10">
+          <div className="text-6xl mb-4" style={{ animation: isActive ? "float 3s ease-in-out infinite" : "none" }}>
+            {emoji}
+          </div>
+          <h2 className="text-white font-black text-xl text-center leading-tight mb-3 drop-shadow-lg">
+            {short.title}
+          </h2>
+          {short.description && (
+            <p className="text-white/80 text-sm text-center leading-relaxed max-w-[280px] drop-shadow">
+              {short.description}
+            </p>
+          )}
+          {short.tags && short.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-3 justify-center">
+              {short.tags.slice(0, 5).map((tag) => (
+                <span key={tag} className="text-[11px] text-white/90 bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full font-medium">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Bottom info */}
+        <div className="absolute bottom-16 left-4 right-16 z-20">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center text-xs font-bold text-white">
+              {short.nickname[0]}
+            </div>
+            <span className="text-white font-bold text-sm drop-shadow-lg">@{short.nickname}</span>
+          </div>
+        </div>
+
+        {/* Right side action buttons */}
+        <ActionButtons short={short} onLike={onLike} onUnlike={onUnlike} onComment={onComment} onGift={onGift} onShare={onShare} />
+      </div>
+    );
+  }
+
+  /* ─── Video card ───────────────────────────────────────── */
   return (
-    <div className="absolute inset-0" style={getCardStyle(index)} onClick={handleTap}>
-      {/* Decorative pattern overlay */}
-      <div className="absolute inset-0 opacity-10"
-        style={{
-          backgroundImage: "radial-gradient(circle at 25% 25%, white 1px, transparent 1px), radial-gradient(circle at 75% 75%, white 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
+    <div className="absolute inset-0 bg-black" onClick={handleTap}>
+      {/* Video element */}
+      <video
+        ref={videoRef}
+        src={resolveMediaUrl(short.video_url)}
+        className="absolute inset-0 w-full h-full object-cover"
+        loop
+        playsInline
+        muted={isMuted}
+        preload="auto"
+        onWaiting={() => setBuffering(true)}
+        onPlaying={() => { setBuffering(false); setNeedsManualPlay(false); }}
+        onTimeUpdate={handleTimeUpdate}
+      />
+
+      {/* Top gradient overlay */}
+      <div className="absolute top-0 left-0 right-0 h-32 z-10 pointer-events-none"
+        style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 100%)" }}
+      />
+
+      {/* Bottom gradient overlay */}
+      <div className="absolute bottom-0 left-0 right-0 h-48 z-10 pointer-events-none"
+        style={{ background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)" }}
       />
 
       {/* Double-tap heart animation */}
@@ -109,23 +252,55 @@ function ShortsCard({ short, index, isActive, onLike, onUnlike, onComment, onGif
         </div>
       )}
 
-      {/* Center content */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center px-8 z-10">
-        <div className="text-6xl mb-4" style={{ animation: isActive ? "float 3s ease-in-out infinite" : "none" }}>
-          {emoji}
+      {/* Mute indicator */}
+      {showMuteIndicator && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+          <div className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center"
+            style={{ animation: "fadeInOut 1s ease-out forwards" }}>
+            <span className="text-3xl">{isMuted ? "🔇" : "🔊"}</span>
+          </div>
         </div>
-        <h2 className="text-white font-black text-xl text-center leading-tight mb-3 drop-shadow-lg">
+      )}
+
+      {/* Buffering spinner */}
+      {buffering && isActive && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+          <div className="w-12 h-12 border-3 border-white/20 border-t-white/80 rounded-full animate-spin" />
+        </div>
+      )}
+
+      {/* Manual play button (when autoplay blocked) */}
+      {needsManualPlay && isActive && (
+        <div className="absolute inset-0 flex items-center justify-center z-20">
+          <button
+            onClick={(e) => { e.stopPropagation(); handleManualPlay(); }}
+            className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center"
+          >
+            <span className="text-3xl ml-1">▶</span>
+          </button>
+        </div>
+      )}
+
+      {/* Bottom info */}
+      <div className="absolute bottom-16 left-4 right-16 z-20">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center text-xs font-bold text-white">
+            {short.nickname[0]}
+          </div>
+          <span className="text-white font-bold text-sm drop-shadow-lg">@{short.nickname}</span>
+        </div>
+        <h2 className="text-white font-bold text-sm leading-tight drop-shadow-lg mb-1">
           {short.title}
         </h2>
         {short.description && (
-          <p className="text-white/80 text-sm text-center leading-relaxed max-w-[280px] drop-shadow">
+          <p className="text-white/70 text-xs leading-relaxed drop-shadow line-clamp-2">
             {short.description}
           </p>
         )}
         {short.tags && short.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-3 justify-center">
-            {short.tags.slice(0, 5).map((tag) => (
-              <span key={tag} className="text-[11px] text-white/90 bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full font-medium">
+          <div className="flex flex-wrap gap-1 mt-1.5">
+            {short.tags.slice(0, 4).map((tag) => (
+              <span key={tag} className="text-[10px] text-white/80 bg-white/15 backdrop-blur-sm px-2 py-0.5 rounded-full">
                 #{tag}
               </span>
             ))}
@@ -133,69 +308,81 @@ function ShortsCard({ short, index, isActive, onLike, onUnlike, onComment, onGif
         )}
       </div>
 
-      {/* Bottom info */}
-      <div className="absolute bottom-16 left-4 right-16 z-20">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center text-xs font-bold text-white">
-            {short.nickname[0]}
-          </div>
-          <span className="text-white font-bold text-sm drop-shadow-lg">@{short.nickname}</span>
-        </div>
-      </div>
-
       {/* Right side action buttons */}
-      <div className="absolute right-3 bottom-28 flex flex-col items-center gap-5 z-20">
-        {/* Like */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            short.liked ? onUnlike() : onLike();
-          }}
-          className="flex flex-col items-center gap-1"
-        >
-          <div className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 ${
-            short.liked ? "bg-red-500/40 scale-110" : "bg-black/30 backdrop-blur-sm"
-          }`}>
-            <span className={`text-xl transition-transform duration-200 ${short.liked ? "scale-125" : ""}`}>
-              {short.liked ? "❤️" : "🤍"}
-            </span>
-          </div>
-          <span className="text-white/80 text-[10px] font-bold tabular-nums">{formatCount(short.likes)}</span>
-        </button>
+      <ActionButtons short={short} onLike={onLike} onUnlike={onUnlike} onComment={onComment} onGift={onGift} onShare={onShare} />
 
-        {/* Comment */}
-        <button onClick={(e) => { e.stopPropagation(); onComment(); }} className="flex flex-col items-center gap-1">
-          <div className="w-11 h-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
-            <span className="text-xl">💬</span>
-          </div>
-          <span className="text-white/80 text-[10px] font-bold tabular-nums">{formatCount(short.comment_count)}</span>
-        </button>
+      {/* Progress bar */}
+      <div className="absolute bottom-0 left-0 right-0 h-[3px] z-30 bg-white/10">
+        <div
+          className="h-full bg-white/80 transition-[width] duration-200 ease-linear"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+    </div>
+  );
+}
 
-        {/* Share */}
-        <button onClick={(e) => { e.stopPropagation(); onShare(); }} className="flex flex-col items-center gap-1">
-          <div className="w-11 h-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
-            <span className="text-xl">🔗</span>
-          </div>
-          <span className="text-white/80 text-[10px] font-bold">공유</span>
-        </button>
-
-        {/* Gift */}
-        {!short.is_mine && (
-          <button onClick={(e) => { e.stopPropagation(); onGift(); }} className="flex flex-col items-center gap-1">
-            <div className="w-11 h-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
-              <span className="text-xl">🎁</span>
-            </div>
-            <span className="text-white/80 text-[10px] font-bold">선물</span>
-          </button>
-        )}
-
-        {/* Views */}
-        <div className="flex flex-col items-center gap-1">
-          <div className="w-11 h-11 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
-            <span className="text-xl">👁️</span>
-          </div>
-          <span className="text-white/80 text-[10px] font-bold tabular-nums">{formatCount(short.views)}</span>
+/* ─── Action Buttons (shared between video and text cards) ─── */
+function ActionButtons({ short, onLike, onUnlike, onComment, onGift, onShare }: {
+  short: Short;
+  onLike: () => void;
+  onUnlike: () => void;
+  onComment: () => void;
+  onGift: () => void;
+  onShare: () => void;
+}) {
+  return (
+    <div className="absolute right-3 bottom-28 flex flex-col items-center gap-5 z-20">
+      {/* Like */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          short.liked ? onUnlike() : onLike();
+        }}
+        className="flex flex-col items-center gap-1"
+      >
+        <div className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 ${
+          short.liked ? "bg-red-500/40 scale-110" : "bg-black/40 backdrop-blur-sm"
+        }`}>
+          <span className={`text-xl transition-transform duration-200 ${short.liked ? "scale-125" : ""}`}>
+            {short.liked ? "❤️" : "🤍"}
+          </span>
         </div>
+        <span className="text-white/80 text-[10px] font-bold tabular-nums">{formatCount(short.likes)}</span>
+      </button>
+
+      {/* Comment */}
+      <button onClick={(e) => { e.stopPropagation(); onComment(); }} className="flex flex-col items-center gap-1">
+        <div className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+          <span className="text-xl">💬</span>
+        </div>
+        <span className="text-white/80 text-[10px] font-bold tabular-nums">{formatCount(short.comment_count)}</span>
+      </button>
+
+      {/* Share */}
+      <button onClick={(e) => { e.stopPropagation(); onShare(); }} className="flex flex-col items-center gap-1">
+        <div className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+          <span className="text-xl">🔗</span>
+        </div>
+        <span className="text-white/80 text-[10px] font-bold">공유</span>
+      </button>
+
+      {/* Gift */}
+      {!short.is_mine && (
+        <button onClick={(e) => { e.stopPropagation(); onGift(); }} className="flex flex-col items-center gap-1">
+          <div className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+            <span className="text-xl">🎁</span>
+          </div>
+          <span className="text-white/80 text-[10px] font-bold">선물</span>
+        </button>
+      )}
+
+      {/* Views */}
+      <div className="flex flex-col items-center gap-1">
+        <div className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
+          <span className="text-xl">👁️</span>
+        </div>
+        <span className="text-white/80 text-[10px] font-bold tabular-nums">{formatCount(short.views)}</span>
       </div>
     </div>
   );
@@ -211,13 +398,26 @@ export default function ShortsPage({ onClose, embedded }: { onClose: () => void;
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [swiping, setSwiping] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isMuted, setIsMuted] = useState(true);
 
   const [showUpload, setShowUpload] = useState(false);
   const [commentShortId, setCommentShortId] = useState<string | null>(null);
   const [giftShortId, setGiftShortId] = useState<string | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const [containerHeight, setContainerHeight] = useState(0);
   const [loadTimeout, setLoadTimeout] = useState(false);
+
+  // Measure container height
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setContainerHeight(entry.contentRect.height);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // Initial feed load
   useEffect(() => {
@@ -312,6 +512,10 @@ export default function ShortsPage({ onClose, embedded }: { onClose: () => void;
       }));
     });
   }, [token, currentShort, unlikeShort]);
+
+  const handleMuteToggle = useCallback(() => {
+    setIsMuted((m) => !m);
+  }, []);
 
   // Touch swipe — improved scrolling
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -415,6 +619,12 @@ export default function ShortsPage({ onClose, embedded }: { onClose: () => void;
     );
   }
 
+  // Determine which cards to render (prev, current, next)
+  const renderIndices: number[] = [];
+  if (currentIndex > 0) renderIndices.push(currentIndex - 1);
+  renderIndices.push(currentIndex);
+  if (currentIndex < shorts.length - 1) renderIndices.push(currentIndex + 1);
+
   return (
     <div className="h-full flex flex-col bg-black">
       {/* Header */}
@@ -440,29 +650,42 @@ export default function ShortsPage({ onClose, embedded }: { onClose: () => void;
         onTouchEnd={handleTouchEnd}
         onWheel={handleWheel}
       >
-        {/* Current card */}
-        <div
-          className="absolute inset-0 transition-transform ease-out"
-          style={{
-            transform: `translateY(${swipeOffset}px)`,
-            transitionDuration: swiping ? "0ms" : "300ms",
-          }}
-        >
-          {currentShort && (
-            <ShortsCard
-              key={currentShort.id}
-              short={currentShort}
-              index={currentIndex}
-              isActive={true}
-              onLike={handleLike}
-              onUnlike={handleUnlike}
-              onComment={() => setCommentShortId(currentShort.id)}
-              onGift={() => setGiftShortId(currentShort.id)}
-              onShare={handleShare}
-              onView={() => token && viewShort(token, currentShort.id)}
-            />
-          )}
-        </div>
+        {/* Render prev + current + next cards */}
+        {renderIndices.map((idx) => {
+          const s = shorts[idx];
+          if (!s) return null;
+          const offsetFromCurrent = idx - currentIndex;
+          const yOffset = containerHeight
+            ? offsetFromCurrent * containerHeight + swipeOffset
+            : offsetFromCurrent * 100; // fallback percentage
+
+          return (
+            <div
+              key={s.id}
+              className="absolute inset-0"
+              style={{
+                transform: containerHeight
+                  ? `translateY(${yOffset}px)`
+                  : `translateY(calc(${offsetFromCurrent * 100}% + ${swipeOffset}px))`,
+                transition: swiping ? "none" : "transform 300ms ease-out",
+              }}
+            >
+              <ShortsCard
+                short={s}
+                index={idx}
+                isActive={idx === currentIndex}
+                isMuted={isMuted}
+                onMuteToggle={handleMuteToggle}
+                onLike={handleLike}
+                onUnlike={handleUnlike}
+                onComment={() => setCommentShortId(s.id)}
+                onGift={() => setGiftShortId(s.id)}
+                onShare={handleShare}
+                onView={() => token && viewShort(token, s.id)}
+              />
+            </div>
+          );
+        })}
 
         {/* Loading for next page */}
         {loading && shorts.length > 0 && (
@@ -529,6 +752,12 @@ export default function ShortsPage({ onClose, embedded }: { onClose: () => void;
         @keyframes float {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-10px); }
+        }
+        @keyframes fadeInOut {
+          0% { opacity: 0; transform: scale(0.8); }
+          20% { opacity: 1; transform: scale(1); }
+          80% { opacity: 1; transform: scale(1); }
+          100% { opacity: 0; transform: scale(0.8); }
         }
       `}</style>
     </div>
