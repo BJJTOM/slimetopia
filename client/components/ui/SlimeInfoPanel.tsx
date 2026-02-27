@@ -282,6 +282,9 @@ export default function SlimeInfoPanel() {
         {/* Talent Stats (IV) */}
         <TalentSection slime={slime} color={color} />
 
+        {/* Skills */}
+        <SkillSection slimeId={slime.id} slimeLevel={slime.level} token={token} />
+
         {/* Equipped accessories row */}
         {equipped.length > 0 && (
           <div className="flex items-center gap-1.5 mb-3 p-2 rounded-xl" style={{
@@ -649,6 +652,223 @@ function StatBar({
       </div>
       {warn && warnText && (
         <div className="text-[8px] text-[#FF6B6B] font-bold ml-6 mt-0.5 animate-pulse">{warnText}</div>
+      )}
+    </div>
+  );
+}
+
+// ===== Skill Section =====
+interface SkillData {
+  slot: number;
+  skill_id: number;
+  name: string;
+  name_en: string;
+  description: string;
+  icon: string;
+  skill_type: "passive" | "active";
+  learn_level: number;
+  can_learn: boolean;
+  inherited?: boolean;
+}
+
+function SkillSection({ slimeId, slimeLevel, token }: { slimeId: string; slimeLevel: number; token: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const [learned, setLearned] = useState<SkillData[]>([]);
+  const [available, setAvailable] = useState<SkillData[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [learning, setLearning] = useState<number | null>(null);
+
+  const fetchSkills = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/slimes/${slimeId}/skills`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setLearned(data.skills || []);
+      setAvailable(data.available || []);
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSkills();
+  }, [slimeId, token]);
+
+  const handleLearn = async (skillId: number) => {
+    setLearning(skillId);
+    try {
+      const res = await fetch(`/api/slimes/${slimeId}/learn-skill`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ skill_id: skillId }),
+      });
+      if (res.ok) {
+        await fetchSkills();
+      }
+    } catch {
+      // ignore
+    } finally {
+      setLearning(null);
+    }
+  };
+
+  // Build slot map: learned skills by slot, then fill with available
+  const slots: (SkillData & { status: "learned" | "available" | "locked" })[] = [];
+  for (let s = 1; s <= 3; s++) {
+    const l = learned.find((sk) => sk.slot === s);
+    if (l) {
+      slots.push({ ...l, status: "learned" });
+    } else {
+      const a = available.find((sk) => sk.slot === s);
+      if (a) {
+        slots.push({ ...a, status: a.can_learn ? "available" : "locked" });
+      }
+    }
+  }
+
+  const learnedCount = learned.length;
+  const totalSlots = slots.length || available.length || 3;
+
+  return (
+    <div className="mb-3 rounded-xl overflow-hidden" style={{
+      background: "linear-gradient(135deg, rgba(61,32,23,0.4), rgba(44,24,16,0.3))",
+      border: "1px solid rgba(139,105,20,0.15)",
+    }}>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between p-2.5 transition-colors hover:bg-white/[0.02]"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-xs">{"\u26A1"}</span>
+          <span className="text-[10px] font-bold" style={{ color: "#C9A84C" }}>스킬 (Skills)</span>
+          <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold"
+            style={{ backgroundColor: "rgba(116,185,255,0.15)", color: "#74B9FF", border: "1px solid rgba(116,185,255,0.25)" }}>
+            {learnedCount}/{totalSlots}
+          </span>
+        </div>
+        <span className="text-[10px] text-[#B2BEC3] transition-transform" style={{ transform: expanded ? "rotate(180deg)" : "rotate(0)" }}>
+          {"\u25BC"}
+        </span>
+      </button>
+
+      {expanded && (
+        <div className="px-2.5 pb-2.5 space-y-2">
+          {loading ? (
+            <div className="text-center py-3">
+              <span className="text-[10px] text-[#B2BEC3] animate-pulse">로딩 중...</span>
+            </div>
+          ) : slots.length === 0 ? (
+            <div className="text-center py-3">
+              <span className="text-[10px] text-[#B2BEC3]/50">습득 가능한 스킬이 없습니다</span>
+            </div>
+          ) : (
+            slots.map((sk) => {
+              const isLearned = sk.status === "learned";
+              const isAvailable = sk.status === "available";
+              const isLocked = sk.status === "locked";
+              const isLearning = learning === sk.skill_id;
+
+              return (
+                <div key={sk.slot} className="flex items-center gap-2.5 p-2 rounded-lg transition-colors" style={{
+                  background: isLearned
+                    ? "linear-gradient(135deg, rgba(85,239,196,0.08), rgba(0,184,148,0.04))"
+                    : isAvailable
+                    ? "linear-gradient(135deg, rgba(201,168,76,0.08), rgba(139,105,20,0.04))"
+                    : "rgba(255,255,255,0.02)",
+                  border: isLearned
+                    ? "1px solid rgba(85,239,196,0.2)"
+                    : isAvailable
+                    ? "1px solid rgba(201,168,76,0.2)"
+                    : "1px solid rgba(255,255,255,0.05)",
+                }}>
+                  {/* Skill icon */}
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{
+                    background: isLearned
+                      ? "linear-gradient(135deg, rgba(85,239,196,0.15), rgba(0,184,148,0.1))"
+                      : isAvailable
+                      ? "linear-gradient(135deg, rgba(201,168,76,0.12), rgba(139,105,20,0.08))"
+                      : "rgba(255,255,255,0.04)",
+                    border: isLearned ? "1px solid rgba(85,239,196,0.25)" : "1px solid rgba(255,255,255,0.06)",
+                    opacity: isLocked ? 0.5 : 1,
+                  }}>
+                    <span className="text-lg">{sk.icon}</span>
+                  </div>
+
+                  {/* Skill info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] font-bold truncate" style={{
+                        color: isLearned ? "#55EFC4" : isAvailable ? "#F5E6C8" : "#B2BEC3",
+                        opacity: isLocked ? 0.5 : 1,
+                      }}>
+                        {sk.name}
+                      </span>
+                      <span className="text-[8px] px-1 py-0.5 rounded-full flex-shrink-0" style={{
+                        background: sk.skill_type === "active" ? "rgba(255,107,107,0.12)" : "rgba(116,185,255,0.12)",
+                        color: sk.skill_type === "active" ? "#FF6B6B" : "#74B9FF",
+                        border: sk.skill_type === "active" ? "1px solid rgba(255,107,107,0.2)" : "1px solid rgba(116,185,255,0.2)",
+                      }}>
+                        {sk.skill_type === "active" ? "액티브" : "패시브"}
+                      </span>
+                      {isLearned && sk.inherited && (
+                        <span className="text-[8px] px-1 py-0.5 rounded-full flex-shrink-0"
+                          style={{ background: "rgba(253,121,168,0.12)", color: "#FD79A8", border: "1px solid rgba(253,121,168,0.2)" }}>
+                          유전
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[9px] mt-0.5 truncate" style={{ color: isLocked ? "rgba(178,190,195,0.4)" : "rgba(178,190,195,0.7)" }}>
+                      {sk.description}
+                    </p>
+                    {!isLearned && (
+                      <span className="text-[8px] mt-0.5 inline-block" style={{
+                        color: isAvailable ? "#C9A84C" : "rgba(178,190,195,0.4)",
+                      }}>
+                        Lv.{sk.learn_level} 필요 {isLocked ? `(현재 Lv.${slimeLevel})` : ""}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Action / Status */}
+                  <div className="flex-shrink-0">
+                    {isLearned ? (
+                      <span className="text-[9px] font-bold px-2 py-1 rounded-full"
+                        style={{ background: "rgba(85,239,196,0.1)", color: "#55EFC4", border: "1px solid rgba(85,239,196,0.2)" }}>
+                        습득
+                      </span>
+                    ) : isAvailable ? (
+                      <button
+                        onClick={() => handleLearn(sk.skill_id)}
+                        disabled={isLearning}
+                        className="text-[9px] font-bold px-2.5 py-1 rounded-full transition-all active:scale-95"
+                        style={{
+                          background: isLearning
+                            ? "rgba(201,168,76,0.15)"
+                            : "linear-gradient(135deg, rgba(201,168,76,0.25), rgba(201,168,76,0.1))",
+                          color: "#D4AF37",
+                          border: "1px solid rgba(201,168,76,0.35)",
+                          opacity: isLearning ? 0.6 : 1,
+                        }}
+                      >
+                        {isLearning ? "..." : "습득"}
+                      </button>
+                    ) : (
+                      <span className="text-[9px] px-2 py-1 rounded-full"
+                        style={{ background: "rgba(255,255,255,0.03)", color: "rgba(178,190,195,0.4)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                        {"\uD83D\uDD12"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
       )}
     </div>
   );
