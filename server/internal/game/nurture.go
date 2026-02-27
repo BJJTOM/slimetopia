@@ -20,11 +20,11 @@ type statDelta struct {
 }
 
 var baseStats = map[string]statDelta{
-	ActionFeed:     {Affection: 2, Hunger: 30, Condition: 0, Exp: 5},
-	ActionPet:      {Affection: 5, Hunger: 0, Condition: 3, Exp: 3},
-	ActionPlay:     {Affection: 3, Hunger: 0, Condition: 10, Exp: 8},
-	ActionBath:     {Affection: 3, Hunger: 0, Condition: 25, Exp: 5},
-	ActionMedicine: {Affection: 5, Hunger: 0, Condition: 15, Exp: 3},
+	ActionFeed:     {Affection: 2, Hunger: 30, Condition: 0, Exp: 10},
+	ActionPet:      {Affection: 5, Hunger: 0, Condition: 3, Exp: 5},
+	ActionPlay:     {Affection: 3, Hunger: 0, Condition: 10, Exp: 15},
+	ActionBath:     {Affection: 3, Hunger: 0, Condition: 25, Exp: 8},
+	ActionMedicine: {Affection: 5, Hunger: 0, Condition: 15, Exp: 5},
 }
 
 // Cooldown durations per action
@@ -103,13 +103,13 @@ func applyLazyDecay(hunger, condition, affection int, updatedAt time.Time) (int,
 
 	shouldSick := false
 	for i := 0; i < hours; i++ {
-		hunger -= 8 // 5→8: faster hunger decay
+		hunger -= 5 // gentler hunger decay
 		if hunger < 0 {
 			hunger = 0
 		}
 		if hunger == 0 {
-			condition -= 3  // 2→3: faster condition decay when hungry
-			affection -= 2  // new: affection also drops when hungry
+			condition -= 2  // gentler condition decay when hungry
+			affection -= 1  // gentler affection decay when hungry
 			if condition < 0 {
 				condition = 0
 			}

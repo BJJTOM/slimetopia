@@ -33,6 +33,7 @@ import MiniContentsPage from "@/components/ui/MiniContentsPage";
 import CollectionPage from "@/components/ui/CollectionPage";
 import GachaPage from "@/components/ui/GachaPage";
 import MoreMenuSheet from "@/components/ui/MoreMenuSheet";
+import SlimeDetailPage from "@/components/ui/SlimeDetailPage";
 import SplashScreen from "@/components/ui/SplashScreen";
 import { useAndroidBackButton } from "@/lib/useBackButton";
 
@@ -88,6 +89,8 @@ export default function PlayPage() {
   const setShowCollection = useGameStore((s) => s.setShowCollection);
   const showMore = useGameStore((s) => s.showMore);
   const setShowMore = useGameStore((s) => s.setShowMore);
+  const detailSlimeId = useGameStore((s) => s.detailSlimeId);
+  const setDetailSlimeId = useGameStore((s) => s.setDetailSlimeId);
 
   const [showSplash, setShowSplash] = useState(true);
 
@@ -209,6 +212,12 @@ export default function PlayPage() {
         )}
 
         {showMore && <MoreMenuSheet onClose={() => setShowMore(false)} />}
+
+        {detailSlimeId && (
+          <div className="absolute inset-0 z-50 bg-[#0a0a1a]" style={{ bottom: 76 }}>
+            <SlimeDetailPage slimeId={detailSlimeId} onClose={() => setDetailSlimeId(null)} />
+          </div>
+        )}
 
         <WelcomeBackModal />
         <BottomNav />
