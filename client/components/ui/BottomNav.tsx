@@ -2,12 +2,13 @@
 
 import { useGameStore } from "@/lib/store/gameStore";
 import { useLocaleStore } from "@/lib/store/localeStore";
+import { getGameIcon } from "@/lib/gameIcons";
 
 const navItems = [
-  { id: "home" as const, labelKey: "home", emoji: "\uD83C\uDFE0" },
-  { id: "community" as const, labelKey: "community", emoji: "\uD83D\uDCAC" },
-  { id: "merge" as const, labelKey: "merge", emoji: "\u2697\uFE0F" },
-  { id: "discovery" as const, labelKey: "explore", emoji: "\uD83E\uDDED" },
+  { id: "home" as const, labelKey: "home" },
+  { id: "community" as const, labelKey: "community" },
+  { id: "merge" as const, labelKey: "merge" },
+  { id: "discovery" as const, labelKey: "explore" },
 ] as const;
 
 export default function BottomNav() {
@@ -56,9 +57,9 @@ export default function BottomNav() {
   };
 
   const overlayButtons = [
-    { id: "mini", labelKey: "nav_mini_games", emoji: "\uD83C\uDFAE", active: showMiniContents, action: () => { closeOverlays(); setShowMiniContents(true); } },
-    { id: "collection", labelKey: "nav_collection", emoji: "\uD83D\uDCD6", active: showCollection, action: () => { closeOverlays(); setShowCollection(true); } },
-    { id: "profile", labelKey: "nav_profile", emoji: "\uD83D\uDC64", active: showProfile, action: () => { closeOverlays(); setShowProfile(true); } },
+    { id: "mini", labelKey: "nav_mini_games", active: showMiniContents, action: () => { closeOverlays(); setShowMiniContents(true); } },
+    { id: "collection", labelKey: "nav_collection", active: showCollection, action: () => { closeOverlays(); setShowCollection(true); } },
+    { id: "profile", labelKey: "nav_profile", active: showProfile, action: () => { closeOverlays(); setShowProfile(true); } },
   ];
 
   const anyOverlay = showCommunity || showProfile || showShorts || showMiniContents || showCollection;
@@ -98,11 +99,11 @@ export default function BottomNav() {
                 boxShadow: isActive ? "0 2px 8px rgba(201,168,76,0.15), inset 0 1px 0 rgba(245,230,200,0.05)" : "none",
                 transition: "all 0.2s ease",
               }}>
-                <span style={{
-                  fontSize: isActive ? 20 : 17,
-                  filter: isActive ? "none" : "grayscale(0.6) opacity(0.5)",
+                <img src={getGameIcon(item.id, 22, isActive)} alt="" style={{
+                  width: isActive ? 22 : 19,
+                  height: isActive ? 22 : 19,
                   transition: "all 0.2s ease",
-                }}>{item.emoji}</span>
+                }} />
 
                 {badge > 0 && (
                   <span style={{
@@ -146,11 +147,11 @@ export default function BottomNav() {
               boxShadow: btn.active ? "0 2px 8px rgba(201,168,76,0.15), inset 0 1px 0 rgba(245,230,200,0.05)" : "none",
               transition: "all 0.2s ease",
             }}>
-              <span style={{
-                fontSize: btn.active ? 20 : 17,
-                filter: btn.active ? "none" : "grayscale(0.6) opacity(0.5)",
+              <img src={getGameIcon(btn.id, 22, btn.active)} alt="" style={{
+                width: btn.active ? 22 : 19,
+                height: btn.active ? 22 : 19,
                 transition: "all 0.2s ease",
-              }}>{btn.emoji}</span>
+              }} />
             </div>
 
             <span style={{
