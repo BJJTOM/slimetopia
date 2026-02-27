@@ -1645,23 +1645,22 @@ export default function GameCanvas() {
     const areaH = areaBottom - areaTop;
     const maxSlimes = Math.min(slimes.length, 30);
 
+    // Adaptive grid placement: arrange slimes in a grid to prevent overlap
+    const cols = Math.ceil(Math.sqrt(maxSlimes * (areaW / areaH)));
+    const rows = Math.ceil(maxSlimes / cols);
+    const cellW = areaW / cols;
+    const cellH = areaH / rows;
+    const jitterX = Math.min(cellW * 0.2, 15);
+    const jitterY = Math.min(cellH * 0.2, 10);
+
     for (let idx = 0; idx < maxSlimes; idx++) {
-      // Use golden ratio-based distribution for organic feel
-      const angle = idx * 2.4; // golden angle
-      const radius = Math.sqrt(idx / maxSlimes) * Math.min(areaW, areaH) * 0.48;
-      const centerX = paddingLeft + areaW / 2;
-      let x = centerX + Math.cos(angle) * radius * (areaW / areaH);
-      let y = areaTop + areaH * 0.4 + Math.sin(angle) * radius * 0.5;
+      const col = idx % cols;
+      const row = Math.floor(idx / cols);
+      // Center of cell + small jitter for organic feel
+      let x = paddingLeft + col * cellW + cellW / 2 + (Math.random() - 0.5) * 2 * jitterX;
+      let y = areaTop + row * cellH + cellH / 2 + (Math.random() - 0.5) * 2 * jitterY;
 
       // Clamp to safe bounds
-      x = Math.max(paddingLeft, Math.min(W - paddingRight, x));
-      y = Math.max(areaTop, Math.min(areaBottom, y));
-
-      // Add jitter
-      x += (Math.random() - 0.5) * 20;
-      y += (Math.random() - 0.5) * 12;
-
-      // Re-clamp after jitter
       x = Math.max(paddingLeft, Math.min(W - paddingRight, x));
       y = Math.max(areaTop, Math.min(areaBottom, y));
 
@@ -1675,7 +1674,7 @@ export default function GameCanvas() {
       container.sortableChildren = true;
 
       const grade = sp?.grade || "common";
-      const sizeScale = maxSlimes > 12 ? 0.8 : maxSlimes > 6 ? 0.9 : 1;
+      const sizeScale = maxSlimes > 20 ? 0.6 : maxSlimes > 12 ? 0.7 : maxSlimes > 6 ? 0.85 : 1.0;
       const baseSize = Math.min(100 + (slime.level - 1) * 3, 150) * sizeScale;
 
       const slimeAccs = equippedAccessories[slime.id] || [];

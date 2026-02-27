@@ -353,6 +353,7 @@ interface GameState {
   collectionRequirements: Record<string, number>;
   collectionScore: CollectionScoreData | null;
   slimeSets: SlimeSetProgress[];
+  collectionMilestones: { count: number; gold: number; gems: number; reached: boolean; claimed: boolean }[];
 
   // Materials
   materialDefs: MaterialDef[];
@@ -467,6 +468,8 @@ interface GameState {
   submitToCollection: (token: string, slimeId: string) => Promise<boolean>;
   fetchCollectionScore: (token: string) => Promise<void>;
   fetchSlimeSets: (token: string) => Promise<void>;
+  fetchCollectionMilestones: (token: string) => Promise<void>;
+  claimCollectionMilestone: (token: string, milestone: number) => Promise<boolean>;
 
   // Material actions
   fetchMaterialDefs: (token: string) => Promise<void>;
@@ -489,6 +492,7 @@ interface GameState {
   fetchFoodInventory: (token: string) => Promise<void>;
   applyFood: (token: string, itemId: number, slimeId: string) => Promise<boolean>;
   applyFoodBatch: (token: string, itemId: number, slimeId: string, quantity: number) => Promise<boolean>;
+  applyFoodAll: (token: string, itemId: number) => Promise<{ fedCount: number; levelUps: number } | null>;
 
   // Community actions
   setShowCommunity: (show: boolean) => void;
@@ -633,6 +637,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   collectionRequirements: {},
   collectionScore: null,
   slimeSets: [],
+  collectionMilestones: [],
   materialDefs: [],
   materialInventory: [],
   synthesisMaterialId: null,
@@ -1101,6 +1106,47 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
+  // ===== Collection Milestones =====
+  fetchCollectionMilestones: async (token) => {
+    try {
+      const res = await authApi<{ milestones: { count: number; gold: number; gems: number; reached: boolean; claimed: boolean }[]; collection_count: number }>("/api/collection/milestones", token);
+      set({ collectionMilestones: res.milestones || [], collectionCount: res.collection_count || 0 });
+    } catch {
+      // ignore
+    }
+  },
+
+  claimCollectionMilestone: async (token, milestone) => {
+    try {
+      const res = await authApi<{ success: boolean; gold: number; gems: number }>("/api/collection/claim-milestone", token, { method: "POST", body: { milestone } });
+      if (res.success) {
+        set((s) => ({
+          collectionMilestones: s.collectionMilestones.map((m) =>
+            m.count === milestone ? { ...m, claimed: true } : m
+          ),
+        }));
+        toastReward(`+${res.gold.toLocaleString()} Gold, +${res.gems} Gems`, "🏆");
+        // Refresh user balance
+        const authStore = useAuthStore.getState();
+        authStore.fetchUser();
+        return true;
+      }
+      return false;
+    } catch (err) {
+      if (err instanceof ApiError) {
+        const errCode = err.data.error as string;
+        if (errCode === "already_claimed") {
+          toastError("이미 수령한 보상입니다");
+        } else if (errCode === "milestone_not_reached") {
+          toastError("아직 도달하지 않은 마일스톤입니다");
+        } else {
+          toastError(errCode || "보상 수령 실패");
+        }
+      }
+      return false;
+    }
+  },
+
   // ===== Materials =====
   fetchMaterialDefs: async (token) => {
     try {
@@ -1215,18 +1261,20 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   applyFood: async (token, itemId, slimeId) => {
     try {
-      const res = await authApi<{ slime_id: string; affection: number; hunger: number; condition: number; remaining: number }>(
+      const res = await authApi<{ slime_id: string; affection: number; hunger: number; condition: number; remaining: number; exp_gained: number; new_exp: number; new_level: number; level_up: boolean }>(
         "/api/food/apply", token, { method: "POST", body: { item_id: itemId, slime_id: slimeId } }
       );
-      // Update slime stats in state
       set((s) => ({
         slimes: s.slimes.map((sl) =>
-          sl.id === res.slime_id ? { ...sl, affection: res.affection, hunger: res.hunger, condition: res.condition } : sl
+          sl.id === res.slime_id ? { ...sl, affection: res.affection, hunger: res.hunger, condition: res.condition, exp: res.new_exp, level: res.new_level } : sl
         ),
         foodInventory: s.foodInventory.map((f) =>
           f.item_id === itemId ? { ...f, quantity: res.remaining } : f
         ).filter((f) => f.quantity > 0),
       }));
+      if (res.level_up) {
+        toastLevelUp(`Lv.${res.new_level} 달성!`);
+      }
       return true;
     } catch {
       return false;
@@ -1235,20 +1283,59 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   applyFoodBatch: async (token, itemId, slimeId, quantity) => {
     try {
-      const res = await authApi<{ slime_id: string; affection: number; hunger: number; condition: number; remaining: number }>(
+      const res = await authApi<{ slime_id: string; affection: number; hunger: number; condition: number; remaining: number; exp_gained: number; new_exp: number; new_level: number; level_up: boolean }>(
         "/api/food/apply-batch", token, { method: "POST", body: { item_id: itemId, slime_id: slimeId, quantity } }
       );
       set((s) => ({
         slimes: s.slimes.map((sl) =>
-          sl.id === res.slime_id ? { ...sl, affection: res.affection, hunger: res.hunger, condition: res.condition } : sl
+          sl.id === res.slime_id ? { ...sl, affection: res.affection, hunger: res.hunger, condition: res.condition, exp: res.new_exp, level: res.new_level } : sl
         ),
         foodInventory: s.foodInventory.map((f) =>
           f.item_id === itemId ? { ...f, quantity: res.remaining } : f
         ).filter((f) => f.quantity > 0),
       }));
+      if (res.level_up) {
+        toastLevelUp(`Lv.${res.new_level} 달성!`);
+      }
       return true;
     } catch {
       return false;
+    }
+  },
+
+  applyFoodAll: async (token, itemId) => {
+    try {
+      const res = await authApi<{
+        results: { slime_id: string; affection: number; hunger: number; condition: number; exp_gained: number; new_exp: number; new_level: number; level_up: boolean }[];
+        fed_count: number;
+        used: number;
+        remaining: number;
+      }>("/api/food/apply-all", token, { method: "POST", body: { item_id: itemId } });
+
+      let levelUps = 0;
+      set((s) => {
+        const updatedSlimes = [...s.slimes];
+        for (const r of res.results) {
+          const idx = updatedSlimes.findIndex((sl) => sl.id === r.slime_id);
+          if (idx >= 0) {
+            updatedSlimes[idx] = { ...updatedSlimes[idx], affection: r.affection, hunger: r.hunger, condition: r.condition, exp: r.new_exp, level: r.new_level };
+          }
+          if (r.level_up) levelUps++;
+        }
+        return {
+          slimes: updatedSlimes,
+          foodInventory: s.foodInventory.map((f) =>
+            f.item_id === itemId ? { ...f, quantity: res.remaining } : f
+          ).filter((f) => f.quantity > 0),
+        };
+      });
+
+      if (levelUps > 0) {
+        toastLevelUp(`${levelUps}마리 레벨업!`);
+      }
+      return { fedCount: res.fed_count, levelUps };
+    } catch {
+      return null;
     }
   },
 

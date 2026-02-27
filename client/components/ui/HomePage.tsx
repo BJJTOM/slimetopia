@@ -2,7 +2,16 @@
 
 import { useState, useMemo } from "react";
 import { useGameStore } from "@/lib/store/gameStore";
+import { useAuthStore } from "@/lib/store/authStore";
 import { useLocaleStore } from "@/lib/store/localeStore";
+import { toastSuccess } from "@/components/ui/Toast";
+
+const CARE_FOOD_ITEMS: Record<number, { name: string; icon: string }> = {
+  3: { name: "\uB9DB\uC788\uB294 \uBA39\uC774", icon: "\uD83C\uDF56" },
+  4: { name: "\uACE0\uAE09 \uBA39\uC774", icon: "\uD83E\uDD69" },
+  7: { name: "\uC288\uD37C \uBA39\uC774", icon: "\uD83C\uDF57" },
+  8: { name: "\uC6D0\uC18C\uAC15\uD654 \uBA39\uC774", icon: "\u2728" },
+};
 
 // ─── 10 Home Background Themes ────────────────────────────────────────────
 export const HOME_BACKGROUNDS = [
@@ -97,9 +106,15 @@ export default function HomePage() {
   const dailyMissions = useGameStore((s) => s.dailyMissions);
   const slimes = useGameStore((s) => s.slimes);
   const unreadMailCount = useGameStore((s) => s.unreadMailCount);
+  const foodInventory = useGameStore((s) => s.foodInventory);
+  const applyFoodAll = useGameStore((s) => s.applyFoodAll);
+  const fetchFoodInventory = useGameStore((s) => s.fetchFoodInventory);
+  const token = useAuthStore((s) => s.accessToken);
   const t = useLocaleStore((s) => s.t);
 
   const [showBgPicker, setShowBgPicker] = useState(false);
+  const [showCareSheet, setShowCareSheet] = useState(false);
+  const [feedingItemId, setFeedingItemId] = useState<number | null>(null);
 
   const unclaimedCount = useMemo(
     () => dailyMissions.filter((m) => m.completed && !m.claimed).length,
@@ -110,6 +125,28 @@ export default function HomePage() {
     () => slimes.filter((s) => s.hunger < 20 || s.condition < 20 || s.is_sick).length,
     [slimes]
   );
+  const hungryCount = useMemo(
+    () => slimes.filter((s) => s.hunger < 80).length,
+    [slimes]
+  );
+  const hasFood = foodInventory.length > 0;
+  const showCareButton = hungryCount > 0 && hasFood;
+
+  const handleFeedAll = async (itemId: number) => {
+    if (!token || feedingItemId) return;
+    setFeedingItemId(itemId);
+    const result = await applyFoodAll(token, itemId);
+    setFeedingItemId(null);
+    if (result) {
+      const parts = [`${result.fedCount}\uB9C8\uB9AC \uAE09\uC2DD \uC644\uB8CC`];
+      if (result.levelUps > 0) parts.push(`${result.levelUps}\uB9C8\uB9AC \uB808\uBCA8\uC5C5!`);
+      toastSuccess(parts.join(" + "), "\uD83C\uDF56");
+      await fetchFoodInventory(token);
+      // Close sheet if no food left
+      const remaining = useGameStore.getState().foodInventory;
+      if (remaining.length === 0) setShowCareSheet(false);
+    }
+  };
 
   // Get owned backgrounds from localStorage
   const getOwned = (): string[] => {
@@ -234,6 +271,26 @@ export default function HomePage() {
           <span style={{ fontSize: 20, lineHeight: 1 }}>{"\uD83C\uDFA8"}</span>
           <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>{t("home_background")}</span>
         </button>
+
+        {/* Quick Care button — shown when hungry slimes exist and food is available */}
+        {showCareButton && (
+          <button onClick={() => setShowCareSheet(true)} className="relative" style={{
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2,
+            width: 50, height: 50,
+            background: "linear-gradient(145deg, #4A2010, #3D1A0C)",
+            border: "1.5px solid rgba(212,175,55,0.4)",
+            borderRadius: 14,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,235,180,0.1), 0 0 8px rgba(212,175,55,0.15)",
+            cursor: "pointer",
+          }}>
+            <span style={{ fontSize: 20, lineHeight: 1 }}>{"\uD83C\uDF56"}</span>
+            <span style={{ fontSize: 10, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700 }}>{"\uB3CC\uBD04"}</span>
+            <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full text-[9px] font-bold text-white"
+              style={{ background: "#FF6B6B", boxShadow: "0 0 6px rgba(255,107,107,0.5)" }}>
+              {hungryCount}
+            </span>
+          </button>
+        )}
       </div>
 
       {/* ===== RIGHT SIDE — 2-column grid ===== */}
@@ -262,6 +319,80 @@ export default function HomePage() {
           ))}
         </div>
       </div>
+
+      {/* Quick Care Bottom Sheet */}
+      {showCareSheet && (
+        <div className="absolute inset-0 z-20 pointer-events-auto" onClick={() => setShowCareSheet(false)}>
+          <div className="absolute bottom-0 left-0 right-0 rounded-t-2xl flex flex-col"
+            style={{
+              background: "linear-gradient(180deg, #2C1810 0%, #1A0E08 100%)",
+              backdropFilter: "blur(16px)",
+              border: "1.5px solid rgba(139,105,20,0.3)",
+              borderBottom: "none",
+              boxShadow: "0 -4px 24px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,235,180,0.06)",
+            }}
+            onClick={e => e.stopPropagation()}>
+            <div className="shrink-0" style={{
+              padding: "12px 16px",
+              background: "linear-gradient(145deg, #3D2017, #2C1810)",
+              borderBottom: "1.5px solid rgba(139,105,20,0.35)",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              borderRadius: "16px 16px 0 0",
+            }}>
+              <div>
+                <h3 style={{ fontFamily: "Georgia, serif", fontWeight: 700, fontSize: 14, color: "#E8D5A3", margin: 0 }}>{"\uD83C\uDF56"} {"\uBE60\uB978 \uB3CC\uBD04"}</h3>
+                <p style={{ fontSize: 10, color: "rgba(232,213,163,0.4)", margin: "2px 0 0 0" }}>{"\uBC30\uACE0\uD508 \uC2AC\uB77C\uC784"} {hungryCount}{"\uB9C8\uB9AC\uC5D0\uAC8C \uBA39\uC774\uB97C \uC90D\uB2C8\uB2E4"}</p>
+              </div>
+              <button onClick={() => setShowCareSheet(false)} style={{
+                fontSize: 11, color: "#D4AF37", fontFamily: "Georgia, serif", fontWeight: 700,
+                background: "none", border: "none", cursor: "pointer",
+              }}>{"\uB2EB\uAE30"}</button>
+            </div>
+            <div style={{ padding: 12 }}>
+              <div className="flex flex-col gap-2">
+                {foodInventory.map(fi => {
+                  const info = CARE_FOOD_ITEMS[fi.item_id];
+                  if (!info) return null;
+                  const isFeeding = feedingItemId === fi.item_id;
+                  return (
+                    <button key={fi.item_id} onClick={() => handleFeedAll(fi.item_id)}
+                      disabled={isFeeding}
+                      className="transition-all active:scale-[0.97]"
+                      style={{
+                        display: "flex", alignItems: "center", gap: 10,
+                        padding: "10px 14px",
+                        borderRadius: 12,
+                        background: isFeeding
+                          ? "linear-gradient(145deg, #2A1508, #1E0F06)"
+                          : "linear-gradient(145deg, #3D2017, #2C1810)",
+                        border: "1.5px solid rgba(139,105,20,0.3)",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,235,180,0.06)",
+                        cursor: isFeeding ? "wait" : "pointer",
+                        opacity: isFeeding ? 0.7 : 1,
+                        width: "100%",
+                        textAlign: "left",
+                      }}>
+                      <span style={{ fontSize: 24 }}>{info.icon}</span>
+                      <div className="flex-1">
+                        <div style={{ fontSize: 12, color: "#E8D5A3", fontFamily: "Georgia, serif", fontWeight: 700 }}>{info.name}</div>
+                        <div style={{ fontSize: 10, color: "rgba(232,213,163,0.5)" }}>{"\uBCF4\uC720"}: {fi.quantity}{"\uAC1C"}</div>
+                      </div>
+                      <div style={{
+                        fontSize: 11, color: "#1A0E08", fontWeight: 700, fontFamily: "Georgia, serif",
+                        background: "linear-gradient(135deg, #D4AF37, #8B6914)",
+                        padding: "4px 10px", borderRadius: 8,
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
+                      }}>
+                        {isFeeding ? "\uAE09\uC2DD \uC911..." : "\uBAA8\uB450 \uBA39\uC774\uAE30"}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Background Picker Bottom Sheet */}
       {showBgPicker && (

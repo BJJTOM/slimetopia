@@ -18,10 +18,10 @@ const GRADE_ORDER: Record<string, number> = {
 const GRADES = ["all", "mythic", "legendary", "epic", "rare", "uncommon", "common"] as const;
 
 const FOOD_ITEMS: Record<number, { name: string; icon: string; desc: string }> = {
-  3: { name: "맛있는 먹이", icon: "🍖", desc: "만복도 +50, 친밀도 +5" },
-  4: { name: "고급 먹이", icon: "🥩", desc: "만복도 MAX, 친밀도 +10" },
-  7: { name: "슈퍼 먹이", icon: "🍗", desc: "만복도 MAX, 친밀도 +20" },
-  8: { name: "원소강화 먹이", icon: "✨", desc: "만복도 +80, 친밀도 +15" },
+  3: { name: "맛있는 먹이", icon: "🍖", desc: "만복도 +50, 친밀도 +5, 경험치 +3" },
+  4: { name: "고급 먹이", icon: "🥩", desc: "만복도 MAX, 친밀도 +10, 경험치 +8" },
+  7: { name: "슈퍼 먹이", icon: "🍗", desc: "만복도 MAX, 친밀도 +20, 경험치 +15" },
+  8: { name: "원소강화 먹이", icon: "✨", desc: "만복도 +80, 친밀도 +15, 경험치 +10" },
 };
 
 export default function InventoryPage() {

@@ -535,24 +535,7 @@ func (h *Handler) BuyItem(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "not your slime"})
 		}
 
-		var hungerBonus, affectionBonus int
-		switch item.ID {
-		case 3: // Tasty Food
-			hungerBonus = 50
-			affectionBonus = 5
-		case 4: // Premium Food
-			hungerBonus = 100
-			affectionBonus = 10
-		case 7: // Super Food
-			hungerBonus = 100
-			affectionBonus = 20
-		case 8: // Elemental Food
-			hungerBonus = 80
-			affectionBonus = 15
-		default:
-			hungerBonus = 50
-			affectionBonus = 5
-		}
+		hungerBonus, affectionBonus, expBonus := getFoodBonuses(item.ID)
 
 		newHunger := clamp(slime.Hunger+hungerBonus, 0, 100)
 		newAffection := clamp(slime.Affection+affectionBonus, 0, 100)
@@ -562,19 +545,28 @@ func (h *Handler) BuyItem(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to apply food"})
 		}
 
+		// Apply EXP
+		newExp := slime.Exp + expBonus
+		newLevel, finalExp, leveledUp := checkLevelUp(slime.Level, newExp)
+		h.slimeRepo.SetLevelAndExp(ctx, body.SlimeID, newLevel, finalExp)
+
 		user, _ := h.userRepo.FindByID(ctx, userID)
 
 		LogGameAction(h.slimeRepo.Pool(), userID, "shop_buy_food", "shop", -item.Cost.Gold, -item.Cost.Gems, 0, map[string]interface{}{
-			"item_id": item.ID, "slime_id": body.SlimeID, "hunger_bonus": hungerBonus, "affection_bonus": affectionBonus,
+			"item_id": item.ID, "slime_id": body.SlimeID, "hunger_bonus": hungerBonus, "affection_bonus": affectionBonus, "exp_gained": expBonus,
 		})
 
 		return c.JSON(fiber.Map{
 			"type": "food",
 			"result": fiber.Map{
-				"slime_id":  body.SlimeID,
-				"affection": newAffection,
-				"hunger":    newHunger,
-				"condition": slime.Condition,
+				"slime_id":   body.SlimeID,
+				"affection":  newAffection,
+				"hunger":     newHunger,
+				"condition":  slime.Condition,
+				"exp_gained": expBonus,
+				"new_exp":    finalExp,
+				"new_level":  newLevel,
+				"level_up":   leveledUp,
 			},
 			"user": fiber.Map{
 				"gold": user.Gold,
@@ -923,6 +915,23 @@ func (h *Handler) BuyGems(c *fiber.Ctx) error {
 	})
 }
 
+// ─── Food Bonuses Helper ────────────────────────────────────────────────────
+
+func getFoodBonuses(itemID int) (hunger, affection, exp int) {
+	switch itemID {
+	case 3: // 맛있는 먹이
+		return 50, 5, 3
+	case 4: // 고급 먹이
+		return 100, 10, 8
+	case 7: // 슈퍼 먹이
+		return 100, 20, 15
+	case 8: // 원소강화 먹이
+		return 80, 15, 10
+	default:
+		return 50, 5, 3
+	}
+}
+
 // ─── Food Inventory ────────────────────────────────────────────────────────
 
 func (h *Handler) GetFoodInventory(c *fiber.Ctx) error {
@@ -1032,24 +1041,7 @@ func (h *Handler) ApplyFood(c *fiber.Ctx) error {
 	}
 
 	// Apply food effects
-	var hungerBonus, affectionBonus int
-	switch body.ItemID {
-	case 3:
-		hungerBonus = 50
-		affectionBonus = 5
-	case 4:
-		hungerBonus = 100
-		affectionBonus = 10
-	case 7:
-		hungerBonus = 100
-		affectionBonus = 20
-	case 8:
-		hungerBonus = 80
-		affectionBonus = 15
-	default:
-		hungerBonus = 50
-		affectionBonus = 5
-	}
+	hungerBonus, affectionBonus, expBonus := getFoodBonuses(body.ItemID)
 
 	newHunger := clamp(slime.Hunger+hungerBonus, 0, 100)
 	newAffection := clamp(slime.Affection+affectionBonus, 0, 100)
@@ -1058,21 +1050,32 @@ func (h *Handler) ApplyFood(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to apply food"})
 	}
 
+	// Apply EXP
+	newExp := slime.Exp + expBonus
+	newLevel, finalExp, leveledUp := checkLevelUp(slime.Level, newExp)
+	if err := h.slimeRepo.SetLevelAndExp(ctx, body.SlimeID, newLevel, finalExp); err != nil {
+		log.Error().Err(err).Str("slime_id", body.SlimeID).Msg("failed to set level/exp after food")
+	}
+
 	// Decrement inventory
 	pool.Exec(ctx,
 		`UPDATE food_inventory SET quantity = quantity - 1 WHERE user_id = $1 AND item_id = $2`,
 		userID, body.ItemID)
 
 	LogGameAction(pool, userID, "apply_food", "item", 0, 0, 0, map[string]interface{}{
-		"item_id": body.ItemID, "slime_id": body.SlimeID,
+		"item_id": body.ItemID, "slime_id": body.SlimeID, "exp_gained": expBonus,
 	})
 
 	return c.JSON(fiber.Map{
-		"slime_id":  body.SlimeID,
-		"affection": newAffection,
-		"hunger":    newHunger,
-		"condition": slime.Condition,
-		"remaining": qty - 1,
+		"slime_id":   body.SlimeID,
+		"affection":  newAffection,
+		"hunger":     newHunger,
+		"condition":  slime.Condition,
+		"remaining":  qty - 1,
+		"exp_gained": expBonus,
+		"new_exp":    finalExp,
+		"new_level":  newLevel,
+		"level_up":   leveledUp,
 	})
 }
 
@@ -1119,24 +1122,7 @@ func (h *Handler) ApplyFoodBatch(c *fiber.Ctx) error {
 	}
 
 	// Apply food effects × quantity
-	var hungerBonus, affectionBonus int
-	switch body.ItemID {
-	case 3:
-		hungerBonus = 50
-		affectionBonus = 5
-	case 4:
-		hungerBonus = 100
-		affectionBonus = 10
-	case 7:
-		hungerBonus = 100
-		affectionBonus = 20
-	case 8:
-		hungerBonus = 80
-		affectionBonus = 15
-	default:
-		hungerBonus = 50
-		affectionBonus = 5
-	}
+	hungerBonus, affectionBonus, expPerUnit := getFoodBonuses(body.ItemID)
 
 	newHunger := clamp(slime.Hunger+hungerBonus*useQty, 0, 100)
 	newAffection := clamp(slime.Affection+affectionBonus*useQty, 0, 100)
@@ -1145,20 +1131,144 @@ func (h *Handler) ApplyFoodBatch(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to apply food"})
 	}
 
+	// Apply EXP
+	totalExp := expPerUnit * useQty
+	newExp := slime.Exp + totalExp
+	newLevel, finalExp, leveledUp := checkLevelUp(slime.Level, newExp)
+	if err := h.slimeRepo.SetLevelAndExp(ctx, body.SlimeID, newLevel, finalExp); err != nil {
+		log.Error().Err(err).Str("slime_id", body.SlimeID).Msg("failed to set level/exp after food batch")
+	}
+
 	// Decrement inventory
 	pool.Exec(ctx,
 		`UPDATE food_inventory SET quantity = quantity - $3 WHERE user_id = $1 AND item_id = $2`,
 		userID, body.ItemID, useQty)
 
 	LogGameAction(pool, userID, "apply_food_batch", "item", 0, 0, 0, map[string]interface{}{
-		"item_id": body.ItemID, "slime_id": body.SlimeID, "quantity": useQty,
+		"item_id": body.ItemID, "slime_id": body.SlimeID, "quantity": useQty, "exp_gained": totalExp,
 	})
 
 	return c.JSON(fiber.Map{
-		"slime_id":  body.SlimeID,
-		"affection": newAffection,
-		"hunger":    newHunger,
-		"condition": slime.Condition,
-		"remaining": qty - useQty,
+		"slime_id":   body.SlimeID,
+		"affection":  newAffection,
+		"hunger":     newHunger,
+		"condition":  slime.Condition,
+		"remaining":  qty - useQty,
+		"exp_gained": totalExp,
+		"new_exp":    finalExp,
+		"new_level":  newLevel,
+		"level_up":   leveledUp,
+	})
+}
+
+// ApplyFoodToAll feeds all hungry slimes at once using inventory food
+func (h *Handler) ApplyFoodToAll(c *fiber.Ctx) error {
+	userID := c.Locals("user_id").(string)
+
+	var body struct {
+		ItemID int `json:"item_id"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "item_id required"})
+	}
+
+	ctx := c.Context()
+	pool := h.slimeRepo.Pool()
+
+	// Check inventory
+	var qty int
+	err := pool.QueryRow(ctx,
+		`SELECT quantity FROM food_inventory WHERE user_id = $1 AND item_id = $2`,
+		userID, body.ItemID).Scan(&qty)
+	if err != nil || qty <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "먹이가 없습니다"})
+	}
+
+	// Get all slimes
+	slimes, err := h.slimeRepo.FindByUser(ctx, userID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to load slimes"})
+	}
+
+	// Filter hungry slimes (hunger < 80)
+	type hungrySlime struct {
+		idx int
+		s   *models.Slime
+	}
+	var hungry []hungrySlime
+	for i := range slimes {
+		if slimes[i].Hunger < 80 {
+			hungry = append(hungry, hungrySlime{idx: i, s: &slimes[i]})
+		}
+	}
+
+	if len(hungry) == 0 {
+		return c.JSON(fiber.Map{"results": []fiber.Map{}, "fed_count": 0, "used": 0})
+	}
+
+	// Use min(hungry count, inventory) food items
+	useCount := len(hungry)
+	if useCount > qty {
+		useCount = qty
+	}
+
+	hungerBonus, affectionBonus, expPerUnit := getFoodBonuses(body.ItemID)
+
+	type feedResult struct {
+		SlimeID   string `json:"slime_id"`
+		Affection int    `json:"affection"`
+		Hunger    int    `json:"hunger"`
+		Condition int    `json:"condition"`
+		ExpGained int    `json:"exp_gained"`
+		NewExp    int    `json:"new_exp"`
+		NewLevel  int    `json:"new_level"`
+		LevelUp   bool   `json:"level_up"`
+	}
+
+	results := make([]feedResult, 0, useCount)
+	for i := 0; i < useCount; i++ {
+		s := hungry[i].s
+		sid := uuidToString(s.ID)
+
+		newHunger := clamp(s.Hunger+hungerBonus, 0, 100)
+		newAffection := clamp(s.Affection+affectionBonus, 0, 100)
+
+		if err := h.slimeRepo.UpdateStats(ctx, sid, newAffection, newHunger, s.Condition); err != nil {
+			log.Error().Err(err).Str("slime_id", sid).Msg("apply-all: failed to update stats")
+			continue
+		}
+
+		newExp := s.Exp + expPerUnit
+		newLevel, finalExp, leveledUp := checkLevelUp(s.Level, newExp)
+		if err := h.slimeRepo.SetLevelAndExp(ctx, sid, newLevel, finalExp); err != nil {
+			log.Error().Err(err).Str("slime_id", sid).Msg("apply-all: failed to set level/exp")
+		}
+
+		results = append(results, feedResult{
+			SlimeID:   sid,
+			Affection: newAffection,
+			Hunger:    newHunger,
+			Condition: s.Condition,
+			ExpGained: expPerUnit,
+			NewExp:    finalExp,
+			NewLevel:  newLevel,
+			LevelUp:   leveledUp,
+		})
+	}
+
+	// Decrement inventory
+	pool.Exec(ctx,
+		`UPDATE food_inventory SET quantity = quantity - $3 WHERE user_id = $1 AND item_id = $2`,
+		userID, body.ItemID, len(results))
+
+	LogGameAction(pool, userID, "apply_food_all", "item", 0, 0, 0, map[string]interface{}{
+		"item_id": body.ItemID, "fed_count": len(results),
+	})
+
+	return c.JSON(fiber.Map{
+		"results":   results,
+		"fed_count": len(results),
+		"used":      len(results),
+		"remaining": qty - len(results),
 	})
 }
