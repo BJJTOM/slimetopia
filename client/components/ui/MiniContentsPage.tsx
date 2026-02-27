@@ -5,6 +5,7 @@ import SlimeRace from "@/components/game/SlimeRace";
 import FishingGame from "@/components/game/FishingGame";
 import WorldBossPage from "@/components/ui/WorldBossPage";
 import TrainingPage from "@/components/ui/TrainingPage";
+import { generateSlimeIconSvg } from "@/lib/slimeSvg";
 
 type MiniContent = "menu" | "race" | "fishing" | "boss" | "training";
 
@@ -25,7 +26,7 @@ const CONTENTS = [
     id: "race" as const,
     name: "슬라임 레이스",
     desc: "장애물을 피하고 코인을 모아 최고 점수에 도전!",
-    emoji: "🏃",
+    icon: { element: "grass", grade: "rare", speciesId: 3 },
     accent: "#C9A84C",
     bg: "/assets/bg/grassland.png",
     reward: "Gold + EXP",
@@ -38,7 +39,7 @@ const CONTENTS = [
     id: "fishing" as const,
     name: "낚시",
     desc: "릴링 미니게임으로 희귀한 물고기를 낚아올려요!",
-    emoji: "🎣",
+    icon: { element: "water", grade: "epic", speciesId: 1 },
     accent: "#74B9FF",
     bg: "/assets/bg/clear_lake.png",
     reward: "Gold + Gems",
@@ -51,7 +52,7 @@ const CONTENTS = [
     id: "boss" as const,
     name: "월드 보스",
     desc: "5단계 보스를 파티로 공격! 속성 유리를 활용하세요",
-    emoji: "⚔️",
+    icon: { element: "fire", grade: "legendary", speciesId: 2 },
     accent: "#FF6B6B",
     bg: "/assets/bg/red_volcano.png",
     reward: "Gold + Gems",
@@ -64,7 +65,7 @@ const CONTENTS = [
     id: "training" as const,
     name: "훈련소",
     desc: "슬라임을 방치 훈련! 최대 8시간 EXP 자동 획득",
-    emoji: "🏋️",
+    icon: { element: "light", grade: "uncommon", speciesId: 30 },
     accent: "#FDCB6E",
     bg: "/assets/bg/starlight_cave.png",
     reward: "EXP",
@@ -131,14 +132,18 @@ export default function MiniContentsPage({ onClose }: { onClose: () => void }) {
 
               {/* Content */}
               <div className="relative h-full flex items-center gap-3 px-3.5">
-                {/* Icon */}
+                {/* Icon — themed slime */}
                 <div className="relative shrink-0">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl backdrop-blur-sm"
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center backdrop-blur-sm"
                     style={{
-                      background: "rgba(0,0,0,0.3)",
-                      border: `1px solid ${c.accent}40`,
+                      background: "rgba(0,0,0,0.25)",
+                      border: `1px solid ${c.accent}35`,
                     }}>
-                    {c.emoji}
+                    <img
+                      src={generateSlimeIconSvg(c.icon.element, 36, c.icon.grade, undefined, c.icon.speciesId)}
+                      alt="" className="w-9 h-9" draggable={false}
+                      style={{ imageRendering: "pixelated" }}
+                    />
                   </div>
                   {c.tag && (
                     <span className="absolute -top-1 -right-1 text-[7px] font-bold px-1 py-px rounded-full"
