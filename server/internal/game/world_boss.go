@@ -18,13 +18,18 @@ type BossDef struct {
 	BaseHP  int64
 }
 
-// 5 unique bosses, one per stage
+// 10 unique bosses, one per stage
 var stageBosses = []BossDef{
 	{Name: "불꽃 드래곤", Element: "fire", BaseHP: 60000},
 	{Name: "심해 크라켄", Element: "water", BaseHP: 100000},
 	{Name: "얼음 골렘", Element: "ice", BaseHP: 160000},
 	{Name: "독안개 히드라", Element: "poison", BaseHP: 300000},
 	{Name: "혼돈의 슬라임킹", Element: "dark", BaseHP: 600000},
+	{Name: "번개 피닉스", Element: "electric", BaseHP: 1000000},
+	{Name: "대지의 타이탄", Element: "earth", BaseHP: 1800000},
+	{Name: "질풍 세르펜트", Element: "wind", BaseHP: 3000000},
+	{Name: "천체의 수호자", Element: "celestial", BaseHP: 5000000},
+	{Name: "공허의 황제", Element: "light", BaseHP: 10000000},
 }
 
 const (
@@ -33,10 +38,10 @@ const (
 )
 
 // Stage multipliers for rewards
-var stageGoldReward = []int{500, 800, 1200, 2000, 5000}
-var stageGemReward = []int{5, 8, 12, 20, 50}
-var stageGoldMult = []float64{1, 1.5, 2, 3, 5}
-var stageGemMult = []float64{1, 1.5, 2, 3, 5}
+var stageGoldReward = []int{500, 800, 1200, 2000, 5000, 8000, 12000, 20000, 35000, 60000}
+var stageGemReward = []int{5, 8, 12, 20, 50, 80, 120, 200, 350, 600}
+var stageGoldMult = []float64{1, 1.5, 2, 3, 5, 7, 10, 15, 22, 35}
+var stageGemMult = []float64{1, 1.5, 2, 3, 5, 7, 10, 15, 22, 35}
 
 // ===== Handlers =====
 
@@ -319,8 +324,8 @@ func (h *Handler) AttackWorldBoss(c *fiber.Ctx) error {
 	if stageIdx < 0 {
 		stageIdx = 0
 	}
-	if stageIdx > 4 {
-		stageIdx = 4
+	if stageIdx > 9 {
+		stageIdx = 9
 	}
 
 	var bonusGold int64
@@ -331,7 +336,7 @@ func (h *Handler) AttackWorldBoss(c *fiber.Ctx) error {
 		h.userRepo.AddCurrency(ctx, userID, bonusGold, bonusGems, 0)
 
 		// Auto-advance to next stage if not max
-		if stage < 5 {
+		if stage < 10 {
 			nextStage := stage + 1
 			nextIdx := nextStage - 1
 			boss := stageBosses[nextIdx]
@@ -371,7 +376,7 @@ func (h *Handler) AttackWorldBoss(c *fiber.Ctx) error {
 		"slime_results":      slimeResults,
 		"combo_multiplier":   comboMultiplier,
 		"remaining_attacks":  bossMaxAttacksPerDay - attackCount - 1,
-		"next_stage":         defeated && stage < 5,
+		"next_stage":         defeated && stage < 10,
 	})
 }
 
@@ -386,8 +391,9 @@ func isElementStrong(attacker, defender string) bool {
 		"ice":      "wind",
 		"wind":     "poison",
 		"poison":   "grass",
-		"light":    "dark",
-		"dark":     "light",
+		"light":     "dark",
+		"dark":      "light",
+		"celestial": "dark",
 	}
 	return advantages[attacker] == defender
 }

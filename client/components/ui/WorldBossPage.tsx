@@ -51,6 +51,9 @@ interface AttackAnim {
   damage: number;
   element: string;
   critical: boolean;
+  currentSlimeIdx: number;
+  slimeResults: SlimeResult[];
+  comboMultiplier: number;
 }
 
 interface DmgFloat {
@@ -60,6 +63,9 @@ interface DmgFloat {
   damage: number;
   alpha: number;
   critical: boolean;
+  element?: string;
+  scale: number;
+  isCombo?: boolean;
 }
 
 interface BossParticle {
@@ -116,6 +122,11 @@ const BOSS_STAGES = [
   { name: "3단계: 얼음 골렘", element: "ice", desc: "빙하 깊은 곳의 얼음 골렘. 불 속성이 유리!" },
   { name: "4단계: 독안개 히드라", element: "poison", desc: "독안개를 뿜는 다두 달린 히드라. 대지 속성이 유리!" },
   { name: "5단계: 혼돈의 슬라임킹", element: "dark", desc: "혼돈의 힘을 가진 최종 보스. 빛 속성이 유리!" },
+  { name: "6단계: 번개 피닉스", element: "electric", desc: "번개를 몸에 두른 불사조. 대지 속성이 유리!" },
+  { name: "7단계: 대지의 타이탄", element: "earth", desc: "바위와 용암의 거인. 풀 속성이 유리!" },
+  { name: "8단계: 질풍 세르펜트", element: "wind", desc: "소용돌이를 일으키는 바람뱀. 얼음 속성이 유리!" },
+  { name: "9단계: 천체의 수호자", element: "celestial", desc: "별의 힘을 가진 수호자. 어둠 속성이 유리!" },
+  { name: "10단계: 공허의 황제", element: "light", desc: "모든 빛을 지배하는 최종 황제. 어둠 속성이 유리!" },
 ];
 
 // ===== Helpers =====
@@ -600,6 +611,395 @@ function drawSlimeKing(
   ctx.restore();
 }
 
+// Stage 6: Thunder Phoenix - wide wings + lightning bolts
+function drawThunderPhoenix(
+  ctx: CanvasRenderingContext2D, cx: number, cy: number, sz: number,
+  breath: number, phase: "normal" | "enraged" | "critical", t: number,
+  shake: { x: number; y: number },
+) {
+  const col = "#FFEAA7", dark = "#FDCB6E";
+  ctx.save();
+  ctx.translate(cx + shake.x, cy + shake.y);
+
+  drawBossBody(ctx, 0, 0, sz, col, dark, breath, phase, t);
+
+  // Wide wings
+  const wingFlap = Math.sin(t * 4) * 0.2;
+  for (const s of [-1, 1]) {
+    ctx.save();
+    ctx.rotate(s * (0.25 + wingFlap));
+    ctx.beginPath();
+    ctx.moveTo(s * sz * 0.3, -sz * 0.05);
+    ctx.quadraticCurveTo(s * sz * 1.0, -sz * 0.6, s * sz * 0.85, -sz * 0.1);
+    ctx.quadraticCurveTo(s * sz * 0.95, sz * 0.1, s * sz * 0.65, sz * 0.15);
+    ctx.quadraticCurveTo(s * sz * 0.8, sz * 0.25, s * sz * 0.5, sz * 0.2);
+    ctx.closePath();
+    const wg = ctx.createLinearGradient(0, -sz * 0.4, s * sz * 0.9, 0);
+    wg.addColorStop(0, rgba(col, 0.7));
+    wg.addColorStop(0.5, rgba("#FF9F43", 0.5));
+    wg.addColorStop(1, rgba("#FFEAA7", 0.2));
+    ctx.fillStyle = wg; ctx.fill();
+    ctx.strokeStyle = rgba(col, 0.3); ctx.lineWidth = 1; ctx.stroke();
+    ctx.restore();
+  }
+
+  // Lightning bolt crest on forehead
+  const boltY = -sz * 0.5;
+  ctx.beginPath();
+  ctx.moveTo(0, boltY - sz * 0.25);
+  ctx.lineTo(-sz * 0.06, boltY - sz * 0.1);
+  ctx.lineTo(sz * 0.02, boltY - sz * 0.12);
+  ctx.lineTo(-sz * 0.04, boltY);
+  ctx.lineTo(sz * 0.06, boltY - sz * 0.15);
+  ctx.lineTo(-sz * 0.01, boltY - sz * 0.13);
+  ctx.lineTo(sz * 0.04, boltY - sz * 0.25);
+  ctx.closePath();
+  ctx.fillStyle = "#FFEAA7"; ctx.fill();
+  const bg = ctx.createRadialGradient(0, boltY - sz * 0.12, 0, 0, boltY - sz * 0.12, sz * 0.15);
+  bg.addColorStop(0, rgba("#FFEAA7", 0.6)); bg.addColorStop(1, rgba("#FFEAA7", 0));
+  ctx.beginPath(); ctx.arc(0, boltY - sz * 0.12, sz * 0.15, 0, Math.PI * 2); ctx.fillStyle = bg; ctx.fill();
+
+  // Electric arcs around body
+  for (let i = 0; i < 4; i++) {
+    const arcA = t * 5 + i * Math.PI * 0.5;
+    const ax1 = Math.cos(arcA) * sz * 0.45;
+    const ay1 = Math.sin(arcA) * sz * 0.25;
+    const ax2 = ax1 + (Math.random() - 0.5) * sz * 0.2;
+    const ay2 = ay1 + (Math.random() - 0.5) * sz * 0.2;
+    ctx.beginPath(); ctx.moveTo(ax1, ay1); ctx.lineTo(ax2, ay2);
+    ctx.strokeStyle = rgba("#FFEAA7", 0.4 + Math.sin(t * 10 + i) * 0.2);
+    ctx.lineWidth = 1.5; ctx.stroke();
+  }
+
+  drawBossEyes(ctx, sz, phase, t, "#FDCB6E");
+  drawBossMouth(ctx, sz, phase);
+
+  if (phase === "critical") {
+    ctx.strokeStyle = "rgba(255,234,167,0.6)"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(-sz * 0.12, -sz * 0.2); ctx.lineTo(-sz * 0.22, sz * 0.05); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sz * 0.1, -sz * 0.25); ctx.lineTo(sz * 0.2, 0); ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+// Stage 7: Earth Titan - rocky shoulders + lava cracks + floating debris
+function drawEarthTitan(
+  ctx: CanvasRenderingContext2D, cx: number, cy: number, sz: number,
+  breath: number, phase: "normal" | "enraged" | "critical", t: number,
+  shake: { x: number; y: number },
+) {
+  const col = "#DFE6E9", dark = "#B2BEC3";
+  ctx.save();
+  ctx.translate(cx + shake.x, cy + shake.y);
+
+  // Floating debris behind body
+  for (let i = 0; i < 5; i++) {
+    const da = t * 0.8 + i * 1.3;
+    const dx = Math.sin(da) * sz * (0.6 + i * 0.1);
+    const dy = -sz * 0.3 + Math.cos(da * 0.7) * sz * 0.15 - i * sz * 0.08;
+    const ds = sz * (0.04 + Math.sin(t + i) * 0.01);
+    ctx.save(); ctx.translate(dx, dy); ctx.rotate(t + i);
+    ctx.beginPath(); ctx.rect(-ds, -ds, ds * 2, ds * 2);
+    ctx.fillStyle = rgba("#B2BEC3", 0.4 + Math.sin(t * 2 + i) * 0.1); ctx.fill();
+    ctx.restore();
+  }
+
+  drawBossBody(ctx, 0, 0, sz, col, dark, breath, phase, t);
+
+  // Rocky shoulder pads
+  for (const s of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(s * sz * 0.35, -sz * 0.15);
+    ctx.lineTo(s * sz * 0.55, -sz * 0.3);
+    ctx.lineTo(s * sz * 0.6, -sz * 0.1);
+    ctx.lineTo(s * sz * 0.5, sz * 0.05);
+    ctx.closePath();
+    const sg = ctx.createLinearGradient(s * sz * 0.35, -sz * 0.3, s * sz * 0.55, sz * 0.05);
+    sg.addColorStop(0, "#B2BEC3");
+    sg.addColorStop(0.6, "#636E72");
+    sg.addColorStop(1, "#2D3436");
+    ctx.fillStyle = sg; ctx.fill();
+    ctx.strokeStyle = rgba("#636E72", 0.4); ctx.lineWidth = 1; ctx.stroke();
+  }
+
+  // Lava cracks on body
+  ctx.strokeStyle = rgba("#FF6B6B", 0.5 + Math.sin(t * 3) * 0.2);
+  ctx.lineWidth = 1.5; ctx.lineCap = "round";
+  ctx.beginPath(); ctx.moveTo(-sz * 0.15, -sz * 0.1); ctx.lineTo(-sz * 0.05, sz * 0.15); ctx.lineTo(sz * 0.1, sz * 0.25); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(sz * 0.1, -sz * 0.2); ctx.lineTo(sz * 0.2, sz * 0.05); ctx.lineTo(sz * 0.15, sz * 0.2); ctx.stroke();
+  // Lava glow
+  const lg = ctx.createRadialGradient(0, sz * 0.05, 0, 0, sz * 0.05, sz * 0.3);
+  lg.addColorStop(0, rgba("#FF6B6B", 0.1 + Math.sin(t * 4) * 0.05));
+  lg.addColorStop(1, rgba("#FF6B6B", 0));
+  ctx.beginPath(); ctx.arc(0, sz * 0.05, sz * 0.3, 0, Math.PI * 2); ctx.fillStyle = lg; ctx.fill();
+
+  drawBossEyes(ctx, sz, phase, t, "#636E72");
+  drawBossMouth(ctx, sz, phase);
+
+  if (phase === "critical") {
+    ctx.strokeStyle = "rgba(255,107,107,0.6)"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(-sz * 0.2, -sz * 0.3); ctx.lineTo(-sz * 0.1, sz * 0.1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sz * 0.15, -sz * 0.25); ctx.lineTo(sz * 0.25, sz * 0.1); ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+// Stage 8: Wind Serpent - horizontal body + ribbon tentacles + vortex
+function drawWindSerpent(
+  ctx: CanvasRenderingContext2D, cx: number, cy: number, sz: number,
+  breath: number, phase: "normal" | "enraged" | "critical", t: number,
+  shake: { x: number; y: number },
+) {
+  const col = "#A29BFE", dark = "#6C5CE7";
+  ctx.save();
+  ctx.translate(cx + shake.x, cy + shake.y);
+
+  // Vortex rings behind body
+  for (let i = 0; i < 3; i++) {
+    ctx.save();
+    ctx.rotate(t * (1 + i * 0.3) + i * Math.PI * 0.67);
+    const vr = sz * (0.8 + i * 0.25);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, vr, vr * 0.3, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = rgba(col, 0.08 + Math.sin(t * 2 + i) * 0.03);
+    ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.restore();
+  }
+
+  drawBossBody(ctx, 0, 0, sz, col, dark, breath, phase, t);
+
+  // Ribbon tentacles flowing from body
+  for (let i = 0; i < 5; i++) {
+    const ra = (i / 5) * Math.PI * 2 + t * 1.5;
+    const rx = Math.cos(ra) * sz * 0.4;
+    const ry = Math.sin(ra) * sz * 0.2 + sz * 0.1;
+    ctx.beginPath();
+    ctx.moveTo(rx * 0.5, ry * 0.5);
+    const wave = Math.sin(t * 3 + i * 1.5) * sz * 0.15;
+    ctx.quadraticCurveTo(rx + wave, ry + sz * 0.1, rx * 1.5 + wave * 0.5, ry + sz * 0.3);
+    ctx.strokeStyle = rgba(col, 0.3 + Math.sin(t * 2 + i) * 0.1);
+    ctx.lineWidth = sz * 0.03 * (1 - i * 0.08);
+    ctx.lineCap = "round"; ctx.stroke();
+  }
+
+  // Horizontal elongation hint (wider eyes)
+  drawBossEyes(ctx, sz, phase, t, "#C8B6FF");
+
+  // Wind swirl marks near eyes
+  for (const s of [-1, 1]) {
+    ctx.beginPath();
+    ctx.arc(s * sz * 0.25, -sz * 0.15, sz * 0.08, s * 0.5, s * 0.5 + Math.PI * 1.5);
+    ctx.strokeStyle = rgba("#C8B6FF", 0.2); ctx.lineWidth = 1; ctx.stroke();
+  }
+
+  drawBossMouth(ctx, sz, phase);
+
+  if (phase === "critical") {
+    ctx.strokeStyle = "rgba(162,155,254,0.6)"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(-sz * 0.15, -sz * 0.15); ctx.lineTo(-sz * 0.25, sz * 0.1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sz * 0.12, -sz * 0.2); ctx.lineTo(sz * 0.22, sz * 0.05); ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+// Stage 9: Celestial Guardian - halo ring + hexagram emblem + constellation lines
+function drawCelestialGuardian(
+  ctx: CanvasRenderingContext2D, cx: number, cy: number, sz: number,
+  breath: number, phase: "normal" | "enraged" | "critical", t: number,
+  shake: { x: number; y: number },
+) {
+  const col = "#FF9FF3", dark = "#E84393";
+  ctx.save();
+  ctx.translate(cx + shake.x, cy + shake.y);
+
+  // Constellation lines behind body
+  const stars = [
+    { x: -sz * 0.7, y: -sz * 0.4 }, { x: -sz * 0.3, y: -sz * 0.7 },
+    { x: sz * 0.2, y: -sz * 0.65 }, { x: sz * 0.6, y: -sz * 0.35 },
+    { x: sz * 0.5, y: sz * 0.1 }, { x: -sz * 0.5, y: sz * 0.15 },
+  ];
+  ctx.strokeStyle = rgba("#FF9FF3", 0.12 + Math.sin(t * 1.5) * 0.04);
+  ctx.lineWidth = 0.8;
+  for (let i = 0; i < stars.length; i++) {
+    const next = stars[(i + 1) % stars.length];
+    ctx.beginPath(); ctx.moveTo(stars[i].x, stars[i].y); ctx.lineTo(next.x, next.y); ctx.stroke();
+  }
+  // Star dots
+  for (const s of stars) {
+    const twinkle = 0.3 + Math.sin(t * 4 + s.x + s.y) * 0.3;
+    ctx.beginPath(); ctx.arc(s.x, s.y, sz * 0.02, 0, Math.PI * 2);
+    ctx.fillStyle = rgba("#fff", twinkle); ctx.fill();
+  }
+
+  // Halo ring
+  ctx.save();
+  ctx.translate(0, -sz * 0.55);
+  ctx.scale(1, 0.35);
+  ctx.beginPath(); ctx.arc(0, 0, sz * 0.3, 0, Math.PI * 2);
+  const hg = ctx.createLinearGradient(-sz * 0.3, 0, sz * 0.3, 0);
+  hg.addColorStop(0, rgba("#FF9FF3", 0.1));
+  hg.addColorStop(0.5, rgba("#FFF", 0.4));
+  hg.addColorStop(1, rgba("#FF9FF3", 0.1));
+  ctx.strokeStyle = hg; ctx.lineWidth = sz * 0.04; ctx.stroke();
+  ctx.restore();
+
+  drawBossBody(ctx, 0, 0, sz, col, dark, breath, phase, t);
+
+  // Hexagram emblem on chest
+  ctx.save();
+  ctx.translate(0, -sz * 0.05);
+  const hexR = sz * 0.1;
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const a = (i * Math.PI) / 3 - Math.PI / 2;
+    const hx = Math.cos(a) * hexR, hy = Math.sin(a) * hexR;
+    if (i === 0) ctx.moveTo(hx, hy); else ctx.lineTo(hx, hy);
+  }
+  ctx.closePath();
+  ctx.strokeStyle = rgba("#FFF", 0.3 + Math.sin(t * 3) * 0.1);
+  ctx.lineWidth = 1; ctx.stroke();
+  // Inner star
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const a = (i * Math.PI) / 3 - Math.PI / 2;
+    const opp = ((i + 2) % 6 * Math.PI) / 3 - Math.PI / 2;
+    ctx.moveTo(Math.cos(a) * hexR, Math.sin(a) * hexR);
+    ctx.lineTo(Math.cos(opp) * hexR, Math.sin(opp) * hexR);
+  }
+  ctx.strokeStyle = rgba("#FF9FF3", 0.2); ctx.lineWidth = 0.5; ctx.stroke();
+  ctx.restore();
+
+  drawBossEyes(ctx, sz, phase, t, "#E84393");
+  drawBossMouth(ctx, sz, phase);
+
+  if (phase === "critical") {
+    ctx.strokeStyle = "rgba(255,159,243,0.5)"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(-sz * 0.12, -sz * 0.25); ctx.lineTo(-sz * 0.2, sz * 0.05); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sz * 0.1, -sz * 0.3); ctx.lineTo(sz * 0.18, -sz * 0.05); ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+// Stage 10: Void Emperor - 7-point crown + cloak + void portal + 6-element orbit
+function drawVoidEmperor(
+  ctx: CanvasRenderingContext2D, cx: number, cy: number, sz: number,
+  breath: number, phase: "normal" | "enraged" | "critical", t: number,
+  shake: { x: number; y: number },
+) {
+  const col = "#FFF3BF", dark = "#FDD835";
+  ctx.save();
+  ctx.translate(cx + shake.x, cy + shake.y);
+
+  // Void portal behind body
+  ctx.save();
+  ctx.rotate(t * 0.5);
+  for (let i = 0; i < 3; i++) {
+    const pr = sz * (1.2 + i * 0.15);
+    ctx.beginPath(); ctx.arc(0, 0, pr, 0, Math.PI * 2);
+    ctx.strokeStyle = rgba("#FDD835", 0.06 + Math.sin(t * 2 + i) * 0.03);
+    ctx.lineWidth = 1 + Math.sin(t * 3 + i * 2) * 0.5; ctx.stroke();
+  }
+  ctx.restore();
+
+  // Void vortex spiral
+  ctx.save();
+  ctx.globalAlpha = 0.08 + Math.sin(t * 1.5) * 0.03;
+  ctx.beginPath();
+  for (let a = 0; a < Math.PI * 6; a += 0.1) {
+    const r = sz * 0.1 + a * sz * 0.08;
+    const x = Math.cos(a + t * 0.8) * r;
+    const y = Math.sin(a + t * 0.8) * r * 0.4;
+    if (a === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.strokeStyle = "#FDD835"; ctx.lineWidth = 1; ctx.stroke();
+  ctx.restore();
+
+  // Cloak / cape behind body
+  ctx.beginPath();
+  ctx.moveTo(-sz * 0.4, -sz * 0.1);
+  ctx.quadraticCurveTo(-sz * 0.6, sz * 0.2 + Math.sin(t * 2) * sz * 0.03, -sz * 0.45, sz * 0.55);
+  ctx.lineTo(sz * 0.45, sz * 0.55);
+  ctx.quadraticCurveTo(sz * 0.6, sz * 0.2 + Math.sin(t * 2 + 1) * sz * 0.03, sz * 0.4, -sz * 0.1);
+  ctx.closePath();
+  const cg = ctx.createLinearGradient(0, -sz * 0.1, 0, sz * 0.55);
+  cg.addColorStop(0, rgba("#2D3436", 0.6));
+  cg.addColorStop(0.5, rgba("#1A0E08", 0.7));
+  cg.addColorStop(1, rgba("#FDD835", 0.1));
+  ctx.fillStyle = cg; ctx.fill();
+
+  drawBossBody(ctx, 0, 0, sz, col, dark, breath, phase, t);
+
+  // 7-point crown
+  ctx.beginPath();
+  const crownBase = -sz * 0.48;
+  const crownTop = -sz * 0.75;
+  ctx.moveTo(-sz * 0.28, crownBase);
+  for (let i = 0; i < 7; i++) {
+    const cx2 = -sz * 0.25 + (i / 6) * sz * 0.5;
+    const tip = i % 2 === 0 ? crownTop + Math.sin(t * 3 + i) * sz * 0.02 : crownBase - sz * 0.08;
+    ctx.lineTo(cx2, tip);
+  }
+  ctx.lineTo(sz * 0.28, crownBase);
+  ctx.closePath();
+  const crG = ctx.createLinearGradient(0, crownTop, 0, crownBase);
+  crG.addColorStop(0, "#FFF3BF");
+  crG.addColorStop(0.5, "#FDD835");
+  crG.addColorStop(1, "#F9CA24");
+  ctx.fillStyle = crG; ctx.fill();
+  ctx.strokeStyle = rgba("#FDD835", 0.6); ctx.lineWidth = 1; ctx.stroke();
+
+  // Crown jewels
+  const crJewels = ["#FF6B6B", "#74B9FF", "#55EFC4", "#A29BFE"];
+  for (let i = 0; i < 4; i++) {
+    const jx = -sz * 0.18 + i * sz * 0.12;
+    const jy = crownTop + sz * 0.08;
+    ctx.beginPath(); ctx.arc(jx, jy, sz * 0.02, 0, Math.PI * 2);
+    ctx.fillStyle = crJewels[i]; ctx.fill();
+  }
+
+  drawBossEyes(ctx, sz, phase, t, "#FDD835");
+
+  // Emperor smirk / mouth
+  if (phase === "critical") {
+    drawBossMouth(ctx, sz, phase);
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(-sz * 0.1, sz * 0.1);
+    ctx.quadraticCurveTo(0, sz * 0.2, sz * 0.1, sz * 0.08);
+    ctx.strokeStyle = "rgba(255,255,255,0.3)"; ctx.lineWidth = sz * 0.02;
+    ctx.lineCap = "round"; ctx.stroke();
+  }
+
+  // 6-element orbiting orbs
+  const orbElements = [
+    { col: "#FF6B6B", off: 0 }, { col: "#74B9FF", off: Math.PI / 3 },
+    { col: "#55EFC4", off: Math.PI * 2 / 3 }, { col: "#FFEAA7", off: Math.PI },
+    { col: "#A29BFE", off: Math.PI * 4 / 3 }, { col: "#81ECEC", off: Math.PI * 5 / 3 },
+  ];
+  for (const orb of orbElements) {
+    const oa = t * 1.2 + orb.off;
+    const ox = Math.cos(oa) * sz * 0.7;
+    const oy = Math.sin(oa) * sz * 0.25 + sz * 0.1;
+    ctx.beginPath(); ctx.arc(ox, oy, sz * 0.03, 0, Math.PI * 2);
+    ctx.fillStyle = rgba(orb.col, 0.7); ctx.fill();
+    const og = ctx.createRadialGradient(ox, oy, 0, ox, oy, sz * 0.06);
+    og.addColorStop(0, rgba(orb.col, 0.3)); og.addColorStop(1, rgba(orb.col, 0));
+    ctx.beginPath(); ctx.arc(ox, oy, sz * 0.06, 0, Math.PI * 2); ctx.fillStyle = og; ctx.fill();
+  }
+
+  if (phase === "critical") {
+    ctx.strokeStyle = "rgba(253,203,53,0.5)"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(-sz * 0.15, -sz * 0.3); ctx.lineTo(-sz * 0.22, -sz * 0.05); ctx.lineTo(-sz * 0.18, sz * 0.1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(sz * 0.1, -sz * 0.35); ctx.lineTo(sz * 0.15, -sz * 0.1); ctx.lineTo(sz * 0.2, sz * 0.05); ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
 // Main boss draw dispatcher
 function drawBoss(
   ctx: CanvasRenderingContext2D, cx: number, cy: number, sz: number,
@@ -613,6 +1013,11 @@ function drawBoss(
     case 3: drawIceGolem(ctx, cx, cy, sz, breath, phase, t, shake); break;
     case 4: drawPoisonHydra(ctx, cx, cy, sz, breath, phase, t, shake); break;
     case 5: drawSlimeKing(ctx, cx, cy, sz, breath, phase, t, shake); break;
+    case 6: drawThunderPhoenix(ctx, cx, cy, sz, breath, phase, t, shake); break;
+    case 7: drawEarthTitan(ctx, cx, cy, sz, breath, phase, t, shake); break;
+    case 8: drawWindSerpent(ctx, cx, cy, sz, breath, phase, t, shake); break;
+    case 9: drawCelestialGuardian(ctx, cx, cy, sz, breath, phase, t, shake); break;
+    case 10: drawVoidEmperor(ctx, cx, cy, sz, breath, phase, t, shake); break;
     default: drawFireDragon(ctx, cx, cy, sz, breath, phase, t, shake); break;
   }
 }
@@ -1002,77 +1407,130 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
         shakeRef.current.x *= 0.9; shakeRef.current.y *= 0.9;
       }
 
-      // --- Attack Animation ---
+      // --- Sequential Attack Animation ---
       const anim = atkRef.current;
       let bExX = 0, bExY = 0;
       if (anim) {
         anim.time += dt;
         const pSz = bSz * 0.5;
-        const sX = w * 0.15, sY = h * 0.75;
+        const curResult = anim.slimeResults[anim.currentSlimeIdx];
+        const curElem = curResult?.element || anim.element;
+        const curCol = ELEM_COL[curElem] || "#fff";
+        // Stagger start positions for each slime
+        const slimeCount = anim.slimeResults.length || 1;
+        const startOffsetX = (anim.currentSlimeIdx / Math.max(1, slimeCount - 1) - 0.5) * w * 0.15;
+        const sX = w * 0.15 + startOffsetX, sY = h * 0.75;
         const tX = bCx - bSz * 0.3, tY = bCy + bSz * 0.1;
 
         if (anim.phase === "charge") {
-          if (anim.time > 0.3) { anim.phase = "rush"; anim.time = 0; }
+          if (anim.time > 0.2) { anim.phase = "rush"; anim.time = 0; }
           else {
-            drawPlayer(ctx, sX, sY, pSz, anim.element);
-            const ga = anim.time / 0.3;
+            drawPlayer(ctx, sX, sY, pSz, curElem);
+            const ga = anim.time / 0.2;
             const cg = ctx.createRadialGradient(sX, sY, 0, sX, sY, pSz * 2);
-            cg.addColorStop(0, rgba(ELEM_COL[anim.element] || "#fff", ga * 0.4));
+            cg.addColorStop(0, rgba(curCol, ga * 0.4));
             cg.addColorStop(1, "transparent");
             ctx.fillStyle = cg; ctx.fillRect(0, 0, w, h);
           }
         } else if (anim.phase === "rush") {
-          if (anim.time > 0.25) { anim.phase = "impact"; anim.time = 0; }
+          if (anim.time > 0.2) { anim.phase = "impact"; anim.time = 0; }
           else {
-            const p = easeIn(anim.time / 0.25);
+            const p = easeIn(anim.time / 0.2);
             const px = lerp(sX, tX, p), py = lerp(sY, tY, p);
-            drawPlayer(ctx, px, py, pSz, anim.element);
-            // Motion trail
+            drawPlayer(ctx, px, py, pSz, curElem);
+            // Element-colored motion trail
             for (let i = 1; i <= 4; i++) {
               const tp = Math.max(0, p - i * 0.08);
               const tx = lerp(sX, tX, tp), ty = lerp(sY, tY, tp);
               ctx.beginPath(); ctx.arc(tx, ty, pSz * 0.3 * (1 - i * 0.2), 0, Math.PI * 2);
-              ctx.fillStyle = rgba(ELEM_COL[anim.element] || "#fff", 0.2 * (1 - i * 0.2)); ctx.fill();
+              ctx.fillStyle = rgba(curCol, 0.25 * (1 - i * 0.2)); ctx.fill();
             }
           }
         } else if (anim.phase === "impact") {
-          if (anim.time > 0.5) { anim.phase = "settle"; anim.time = 0; }
-          else {
-            if (anim.time < 0.1) flashRef.current = (1 - anim.time / 0.1) * 0.4;
-            // Shockwave
-            const rp = easeOut(anim.time / 0.5);
-            const rR = rp * bSz * 2, rA = 1 - rp;
-            ctx.beginPath(); ctx.arc(bCx, bCy, rR, 0, Math.PI * 2);
-            ctx.strokeStyle = rgba(ELEM_COL[anim.element] || "#fff", rA * 0.6);
-            ctx.lineWidth = 3 * (1 - rp); ctx.stroke();
-            // Second ring
-            const rp2 = easeOut(Math.max(0, anim.time - 0.05) / 0.5);
-            if (rp2 > 0) {
-              ctx.beginPath(); ctx.arc(bCx, bCy, rp2 * bSz * 1.5, 0, Math.PI * 2);
-              ctx.strokeStyle = rgba(ELEM_COL[anim.element] || "#fff", (1 - rp2) * 0.3);
-              ctx.lineWidth = 2 * (1 - rp2); ctx.stroke();
+          if (anim.time > 0.3) {
+            // Spawn per-slime damage float
+            if (curResult) {
+              const c = canvasRef.current;
+              if (c) {
+                const d2 = window.devicePixelRatio || 1;
+                const cw = c.width / d2, ch = c.height / d2;
+                floatsRef.current.push({
+                  x: cw / 2 + (Math.random() - 0.5) * 40 + anim.currentSlimeIdx * 12 - slimeCount * 6,
+                  y: ch * 0.33 - anim.currentSlimeIdx * 14,
+                  vy: -1.5, damage: curResult.damage, alpha: 1,
+                  critical: curResult.strong, element: curResult.element,
+                  scale: 1.5,
+                });
+                // Star burst on strong hit
+                if (curResult.strong) {
+                  const cols = IMPACT_COLORS[curElem] || ["#FFEAA7", "#FFF"];
+                  for (let si = 0; si < 8; si++) {
+                    const ang = (Math.PI * 2 * si) / 8;
+                    partsRef.current.push({
+                      x: bCx, y: bCy - bSz * 0.1, vx: Math.cos(ang) * 3, vy: Math.sin(ang) * 3,
+                      life: 0, maxLife: 0.3, size: 3, color: cols[si % cols.length], type: "impact",
+                    });
+                  }
+                }
+              }
             }
-            // Impact particles
-            if (anim.time < 0.08) {
-              const cols = IMPACT_COLORS[anim.element] || ["#A29BFE", "#C8B6FF", "#DFE6E9"];
-              for (let i = 0; i < 15; i++) {
-                const ang = (Math.PI * 2 * i) / 15 + Math.random() * 0.3;
-                const spd = 2 + Math.random() * 5;
+            // Move to next slime or settle
+            if (anim.currentSlimeIdx < slimeCount - 1) {
+              anim.currentSlimeIdx++;
+              anim.phase = "charge";
+              anim.time = 0;
+            } else {
+              anim.phase = "settle";
+              anim.time = 0;
+              // Show combo text if multiplier > 1
+              if (anim.comboMultiplier > 1) {
+                const c = canvasRef.current;
+                if (c) {
+                  const d2 = window.devicePixelRatio || 1;
+                  const cw = c.width / d2, ch = c.height / d2;
+                  floatsRef.current.push({
+                    x: cw / 2, y: ch * 0.25, vy: -1, damage: anim.damage, alpha: 1.2,
+                    critical: false, element: undefined, scale: 1.5, isCombo: true,
+                  });
+                }
+              }
+            }
+          } else {
+            if (anim.time < 0.08) flashRef.current = (1 - anim.time / 0.08) * 0.3;
+            // Shockwave with element color
+            const rp = easeOut(anim.time / 0.3);
+            const rR = rp * bSz * 1.8, rA = 1 - rp;
+            ctx.beginPath(); ctx.arc(bCx, bCy, rR, 0, Math.PI * 2);
+            ctx.strokeStyle = rgba(curCol, rA * 0.5);
+            ctx.lineWidth = 2.5 * (1 - rp); ctx.stroke();
+            // Second ring
+            const rp2 = easeOut(Math.max(0, anim.time - 0.04) / 0.3);
+            if (rp2 > 0) {
+              ctx.beginPath(); ctx.arc(bCx, bCy, rp2 * bSz * 1.3, 0, Math.PI * 2);
+              ctx.strokeStyle = rgba(curCol, (1 - rp2) * 0.25);
+              ctx.lineWidth = 1.5 * (1 - rp2); ctx.stroke();
+            }
+            // Impact particles in element color
+            if (anim.time < 0.06) {
+              const cols = IMPACT_COLORS[curElem] || ["#A29BFE", "#C8B6FF", "#DFE6E9"];
+              for (let i = 0; i < 10; i++) {
+                const ang = (Math.PI * 2 * i) / 10 + Math.random() * 0.3;
+                const spd = 1.5 + Math.random() * 4;
                 partsRef.current.push({
                   x: bCx, y: bCy, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
-                  life: 0, maxLife: 0.4 + Math.random() * 0.4,
-                  size: 2 + Math.random() * 4,
-                  color: anim.critical ? "#FFEAA7" : cols[Math.floor(Math.random() * cols.length)],
+                  life: 0, maxLife: 0.3 + Math.random() * 0.3,
+                  size: 2 + Math.random() * 3,
+                  color: curResult?.strong ? "#FFEAA7" : cols[Math.floor(Math.random() * cols.length)],
                   type: "impact",
                 });
               }
             }
             // Boss knockback
-            bExX = Math.sin(anim.time * 30) * (1 - anim.time / 0.5) * 8;
-            bExY = Math.sin(anim.time * 25) * (1 - anim.time / 0.5) * 4;
+            bExX = Math.sin(anim.time * 30) * (1 - anim.time / 0.3) * 6;
+            bExY = Math.sin(anim.time * 25) * (1 - anim.time / 0.3) * 3;
           }
         } else if (anim.phase === "settle") {
-          if (anim.time > 0.5) atkRef.current = null;
+          if (anim.time > 0.4) atkRef.current = null;
         }
       }
 
@@ -1117,20 +1575,40 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
       ctx.fillText(eName, 8 + ew / 2, 20);
       ctx.restore();
 
-      // Damage floats
+      // Damage floats with element colors, pop-in, and combo text
       floatsRef.current = floatsRef.current.filter((d) => {
         d.y += d.vy * dt * 60; d.vy -= 0.02 * dt * 60; d.alpha -= 0.012 * dt * 60;
+        if (d.scale > 1) d.scale = Math.max(1, d.scale - dt * 4);
         if (d.alpha <= 0) return false;
         ctx.save();
-        ctx.font = `bold ${d.critical ? 24 : 18}px sans-serif`;
-        ctx.textAlign = "center"; ctx.globalAlpha = d.alpha;
-        ctx.fillStyle = d.critical ? "#FFEAA7" : "#FF6B6B";
-        ctx.shadowColor = d.critical ? "#FFEAA7" : "#FF6B6B"; ctx.shadowBlur = 12;
-        ctx.fillText(`-${d.damage.toLocaleString()}`, d.x, d.y);
-        if (d.critical) {
-          ctx.font = "bold 10px sans-serif"; ctx.fillStyle = "#FFEAA7";
-          ctx.fillText("\uC720\uB9AC!", d.x, d.y - 22);
+        ctx.textAlign = "center"; ctx.globalAlpha = Math.min(1, d.alpha);
+
+        if (d.isCombo) {
+          // Combo multiplier text (gold)
+          const comboScale = d.scale;
+          ctx.translate(d.x, d.y);
+          ctx.scale(comboScale, comboScale);
+          ctx.font = "bold 22px sans-serif";
+          ctx.fillStyle = "#D4AF37";
+          ctx.shadowColor = "#D4AF37"; ctx.shadowBlur = 16;
+          ctx.fillText(`COMBO x${(d.damage > 0 ? (d.damage / d.damage).toFixed(0) : "")}\u2728`, 0, 0);
+        } else {
+          // Per-slime damage float with element color
+          const elemCol = d.element ? (ELEM_COL[d.element] || "#FF6B6B") : "#FF6B6B";
+          const fontSize = d.critical ? 28 : 20;
+          ctx.translate(d.x, d.y);
+          ctx.scale(d.scale, d.scale);
+          ctx.font = `bold ${fontSize}px sans-serif`;
+          ctx.fillStyle = d.critical ? "#FFEAA7" : elemCol;
+          ctx.shadowColor = d.critical ? "#FFEAA7" : elemCol; ctx.shadowBlur = 12;
+          ctx.fillText(`-${d.damage.toLocaleString()}`, 0, 0);
+          if (d.critical) {
+            // Star burst effect + "유리!" text
+            ctx.font = "bold 11px sans-serif"; ctx.fillStyle = "#FFEAA7";
+            ctx.fillText("\u2B50 \uC720\uB9AC!", 0, -24);
+          }
         }
+
         ctx.restore();
         return true;
       });
@@ -1157,18 +1635,14 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
     return () => { cancelAnimationFrame(animRef.current); window.removeEventListener("resize", resize); };
   }, []);
 
-  // Trigger attack animation
-  const triggerAtk = (damage: number, element: string, critical: boolean) => {
-    atkRef.current = { phase: "charge", time: 0, damage, element, critical };
-    setTimeout(() => {
-      const c = canvasRef.current; if (!c) return;
-      const d = window.devicePixelRatio || 1;
-      const w = c.width / d, h = c.height / d;
-      floatsRef.current.push({
-        x: w / 2 + (Math.random() - 0.5) * 30, y: h * 0.35,
-        vy: -1.5, damage, alpha: 1, critical,
-      });
-    }, 550);
+  // Trigger sequential attack animation
+  const triggerAtk = (damage: number, element: string, critical: boolean, slimeResults: SlimeResult[], comboMultiplier: number) => {
+    atkRef.current = {
+      phase: "charge", time: 0, damage, element, critical,
+      currentSlimeIdx: 0,
+      slimeResults: slimeResults.length > 0 ? slimeResults : [{ id: "", element, damage, exp_gain: 0, strong: critical }],
+      comboMultiplier,
+    };
   };
 
   const attack = async () => {
@@ -1185,7 +1659,8 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
       }>("/api/boss/attack", token, { method: "POST", body: { slime_ids: attackIds } });
 
       const playerElem = slimes.find((s) => s.id === attackIds[0])?.element || "water";
-      triggerAtk(res.damage, playerElem, isStrong(playerElem, bossState!.boss.element));
+      const results = res.slime_results || [];
+      triggerAtk(res.damage, playerElem, isStrong(playerElem, bossState!.boss.element), results, res.combo_multiplier);
 
       if (bossRef.current) {
         bossRef.current = { ...bossRef.current, current_hp: res.boss_hp_remaining, defeated: res.defeated };
@@ -1195,7 +1670,9 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
       const prevBest = parseInt(localStorage.getItem("boss_best_damage") || "0", 10);
       if (res.damage > prevBest) localStorage.setItem("boss_best_damage", String(res.damage));
 
-      // Show result modal after animation
+      // Show result modal after sequential animation completes
+      const partySize = results.length || 1;
+      const modalDelay = Math.max(1200, partySize * 800 + 600);
       setTimeout(() => {
         setAttackResult({
           damage: res.damage,
@@ -1205,12 +1682,12 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
           defeated: res.defeated,
           nextStage: res.next_stage,
           comboMultiplier: res.combo_multiplier,
-          slimeResults: res.slime_results || [],
+          slimeResults: results,
           bossElement: bossState!.boss.element,
         });
         useAuthStore.getState().fetchUser();
         fetchBoss();
-      }, 1200);
+      }, modalDelay);
     } catch (e) {
       let errMsg = "";
       if (e && typeof e === "object" && "data" in e) {
@@ -1223,7 +1700,8 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
         toastError("\uACF5\uACA9 \uC2E4\uD328");
       }
     }
-    setTimeout(() => setAttacking(false), 1400);
+    const attackResetDelay = Math.max(1400, (partySlimes.length || 1) * 800 + 800);
+    setTimeout(() => setAttacking(false), attackResetDelay);
   };
 
   if (!bossState) {
@@ -1272,7 +1750,7 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const stageLabel = `${boss.stage || 1} / 5 단계`;
+  const stageLabel = `${boss.stage || 1} / 10 단계`;
   const hasParty = partySlimes.length > 0;
 
   return (
@@ -1299,27 +1777,58 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
       {/* Battle Canvas */}
       <div ref={ctrRef} className="relative shrink-0" style={{ height: "38%" }}>
         <canvas ref={canvasRef} className="w-full h-full" />
-        {/* HP overlay */}
+        {/* HP overlay - enhanced with segments, gradient, shine, and glow */}
         <div className="absolute bottom-0 left-0 right-0 px-4 pb-2">
           <div className="flex items-center justify-between text-[9px] mb-1">
             <span className="font-bold font-serif-game" style={{ color: "#F5E6C8" }}>{boss.name}</span>
-            <span className="tabular-nums" style={{ color: "rgba(245,230,200,0.5)" }}>{boss.current_hp.toLocaleString()} / {boss.max_hp.toLocaleString()}</span>
+            <span className="tabular-nums" style={{ color: "rgba(245,230,200,0.5)" }}>
+              {boss.current_hp.toLocaleString()} / {boss.max_hp.toLocaleString()}
+              <span className="ml-1" style={{ color: "rgba(245,230,200,0.3)" }}>({hpPct.toFixed(1)}%)</span>
+            </span>
           </div>
-          <div className="h-2.5 bg-black/50 backdrop-blur-sm rounded-full overflow-hidden" style={{ border: "1px solid rgba(139,105,20,0.2)" }}>
-            <div className="h-full rounded-full transition-all duration-700" style={{
+          <div className="relative h-3 bg-black/60 backdrop-blur-sm rounded-full overflow-hidden" style={{
+            border: "1px solid rgba(139,105,20,0.25)",
+            boxShadow: `0 0 12px ${hpPct > 50 ? "#55EFC4" : hpPct > 20 ? "#FFEAA7" : "#FF6B6B"}20`,
+          }}>
+            {/* HP fill with gradient */}
+            <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-700" style={{
               width: `${hpPct}%`,
-              background: hpPct > 50 ? "linear-gradient(90deg, #55EFC4, #00B894)" : hpPct > 20 ? "linear-gradient(90deg, #FFEAA7, #FDCB6E)" : "linear-gradient(90deg, #FF6B6B, #E17055)",
-              boxShadow: `0 0 8px ${hpPct > 50 ? "#55EFC4" : hpPct > 20 ? "#FFEAA7" : "#FF6B6B"}40`,
+              background: hpPct > 50
+                ? "linear-gradient(180deg, #6FFFB8, #55EFC4 40%, #00B894)"
+                : hpPct > 20
+                  ? "linear-gradient(180deg, #FFE78A, #FFEAA7 40%, #FDCB6E)"
+                  : "linear-gradient(180deg, #FF8E8E, #FF6B6B 40%, #E17055)",
+              boxShadow: `0 0 10px ${hpPct > 50 ? "#55EFC4" : hpPct > 20 ? "#FFEAA7" : "#FF6B6B"}50`,
             }} />
+            {/* Shine effect on HP bar */}
+            <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-700" style={{
+              width: `${hpPct}%`,
+              background: "linear-gradient(180deg, rgba(255,255,255,0.25) 0%, transparent 50%, rgba(0,0,0,0.1) 100%)",
+            }} />
+            {/* Damage preview flash (red flash at edge of HP) */}
+            {attacking && (
+              <div className="absolute inset-y-0 rounded-full animate-pulse" style={{
+                left: `${Math.max(0, hpPct - 5)}%`,
+                width: "5%",
+                background: "linear-gradient(90deg, transparent, rgba(255,80,80,0.4), rgba(255,80,80,0.6))",
+              }} />
+            )}
+            {/* Segment markers at 25%, 50%, 75% */}
+            {[25, 50, 75].map((pct) => (
+              <div key={pct} className="absolute inset-y-0" style={{
+                left: `${pct}%`, width: "1px",
+                background: "rgba(255,255,255,0.12)",
+              }} />
+            ))}
           </div>
         </div>
       </div>
 
       {/* Controls */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-        {/* Stage indicator */}
-        <div className="flex items-center gap-1.5 mb-1">
-          {[1, 2, 3, 4, 5].map((s) => {
+        {/* Stage indicator (10 stages) */}
+        <div className="flex items-center gap-0.5 mb-1">
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((s) => {
             const stgBoss = BOSS_STAGES[s - 1];
             const stgCol = ELEM_COL[stgBoss.element] || "#A29BFE";
             return (
@@ -1484,7 +1993,7 @@ export default function WorldBossPage({ onClose }: { onClose: () => void }) {
             <span className="text-[#D4AF37] font-bold text-lg" style={{ textShadow: "0 0 16px rgba(212,175,55,0.4)" }}>
               {"\uD83C\uDF89"} \uBCF4\uC2A4 \uACA9\uD30C \uC644\uB8CC! {"\uD83C\uDF89"}
             </span>
-            {(boss.stage || 1) < 5 ? (
+            {(boss.stage || 1) < 10 ? (
               <p className="text-white/40 text-xs mt-2">\uB2E4\uC74C \uC2A4\uD14C\uC774\uC9C0\uAC00 \uC900\uBE44\uB429\uB2C8\uB2E4...</p>
             ) : (
               <p className="text-[#FFEAA7] text-xs mt-2 font-bold">\uCD5C\uC885 \uBCF4\uC2A4 \uD074\uB9AC\uC5B4! \uCD95\uD558\uD569\uB2C8\uB2E4!</p>
