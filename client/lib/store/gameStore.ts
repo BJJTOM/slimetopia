@@ -398,6 +398,9 @@ interface GameState {
   // Collection (main feature)
   showCollection: boolean;
 
+  // Slime detail page
+  detailSlimeId: string | null;
+
   // Legacy overlays (used by MiniContentsPage internally)
   showPlaza: boolean;
   showWorldBoss: boolean;
@@ -519,6 +522,9 @@ interface GameState {
 
   // Collection actions (main feature)
   setShowCollection: (show: boolean) => void;
+
+  // Slime detail page
+  setDetailSlimeId: (id: string | null) => void;
 
   // Legacy overlay actions (used internally by MiniContentsPage)
   setShowPlaza: (show: boolean) => void;
@@ -661,6 +667,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   showShorts: false,
   showMiniContents: false,
   showCollection: false,
+  detailSlimeId: null,
   showPlaza: false,
   showWorldBoss: false,
   showTraining: false,
@@ -1364,6 +1371,9 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   // ===== Collection =====
   setShowCollection: (show) => set({ showCollection: show }),
+
+  // ===== Slime detail =====
+  setDetailSlimeId: (id) => set({ detailSlimeId: id }),
 
   // ===== Legacy overlays =====
   setShowPlaza: (show) => set({ showPlaza: show }),

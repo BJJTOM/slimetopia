@@ -24,9 +24,41 @@ const FOOD_ITEMS: Record<number, { name: string; icon: string; desc: string }> =
   8: { name: "원소강화 먹이", icon: "✨", desc: "만복도 +80, 친밀도 +15, 경험치 +10" },
 };
 
+// Badge priority calculation for slime cards
+function getTopBadge(
+  slime: { id: string; species_id: number; level: number; exp: number; element: string; personality: string; hunger: number; is_sick: boolean },
+  allSlimes: { species_id: number; element: string }[],
+  species: { id: number; grade: string }[],
+  collectionEntries: { species_id: number; personality: string }[],
+  collectionRequirements: Record<string, number>,
+): { emoji: string; color: string; label: string } | null {
+  // Priority 1: Hungry
+  if (slime.hunger < 30) return { emoji: "\uD83C\uDF56", color: "#FF6B6B", label: "배고파" };
+  // Priority 2: Collection submittable (not yet registered + level meets requirement)
+  const sp = species.find((s) => s.id === slime.species_id);
+  if (sp) {
+    const alreadySubmitted = collectionEntries.some(
+      (e) => e.species_id === slime.species_id && e.personality === slime.personality
+    );
+    const reqLevel = collectionRequirements[sp.grade] || 999;
+    if (!alreadySubmitted && slime.level >= reqLevel) {
+      return { emoji: "\uD83D\uDCDC", color: "#55EFC4", label: "등록가능" };
+    }
+  }
+  // Priority 3: Same species 2+ (merge possible)
+  const sameSpeciesCount = allSlimes.filter((s) => s.species_id === slime.species_id).length;
+  if (sameSpeciesCount >= 2) return { emoji: "\uD83D\uDD00", color: "#74B9FF", label: "합성" };
+  // Priority 4: Near level-up (EXP >= 80% of next level)
+  const expRequired = slime.level * 100;
+  if (slime.level < 30 && slime.exp >= expRequired * 0.8) {
+    return { emoji: "\u2B06\uFE0F", color: "#FFEAA7", label: "곧 레벨업" };
+  }
+  return null;
+}
+
 export default function InventoryPage() {
   const token = useAuthStore((s) => s.accessToken);
-  const { slimes, species, selectSlime, equippedAccessories, feedSlime, fetchSlimes, getCooldownRemaining, foodInventory, fetchFoodInventory, applyFood, applyFoodBatch, slimeCapacity, slimeCapacityNextTier, fetchCapacityInfo, expandCapacity } = useGameStore();
+  const { slimes, species, selectSlime, equippedAccessories, feedSlime, fetchSlimes, getCooldownRemaining, foodInventory, fetchFoodInventory, applyFood, applyFoodBatch, slimeCapacity, slimeCapacityNextTier, fetchCapacityInfo, expandCapacity, collectionEntries, collectionRequirements, setDetailSlimeId, medicineSlime } = useGameStore();
   const [sortBy, setSortBy] = useState<SortKey>("level");
   const [filterElement, setFilterElement] = useState("all");
   const [filterGrade, setFilterGrade] = useState("all");
@@ -164,8 +196,25 @@ export default function InventoryPage() {
     if (multiSelect) {
       toggleSelect(id);
     } else {
-      selectSlime(id);
+      setDetailSlimeId(id);
     }
+  };
+
+  // "관리 필요" slimes
+  const hungrySlimes = slimes.filter((s) => s.hunger < 30);
+  const sickSlimes = slimes.filter((s) => s.is_sick);
+  const needsCareSlimes = [...sickSlimes, ...hungrySlimes.filter((s) => !s.is_sick)];
+
+  // Quick action handlers for care section
+  const quickFeed = async (id: string) => {
+    if (!token) return;
+    try { await feedSlime(token, id); toastReward("먹이를 줬습니다!", "\uD83C\uDF56"); }
+    catch { toastError("쿨타임 중입니다"); }
+  };
+  const quickMedicine = async (id: string) => {
+    if (!token) return;
+    try { await medicineSlime(token, id); toastReward("치료 완료!", "\uD83D\uDC8A"); }
+    catch { toastError("쿨타임 중입니다"); }
   };
 
   return (
@@ -197,7 +246,7 @@ export default function InventoryPage() {
               fontFamily: "Georgia, 'Times New Roman', serif",
               textShadow: "0 2px 4px rgba(0,0,0,0.5)",
               letterSpacing: "0.05em",
-            }}>인벤토리</h2>
+            }}>내 슬라임</h2>
           </div>
           <span className="text-[10px] px-2.5 py-1 rounded-md font-bold tracking-wide" style={{
             background: "linear-gradient(135deg, rgba(201,168,76,0.15), rgba(139,105,20,0.1))",
@@ -205,7 +254,7 @@ export default function InventoryPage() {
             border: "1px solid rgba(139,105,20,0.4)",
             fontFamily: "Georgia, serif",
           }}>
-            {slimes.length}<span style={{ opacity: 0.5 }}>/30</span>
+            {slimes.length}<span style={{ opacity: 0.5 }}>/{slimeCapacity}</span>
           </span>
         </div>
 
@@ -470,19 +519,58 @@ export default function InventoryPage() {
               </div>
             )}
 
-            {/* Hungry alert */}
-            {!multiSelect && hungryCount > 0 && (
-              <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg" style={{
-                background: "linear-gradient(135deg, rgba(139,105,20,0.08), rgba(61,32,23,0.4))",
-                border: "1px solid rgba(139,105,20,0.25)",
+            {/* 관리 필요 섹션 */}
+            {!multiSelect && needsCareSlimes.length > 0 && (
+              <div className="mb-3 rounded-xl overflow-hidden" style={{
+                background: "linear-gradient(135deg, rgba(139,105,20,0.06), rgba(61,32,23,0.3))",
+                border: "1px solid rgba(139,105,20,0.2)",
               }}>
-                <span className="text-sm">{"😋"}</span>
-                <span className="text-[10px]" style={{ color: "#C9A84C", fontFamily: "Georgia, serif" }}>배고픈 슬라임 {hungryCount}마리</span>
-                <button onClick={() => { setMultiSelect(true); setSelected(new Set(slimes.filter((s) => s.hunger < 30).map((s) => s.id))); }}
-                  className="ml-auto text-[9px] font-bold transition"
-                  style={{ color: "#D4AF37", fontFamily: "Georgia, serif" }}>
-                  선택하기
-                </button>
+                <div className="px-3 py-1.5 flex items-center gap-1.5" style={{
+                  borderBottom: "1px solid rgba(139,105,20,0.1)",
+                  background: "rgba(139,105,20,0.05)",
+                }}>
+                  <span className="text-[10px] font-bold" style={{ color: "#C9A84C", fontFamily: "Georgia, serif" }}>
+                    {"\u26A0\uFE0F"} 관리 필요 ({needsCareSlimes.length}마리)
+                  </span>
+                </div>
+                <div className="divide-y divide-[rgba(139,105,20,0.08)]">
+                  {needsCareSlimes.slice(0, 5).map((slime) => {
+                    const sp = getSpecies(slime.species_id);
+                    const isSick = slime.is_sick;
+                    const isHungry = slime.hunger < 30;
+                    return (
+                      <div key={slime.id} className="flex items-center gap-2 px-3 py-1.5">
+                        <span className="text-sm">{isSick ? "\uD83D\uDC8A" : "\uD83C\uDF56"}</span>
+                        <img src={generateSlimeIconSvg(slime.element, 24, sp?.grade, undefined, slime.species_id)}
+                          alt="" className="w-6 h-6" draggable={false} />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[10px] font-bold truncate block" style={{ color: "#F5E6C8", fontFamily: "Georgia, serif" }}>
+                            {slime.name || sp?.name || "???"}
+                          </span>
+                          <span className="text-[9px]" style={{ color: isSick ? "#FF6B6B" : "#FFEAA7" }}>
+                            {isSick ? "아파요" : "배고파!"}
+                          </span>
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); isSick ? quickMedicine(slime.id) : quickFeed(slime.id); }}
+                          className="text-[9px] font-bold px-2.5 py-1 rounded-lg transition active:scale-95"
+                          style={{
+                            background: isSick ? "rgba(255,107,107,0.15)" : "rgba(212,175,55,0.15)",
+                            color: isSick ? "#FF6B6B" : "#D4AF37",
+                            border: `1px solid ${isSick ? "rgba(255,107,107,0.3)" : "rgba(212,175,55,0.3)"}`,
+                            fontFamily: "Georgia, serif",
+                          }}>
+                          {isSick ? "치료하기" : "먹이주기"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                  {needsCareSlimes.length > 5 && (
+                    <div className="px-3 py-1 text-center">
+                      <span className="text-[9px]" style={{ color: "rgba(201,168,76,0.4)" }}>외 {needsCareSlimes.length - 5}마리...</span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -495,6 +583,9 @@ export default function InventoryPage() {
                   const gradeColor = sp ? gradeColors[sp.grade] || "#B2BEC3" : "#B2BEC3";
                   const isSelected = selected.has(slime.id);
                   const personality = personalityEmoji[slime.personality] || "";
+                  const expRequired = slime.level * 100;
+                  const expPct = slime.level >= 30 ? 100 : Math.min((slime.exp / expRequired) * 100, 100);
+                  const badge = getTopBadge(slime, slimes, species, collectionEntries, collectionRequirements);
 
                   return (
                     <button key={slime.id} onClick={() => handleSlimeClick(slime.id)}
@@ -520,13 +611,24 @@ export default function InventoryPage() {
                         <div className="absolute top-0 right-0 w-px h-full" style={{ background: "#8B6914" }} />
                       </div>
 
+                      {/* Status badge (top-right) */}
+                      {badge && !multiSelect && (
+                        <div className="absolute -top-1 -right-1 z-10 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full" style={{
+                          background: `${badge.color}25`,
+                          border: `1px solid ${badge.color}50`,
+                        }}>
+                          <span className="text-[8px]">{badge.emoji}</span>
+                          <span className="text-[7px] font-bold" style={{ color: badge.color }}>{badge.label}</span>
+                        </div>
+                      )}
+
                       {/* Select checkbox */}
                       {multiSelect && (
                         <div className="absolute top-1.5 left-1.5 w-4 h-4 rounded-full flex items-center justify-center z-10" style={{
                           background: isSelected ? "linear-gradient(135deg, #2ECC71, #27AE60)" : "rgba(139,105,20,0.15)",
                           border: isSelected ? "1.5px solid #27AE60" : "1px solid rgba(139,105,20,0.3)",
                         }}>
-                          {isSelected && <span className="text-[8px] font-bold" style={{ color: "#F5E6C8" }}>{"✓"}</span>}
+                          {isSelected && <span className="text-[8px] font-bold" style={{ color: "#F5E6C8" }}>{"\u2713"}</span>}
                         </div>
                       )}
 
@@ -573,6 +675,16 @@ export default function InventoryPage() {
                             {elementNames[slime.element]}
                           </span>
                         </div>
+                      </div>
+
+                      {/* EXP progress bar */}
+                      <div className="w-full h-1 rounded-full overflow-hidden" style={{ background: "rgba(139,105,20,0.1)" }}>
+                        <div className="h-full rounded-full transition-all duration-500" style={{
+                          width: `${expPct}%`,
+                          background: slime.level >= 30
+                            ? "linear-gradient(90deg, #D4AF37, #FFEAA7)"
+                            : "linear-gradient(90deg, #74B9FF, #A29BFE)",
+                        }} />
                       </div>
 
                       {/* Stat bars */}
