@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { api, authApi } from "@/lib/api/client";
+import { api, authApi, ApiError } from "@/lib/api/client";
 
 interface User {
   id: string;
@@ -56,11 +56,27 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ accessToken: newToken, refreshToken: localStorage.getItem("refresh_token") });
       }
       set({ user, isLoading: false });
-    } catch {
-      // Token expired or invalid — clear auth so page redirects to login
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
-      set({ user: null, accessToken: null, refreshToken: null, isLoading: false });
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        // Auth truly failed (refresh also failed) — clear and redirect
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        set({ user: null, accessToken: null, refreshToken: null, isLoading: false });
+      } else {
+        // Network/server error — keep tokens, retry once after delay
+        await new Promise((r) => setTimeout(r, 1500));
+        try {
+          const user = await authApi<User>("/api/user/me", get().accessToken || token);
+          const newToken = localStorage.getItem("access_token");
+          if (newToken && newToken !== token) {
+            set({ accessToken: newToken, refreshToken: localStorage.getItem("refresh_token") });
+          }
+          set({ user, isLoading: false });
+        } catch {
+          // Second attempt also failed — stop loading but keep tokens
+          set({ isLoading: false });
+        }
+      }
     }
   },
 
