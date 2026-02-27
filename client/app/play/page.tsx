@@ -140,8 +140,8 @@ export default function PlayPage() {
         {/* Home background overlay */}
         {activePanel === "home" && homeBgId !== "default" && (
           <div
-            className={`absolute inset-0 z-0 pointer-events-none ${homeBg.animated || ""}`}
-            style={{ background: homeBg.css, opacity: homeBg.opacity ?? 0.55 }}
+            className={`absolute inset-0 z-0 pointer-events-none ${"animated" in homeBg ? (homeBg.animated || "") : ""}`}
+            style={{ background: homeBg.css, opacity: ("opacity" in homeBg ? homeBg.opacity : undefined) ?? 0.55 }}
           />
         )}
         {/* Canvas: always mounted, hidden when not on home tab */}
