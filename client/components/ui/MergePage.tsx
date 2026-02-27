@@ -6,6 +6,7 @@ import { useGameStore, type Slime, type SlimeSpecies, type CraftingRecipe } from
 import { generateSlimeIconSvg } from "@/lib/slimeSvg";
 import { elementColors, elementNames, gradeColors, gradeNames } from "@/lib/constants";
 import { authApi } from "@/lib/api/client";
+import { toastSuccess } from "@/components/ui/Toast";
 
 const rarityColors: Record<string, string> = {
   common: "#B2BEC3",
@@ -259,6 +260,14 @@ export default function MergePage() {
         @keyframes stagger-slide-in {
           from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes batch-result-fade-in {
+          from { opacity: 0; transform: translateY(12px) scale(0.95); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes sparkle-shine {
+          0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+          50% { opacity: 1; transform: scale(1) rotate(180deg); }
         }
       `}</style>
     </div>
@@ -688,6 +697,102 @@ function ManualMergeTab({
         </div>
       </div>
 
+      {/* Recommended Recipes — undiscovered recipes the player can make */}
+      {recipes.length > 0 && (() => {
+        // Find undiscovered, non-hidden recipes where the player owns the required species
+        const ownedSpeciesIds = new Set(slimes.map(s => s.species_id));
+        const recommendations = recipes
+          .filter(r => !r.discovered && !r.hidden)
+          .filter(r => ownedSpeciesIds.has(r.input_a) && ownedSpeciesIds.has(r.input_b))
+          .slice(0, 3);
+
+        if (recommendations.length === 0) return null;
+
+        return (
+          <>
+            {/* Section divider */}
+            <div className="flex items-center gap-2 mx-4 mt-4 mb-3">
+              <div className="flex-1 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(201,168,76,0.4))" }} />
+              <span className="text-[8px]" style={{ color: "rgba(201,168,76,0.5)" }}>&#9734;</span>
+              <div className="flex-1 h-px" style={{ background: "linear-gradient(90deg, rgba(201,168,76,0.4), transparent)" }} />
+            </div>
+
+            <div className="mx-3 mb-3 rounded-lg relative"
+              style={{
+                background: "linear-gradient(170deg, #2D2518 0%, #1E1A0D 100%)",
+                border: "1.5px solid rgba(201,168,76,0.3)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.3), inset 0 0 20px rgba(201,168,76,0.04)",
+              }}>
+              <div className="flex items-center gap-2 px-4 py-2.5" style={{ borderBottom: "1px solid rgba(139,105,20,0.2)" }}>
+                <span className="text-[9px] tracking-[0.15em] font-bold" style={{ color: "#C9A84C", fontFamily: "Georgia, serif" }}>
+                  RECOMMENDED RECIPES
+                </span>
+                <span className="text-[8px] ml-auto px-1.5 py-0.5 rounded" style={{
+                  background: "rgba(201,168,76,0.12)",
+                  color: "rgba(201,168,76,0.6)",
+                  border: "1px solid rgba(201,168,76,0.2)",
+                }}>
+                  보유 슬라임 기반
+                </span>
+              </div>
+              <div className="p-3 space-y-1.5">
+                {recommendations.map((recipe, idx) => {
+                  const inputAName = getSpeciesName(recipe.input_a);
+                  const inputBName = getSpeciesName(recipe.input_b);
+                  // Find matching slimes for auto-fill
+                  const slimeForA = slimes.find(s => s.species_id === recipe.input_a);
+                  const slimeForB = slimes.find(s => s.species_id === recipe.input_b && s.id !== slimeForA?.id);
+                  const canAutoFill = !!slimeForA && !!slimeForB;
+
+                  return (
+                    <button
+                      key={recipe.id}
+                      disabled={!canAutoFill}
+                      onClick={() => {
+                        if (canAutoFill) {
+                          setMergeSlot("A", slimeForA.id);
+                          setMergeSlot("B", slimeForB.id);
+                        }
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-all active:scale-[0.98] text-left"
+                      style={{
+                        background: "linear-gradient(160deg, rgba(139,105,20,0.08), rgba(139,105,20,0.03))",
+                        border: "1px solid rgba(139,105,20,0.18)",
+                        animation: `stagger-slide-in 0.3s ease-out ${idx * 60}ms both`,
+                      }}
+                    >
+                      <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0" style={{
+                        background: "rgba(201,168,76,0.1)",
+                        border: "1px solid rgba(201,168,76,0.2)",
+                      }}>
+                        <span className="text-[10px]" style={{ color: "#C9A84C" }}>?</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[11px] font-medium truncate block" style={{ color: "#F5E6C8", fontFamily: "Georgia, serif" }}>
+                          {inputAName} + {inputBName}
+                        </span>
+                        {recipe.hint && (
+                          <span className="text-[8px] italic truncate block mt-0.5" style={{ color: "rgba(201,168,76,0.4)", fontFamily: "Georgia, serif" }}>
+                            {recipe.hint}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[8px] px-1.5 py-1 rounded font-bold shrink-0" style={{
+                        background: canAutoFill ? "rgba(201,168,76,0.15)" : "rgba(107,58,42,0.1)",
+                        color: canAutoFill ? "#C9A84C" : "rgba(107,58,42,0.4)",
+                        border: canAutoFill ? "1px solid rgba(201,168,76,0.3)" : "1px solid rgba(107,58,42,0.15)",
+                      }}>
+                        {canAutoFill ? "자동 선택" : "재료 부족"}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        );
+      })()}
+
       {/* Recipe Book — Ancient recipe book pages */}
       {recipes.length > 0 && (() => {
         const RECIPES_PER_PAGE = 10;
@@ -732,17 +837,18 @@ function ManualMergeTab({
                   </span>
                   <div className="flex-1 h-px" style={{ background: "linear-gradient(90deg, transparent, #8B6914, transparent)" }} />
                 </div>
-                <div className="flex items-center gap-1.5 ml-3">
-                  <span className="text-[9px] font-bold" style={{ color: "#6B3A2A" }}>{recipes.filter((r) => r.discovered).length}</span>
-                  <span className="text-[9px]" style={{ color: "rgba(107,58,42,0.3)" }}>/</span>
-                  <span className="text-[9px]" style={{ color: "rgba(107,58,42,0.5)" }}>{recipes.length}</span>
-                  <div className="w-12 h-1 rounded-full overflow-hidden ml-1" style={{
+                <div className="flex items-center gap-2 ml-3">
+                  <span className="text-[13px] font-bold" style={{ color: "#6B3A2A", fontFamily: "Georgia, serif" }}>{recipes.filter((r) => r.discovered).length}</span>
+                  <span className="text-[12px] font-bold" style={{ color: "rgba(107,58,42,0.4)" }}>/</span>
+                  <span className="text-[12px] font-medium" style={{ color: "rgba(107,58,42,0.6)" }}>{recipes.length}</span>
+                  <div className="w-16 h-1.5 rounded-full overflow-hidden ml-1" style={{
                     background: "rgba(139,105,20,0.12)",
                     border: "1px solid rgba(139,105,20,0.15)",
                   }}>
-                    <div className="h-full rounded-full" style={{
+                    <div className="h-full rounded-full transition-all duration-500" style={{
                       width: `${recipes.length > 0 ? (recipes.filter(r => r.discovered).length / recipes.length) * 100 : 0}%`,
                       background: "linear-gradient(90deg, #8B6914, #C9A84C)",
+                      boxShadow: "0 0 4px rgba(201,168,76,0.4)",
                     }} />
                   </div>
                 </div>
@@ -874,8 +980,8 @@ function ManualMergeTab({
               <div className="flex items-center justify-center py-2 px-6" style={{ borderTop: "1px solid rgba(139,105,20,0.15)" }}>
                 <div className="flex items-center gap-2 w-full">
                   <div className="flex-1 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(139,105,20,0.3), transparent)" }} />
-                  <span className="text-[8px]" style={{ color: "#8B6914", fontFamily: "Georgia, serif" }}>
-                    -- {recipes.filter(r => r.discovered).length} / {recipes.length} --
+                  <span className="text-[11px] font-medium" style={{ color: "#8B6914", fontFamily: "Georgia, serif" }}>
+                    -- {recipes.filter(r => r.discovered).length} / {recipes.length} discovered --
                   </span>
                   <div className="flex-1 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(139,105,20,0.3), transparent)" }} />
                 </div>
@@ -1125,7 +1231,21 @@ function BatchMergeTab({
       )}
 
       {/* Result modal */}
-      {showResults && results.length > 0 && (
+      {showResults && results.length > 0 && (() => {
+        // Grade-based grouping for summary cards
+        const gradeOrder = ["mythic", "legendary", "epic", "rare", "uncommon", "common"];
+        const gradeCounts: Record<string, number> = {};
+        for (const r of results) {
+          if (r.success && r.resultGrade) {
+            gradeCounts[r.resultGrade] = (gradeCounts[r.resultGrade] || 0) + 1;
+          }
+        }
+        const isRarePlus = (grade: string) => {
+          const rareIdx = gradeOrder.indexOf("rare");
+          return gradeOrder.indexOf(grade) <= rareIdx && gradeOrder.indexOf(grade) >= 0;
+        };
+
+        return (
         <div className="mb-4">
           {/* Summary — parchment style */}
           <div className="flex gap-2 mb-3">
@@ -1147,19 +1267,71 @@ function BatchMergeTab({
             )}
           </div>
 
-          {/* Detail list — dark leather cards */}
+          {/* Grade grouping summary cards */}
+          {Object.keys(gradeCounts).length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {gradeOrder.filter(g => gradeCounts[g]).map((grade, idx) => {
+                const gColor = gradeColors[grade] || "#B2BEC3";
+                return (
+                  <div key={grade}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg relative overflow-hidden"
+                    style={{
+                      background: `linear-gradient(135deg, ${gColor}18, ${gColor}08)`,
+                      border: `1.5px solid ${gColor}40`,
+                      animation: `batch-result-fade-in 0.4s ease-out ${idx * 80}ms both`,
+                    }}>
+                    {isRarePlus(grade) && (
+                      <span className="absolute -top-0.5 -right-0.5 text-[8px]" style={{
+                        animation: `sparkle-shine 1.5s ease-in-out ${idx * 200}ms infinite`,
+                        color: gColor,
+                      }}>&#10022;</span>
+                    )}
+                    <span className="text-[10px] font-bold" style={{ color: gColor }}>
+                      {gradeNames[grade] || grade}
+                    </span>
+                    <span className="text-[12px] font-black" style={{
+                      color: gColor,
+                      textShadow: isRarePlus(grade) ? `0 0 6px ${gColor}60` : "none",
+                    }}>
+                      x{gradeCounts[grade]}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Detail list — dark leather cards with stagger animation */}
           <div className="space-y-1 max-h-[250px] overflow-y-auto game-scroll">
-            {results.map((r, i) => (
+            {results.map((r, i) => {
+              const isRareResult = r.success && isRarePlus(r.resultGrade);
+              return (
               <div key={i}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-[10px]"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-[10px] relative overflow-hidden"
                 style={{
                   background: r.success
                     ? "linear-gradient(160deg, #2D2518, #1E1A0D)"
                     : "linear-gradient(160deg, #3D2117, #2A1810)",
                   border: r.success
-                    ? "1px solid rgba(139,105,20,0.25)"
+                    ? isRareResult
+                      ? `1px solid ${(gradeColors[r.resultGrade] || "#B2BEC3")}40`
+                      : "1px solid rgba(139,105,20,0.25)"
                     : "1px solid rgba(139,69,19,0.25)",
+                  animation: `batch-result-fade-in 0.35s ease-out ${i * 60}ms both`,
                 }}>
+                {/* Sparkle effect for rare+ results */}
+                {isRareResult && (
+                  <>
+                    <span className="absolute top-0.5 right-1 text-[7px]" style={{
+                      animation: `sparkle-shine 2s ease-in-out ${i * 150}ms infinite`,
+                      color: gradeColors[r.resultGrade] || "#B2BEC3",
+                    }}>&#10022;</span>
+                    <span className="absolute bottom-0.5 right-4 text-[5px]" style={{
+                      animation: `sparkle-shine 2s ease-in-out ${i * 150 + 600}ms infinite`,
+                      color: gradeColors[r.resultGrade] || "#B2BEC3",
+                    }}>&#10022;</span>
+                  </>
+                )}
                 <span style={{ color: r.success ? "#C9A84C" : "#8B6914", fontFamily: "Georgia, serif" }}>
                   {r.success ? "\u2713" : "\u2717"}
                 </span>
@@ -1181,7 +1353,8 @@ function BatchMergeTab({
                   <span className="ml-auto" style={{ color: "#8B6914", fontFamily: "Georgia, serif" }}>{r.error}</span>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
 
           <button onClick={() => { setShowResults(false); setResults([]); }}
@@ -1195,7 +1368,8 @@ function BatchMergeTab({
             확인
           </button>
         </div>
-      )}
+        );
+      })()}
 
       {/* Merge groups */}
       {mergeGroups.length === 0 ? (

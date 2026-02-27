@@ -118,7 +118,7 @@ func (h *Handler) GetCodexSets(c *fiber.Ctx) error {
 		}
 		for _, sid := range s.SpeciesIDs {
 			var exists bool
-			pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM codex_entries WHERE user_id = $1 AND species_id = $2)`, userID, sid).Scan(&exists)
+			pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM collection_entries WHERE user_id = $1 AND species_id = $2)`, userID, sid).Scan(&exists)
 			if exists {
 				sp.Completed++
 			}

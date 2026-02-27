@@ -92,11 +92,11 @@ const ELEMENT_COLORS: Record<string, SlimeColors> = {
     iris: "#6838E0", glow: "#9878F0", blush: "#D8A0F0",
   },
   earth: {
-    body: "#E87858", light: "#FFC0A0", dark: "#B04838", accent: "#FFD8C8",
+    body: "#D06848", light: "#FFC0A0", dark: "#A04030", accent: "#FFD8C8",
     iris: "#C04828", glow: "#F09870", blush: "#FFB898",
   },
   wind: {
-    body: "#D8E4E8", light: "#F0F5F8", dark: "#A8B8C0", accent: "#FFFFFF",
+    body: "#B0D0DB", light: "#F0F5F8", dark: "#7FA8B8", accent: "#FFFFFF",
     iris: "#88A8B8", glow: "#C8D8E0", blush: "#F0C0D0",
   },
   celestial: {
@@ -125,7 +125,7 @@ function getSpeciesColors(element: string, speciesId: number): SlimeColors {
 
   const h1 = speciesHash(speciesId, 100);
   const h2 = speciesHash(speciesId, 101);
-  const hueShift = ((h1 % 37) - 18); // ±18 degrees
+  const hueShift = ((h1 % 29) - 14); // ±14 degrees
   const lightShift = ((h2 % 11) - 5); // ±5 lightness
 
   function shiftColor(hex: string): string {
@@ -529,8 +529,10 @@ function getEyes(personality: string, irisColor: string): string {
         <circle cx="35" cy="52" r="2" fill="white" opacity="0.6"/>
         <circle cx="61" cy="52" r="2" fill="white" opacity="0.6"/>
         <!-- Sparkle dot -->
-        <circle cx="43" cy="47" r="1" fill="white" opacity="0.8"/>
-        <circle cx="69" cy="47" r="1" fill="white" opacity="0.8"/>
+        <circle cx="43" cy="47" r="1" fill="white" opacity="0.95"/>
+        <circle cx="69" cy="47" r="1" fill="white" opacity="0.95"/>
+        <!-- Exclamation mark -->
+        <text x="74" y="38" font-size="8" font-weight="bold" fill="#FF6B6B" opacity="0.75" font-family="sans-serif">!</text>
       `;
     case "chill":
       // Half-closed drowsy eyes
@@ -545,8 +547,8 @@ function getEyes(personality: string, irisColor: string): string {
         <ellipse cx="37" cy="51" rx="4" ry="2.2" fill="${pupil}"/>
         <ellipse cx="63" cy="51" rx="4" ry="2.2" fill="${pupil}"/>
         <!-- Eyelid lines -->
-        <path d="M29,47 Q37,44 45,47" fill="none" stroke="#2D3436" stroke-width="1.8" stroke-linecap="round"/>
-        <path d="M55,47 Q63,44 71,47" fill="none" stroke="#2D3436" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M29,48 Q37,45 45,48" fill="none" stroke="#2D3436" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M55,48 Q63,45 71,48" fill="none" stroke="#2D3436" stroke-width="1.8" stroke-linecap="round"/>
         <!-- Tiny highlight -->
         <circle cx="40" cy="49" r="1.5" fill="white" opacity="0.7"/>
         <circle cx="66" cy="49" r="1.5" fill="white" opacity="0.7"/>
@@ -560,21 +562,23 @@ function getEyes(personality: string, irisColor: string): string {
         <!-- Iris -->
         <ellipse cx="37" cy="49" rx="7.5" ry="8" fill="${irisColor}"/>
         <ellipse cx="63" cy="49" rx="7.5" ry="8" fill="${irisColor}"/>
-        <!-- Star pupil (dreamy food eyes) -->
-        <path d="M37,44 L38.5,47.5 L42,48 L39,50.5 L39.5,54 L37,52 L34.5,54 L35,50.5 L32,48 L35.5,47.5 Z" fill="${pupil}"/>
-        <path d="M63,44 L64.5,47.5 L68,48 L65,50.5 L65.5,54 L63,52 L60.5,54 L61,50.5 L58,48 L61.5,47.5 Z" fill="${pupil}"/>
+        <!-- Star pupil (dreamy food eyes, slightly larger) -->
+        <path d="M37,43.5 L38.8,47.5 L42.5,48.2 L39.2,50.8 L39.8,54.5 L37,52 L34.2,54.5 L34.8,50.8 L31.5,48.2 L35.2,47.5 Z" fill="${pupil}"/>
+        <path d="M63,43.5 L64.8,47.5 L68.5,48.2 L65.2,50.8 L65.8,54.5 L63,52 L60.2,54.5 L60.8,50.8 L57.5,48.2 L61.2,47.5 Z" fill="${pupil}"/>
         <!-- Highlight -->
         <circle cx="40" cy="45" r="3" fill="white" opacity="0.85"/>
         <circle cx="66" cy="45" r="3" fill="white" opacity="0.85"/>
         <!-- Sparkle -->
         <circle cx="34" cy="51" r="1.2" fill="white" opacity="0.5"/>
         <circle cx="60" cy="51" r="1.2" fill="white" opacity="0.5"/>
+        <!-- Drool -->
+        <ellipse cx="44" cy="56" rx="1" ry="2" fill="white" opacity="0.35"/>
       `;
     case "curious":
       // Asymmetric — one big, one smaller
       return `
         <!-- Sclera (left big, right normal) -->
-        <ellipse cx="36" cy="48" rx="11.5" ry="12" fill="white"/>
+        <ellipse cx="36" cy="48" rx="12.5" ry="13" fill="white"/>
         <ellipse cx="64" cy="48" rx="8.5" ry="9.5" fill="white"/>
         <!-- Iris -->
         <ellipse cx="37" cy="49" rx="8.5" ry="9" fill="${irisColor}"/>
@@ -598,8 +602,8 @@ function getEyes(personality: string, irisColor: string): string {
       // Sharp angled brows over big eyes
       return `
         <!-- Angry brows -->
-        <line x1="27" y1="38" x2="44" y2="41" stroke="#2D3436" stroke-width="2.8" stroke-linecap="round"/>
-        <line x1="56" y1="41" x2="73" y2="38" stroke="#2D3436" stroke-width="2.8" stroke-linecap="round"/>
+        <line x1="27" y1="38" x2="44" y2="41" stroke="#2D3436" stroke-width="3.2" stroke-linecap="round"/>
+        <line x1="56" y1="41" x2="73" y2="38" stroke="#2D3436" stroke-width="3.2" stroke-linecap="round"/>
         <!-- Sclera -->
         <ellipse cx="37" cy="49" rx="10" ry="10" fill="white"/>
         <ellipse cx="63" cy="49" rx="10" ry="10" fill="white"/>
@@ -641,6 +645,11 @@ function getEyes(personality: string, irisColor: string): string {
         <!-- Sparkle dot -->
         <circle cx="43" cy="48" r="0.8" fill="white" opacity="0.7"/>
         <circle cx="69" cy="48" r="0.8" fill="white" opacity="0.7"/>
+        <!-- Extra eye sparkle dots -->
+        <circle cx="40" cy="47" r="0.6" fill="white" opacity="0.8"/>
+        <circle cx="66" cy="47" r="0.6" fill="white" opacity="0.8"/>
+        <circle cx="36" cy="46" r="0.5" fill="white" opacity="0.6"/>
+        <circle cx="62" cy="46" r="0.5" fill="white" opacity="0.6"/>
       `;
   }
 }
@@ -650,10 +659,10 @@ function getEyes(personality: string, irisColor: string): string {
 function getMouth(personality: string): string {
   switch (personality) {
     case "energetic":
-      // Big happy D-shaped smile with tongue
+      // Big happy D-shaped smile with tongue (widened)
       return `
-        <path d="M38,60 Q50,73 62,60" fill="#C83C28" stroke="#2D3436" stroke-width="1.8"/>
-        <path d="M38,60 Q50,65 62,60" fill="none" stroke="#2D3436" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M36,60 Q50,73 64,60" fill="#C83C28" stroke="#2D3436" stroke-width="1.8"/>
+        <path d="M36,60 Q50,65 64,60" fill="none" stroke="#2D3436" stroke-width="1.8" stroke-linecap="round"/>
         <ellipse cx="50" cy="67" rx="5" ry="3" fill="#FF8888" opacity="0.8"/>
       `;
     case "chill":
@@ -667,18 +676,18 @@ function getMouth(personality: string): string {
         <ellipse cx="58" cy="62" rx="1.5" ry="3.5" fill="white" opacity="0.25"/>
       `;
     case "curious":
-      // Small round "o" mouth
+      // Small round "o" mouth (enlarged)
       return `
-        <ellipse cx="50" cy="62" rx="4.5" ry="5" fill="#C83C28" stroke="#2D3436" stroke-width="1.5"/>
-        <ellipse cx="50" cy="61" rx="2.5" ry="2" fill="white" opacity="0.2"/>
+        <ellipse cx="50" cy="62" rx="5.5" ry="6" fill="#C83C28" stroke="#2D3436" stroke-width="1.5"/>
+        <ellipse cx="50" cy="61" rx="3" ry="2.5" fill="white" opacity="0.2"/>
       `;
     case "tsundere":
       // Pouty omega-shaped cat mouth (ω)
       return `<path d="M42,62 Q46,58 50,62 Q54,58 58,62" fill="none" stroke="#2D3436" stroke-width="2.2" stroke-linecap="round"/>`;
     case "gentle":
     default:
-      // Soft sweet arc smile
-      return `<path d="M42,60 Q50,67 58,60" fill="none" stroke="#2D3436" stroke-width="2.2" stroke-linecap="round"/>`;
+      // Soft sweet arc smile (widened)
+      return `<path d="M40,60 Q50,67 60,60" fill="none" stroke="#2D3436" stroke-width="2.2" stroke-linecap="round"/>`;
   }
 }
 
@@ -688,8 +697,8 @@ function getBlush(personality: string, blushColor: string, uid: string): string 
   if (personality === "tsundere") {
     return `
       <defs><filter id="blr_${uid}"><feGaussianBlur stdDeviation="1.5"/></filter></defs>
-      <ellipse cx="24" cy="56" rx="8.5" ry="5" fill="${blushColor}" opacity="0.55" filter="url(#blr_${uid})"/>
-      <ellipse cx="76" cy="56" rx="8.5" ry="5" fill="${blushColor}" opacity="0.55" filter="url(#blr_${uid})"/>
+      <ellipse cx="24" cy="56" rx="8.5" ry="5" fill="${blushColor}" opacity="0.65" filter="url(#blr_${uid})"/>
+      <ellipse cx="76" cy="56" rx="8.5" ry="5" fill="${blushColor}" opacity="0.65" filter="url(#blr_${uid})"/>
     `;
   }
   return `
@@ -809,32 +818,368 @@ function getElementDecor(element: string, colors: SlimeColors): string {
   }
 }
 
+// ─── Element Particles ──────────────────────────────────────────────────────
+
+function getElementParticles(element: string, colors: SlimeColors, uid: string): { defs: string; overlay: string } {
+  const puid = `ep_${uid}`;
+  switch (element) {
+    case "fire":
+      // 5 floating embers with rising + fading animation
+      return {
+        defs: "",
+        overlay: `
+          <g>
+            <circle cx="22" cy="30" r="1.8" fill="#FF6633" opacity="0.7">
+              <animate attributeName="cy" values="30;22;30" dur="2s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.7;0.15;0.7" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="78" cy="26" r="1.4" fill="#FF8844" opacity="0.6">
+              <animate attributeName="cy" values="26;18;26" dur="2.4s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.6;0.1;0.6" dur="2.4s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="30" cy="70" r="1.2" fill="#FFAA44" opacity="0.5">
+              <animate attributeName="cy" values="70;62;70" dur="1.8s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.5;0.1;0.5" dur="1.8s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="70" cy="74" r="1.5" fill="#FF7733" opacity="0.55">
+              <animate attributeName="cy" values="74;66;74" dur="2.2s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.55;0.1;0.55" dur="2.2s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="50" cy="14" r="1" fill="#FFCC44" opacity="0.45">
+              <animate attributeName="cy" values="14;8;14" dur="1.6s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.45;0.05;0.45" dur="1.6s" repeatCount="indefinite"/>
+            </circle>
+          </g>`,
+      };
+    case "water":
+      // 4 water droplets with size oscillation
+      return {
+        defs: "",
+        overlay: `
+          <g>
+            <ellipse cx="20" cy="34" rx="1.5" ry="2.2" fill="${colors.accent}" opacity="0.5">
+              <animate attributeName="ry" values="2.2;3;2.2" dur="2s" repeatCount="indefinite"/>
+              <animate attributeName="rx" values="1.5;2;1.5" dur="2s" repeatCount="indefinite"/>
+            </ellipse>
+            <ellipse cx="80" cy="42" rx="1.2" ry="1.8" fill="${colors.accent}" opacity="0.45">
+              <animate attributeName="ry" values="1.8;2.6;1.8" dur="2.3s" repeatCount="indefinite"/>
+              <animate attributeName="rx" values="1.2;1.7;1.2" dur="2.3s" repeatCount="indefinite"/>
+            </ellipse>
+            <ellipse cx="28" cy="72" rx="1" ry="1.5" fill="${colors.accent}" opacity="0.4">
+              <animate attributeName="ry" values="1.5;2.2;1.5" dur="1.8s" repeatCount="indefinite"/>
+              <animate attributeName="rx" values="1;1.4;1" dur="1.8s" repeatCount="indefinite"/>
+            </ellipse>
+            <ellipse cx="74" cy="68" rx="1.3" ry="2" fill="${colors.accent}" opacity="0.35">
+              <animate attributeName="ry" values="2;2.8;2" dur="2.5s" repeatCount="indefinite"/>
+              <animate attributeName="rx" values="1.3;1.8;1.3" dur="2.5s" repeatCount="indefinite"/>
+            </ellipse>
+          </g>`,
+      };
+    case "grass":
+      // 3 spinning leaves
+      return {
+        defs: "",
+        overlay: `
+          <g>
+            <g transform-origin="18 28">
+              <path d="M16,28 Q18,24 20,28 Q18,32 16,28" fill="#44DD77" opacity="0.5"/>
+              <animateTransform attributeName="transform" type="rotate" from="0 18 28" to="360 18 28" dur="5s" repeatCount="indefinite"/>
+            </g>
+            <g transform-origin="82 36">
+              <path d="M80,36 Q82,32 84,36 Q82,40 80,36" fill="#33CC66" opacity="0.4"/>
+              <animateTransform attributeName="transform" type="rotate" from="0 82 36" to="360 82 36" dur="6s" repeatCount="indefinite"/>
+            </g>
+            <g transform-origin="26 74">
+              <path d="M24,74 Q26,70 28,74 Q26,78 24,74" fill="#55EE88" opacity="0.35"/>
+              <animateTransform attributeName="transform" type="rotate" from="0 26 74" to="360 26 74" dur="4.5s" repeatCount="indefinite"/>
+            </g>
+          </g>`,
+      };
+    case "ice":
+      // 4 spinning snowflakes
+      return {
+        defs: "",
+        overlay: `
+          <g>
+            <g transform-origin="18 30">
+              <text x="18" y="30" font-size="6" fill="${colors.accent}" text-anchor="middle" opacity="0.5" font-family="sans-serif">*</text>
+              <animateTransform attributeName="transform" type="rotate" from="0 18 30" to="360 18 30" dur="6s" repeatCount="indefinite"/>
+            </g>
+            <g transform-origin="82 26">
+              <text x="82" y="26" font-size="5" fill="white" text-anchor="middle" opacity="0.45" font-family="sans-serif">*</text>
+              <animateTransform attributeName="transform" type="rotate" from="0 82 26" to="360 82 26" dur="5s" repeatCount="indefinite"/>
+            </g>
+            <g transform-origin="24 70">
+              <text x="24" y="70" font-size="4" fill="${colors.accent}" text-anchor="middle" opacity="0.35" font-family="sans-serif">*</text>
+              <animateTransform attributeName="transform" type="rotate" from="0 24 70" to="360 24 70" dur="7s" repeatCount="indefinite"/>
+            </g>
+            <g transform-origin="76 66">
+              <text x="76" y="66" font-size="5" fill="white" text-anchor="middle" opacity="0.3" font-family="sans-serif">*</text>
+              <animateTransform attributeName="transform" type="rotate" from="0 76 66" to="360 76 66" dur="5.5s" repeatCount="indefinite"/>
+            </g>
+          </g>`,
+      };
+    case "electric":
+      // 3 lightning sparks that flash
+      return {
+        defs: "",
+        overlay: `
+          <g>
+            <path d="M16,36 L18,32 L17,35 L20,30" fill="none" stroke="#FFE040" stroke-width="1.2" opacity="0.6" stroke-linecap="round">
+              <animate attributeName="opacity" values="0.6;0;0.6;0;0.6" dur="0.8s" repeatCount="indefinite"/>
+            </path>
+            <path d="M82,44 L84,40 L83,43 L86,38" fill="none" stroke="#FFCC20" stroke-width="1" opacity="0.5" stroke-linecap="round">
+              <animate attributeName="opacity" values="0;0.5;0;0.5;0" dur="1s" repeatCount="indefinite"/>
+            </path>
+            <path d="M24,72 L26,68 L25,71 L28,66" fill="none" stroke="#FFD830" stroke-width="1.1" opacity="0.45" stroke-linecap="round">
+              <animate attributeName="opacity" values="0.45;0;0.45;0;0.45" dur="0.7s" repeatCount="indefinite"/>
+            </path>
+          </g>`,
+      };
+    case "dark":
+      // 4 shadow wisps with blur+fade
+      return {
+        defs: `<filter id="${puid}_blur"><feGaussianBlur stdDeviation="1.5"/></filter>`,
+        overlay: `
+          <g>
+            <ellipse cx="18" cy="40" rx="3" ry="1.5" fill="${colors.dark}" opacity="0.4" filter="url(#${puid}_blur)">
+              <animate attributeName="opacity" values="0.4;0.1;0.4" dur="2.5s" repeatCount="indefinite"/>
+              <animate attributeName="cx" values="18;15;18" dur="2.5s" repeatCount="indefinite"/>
+            </ellipse>
+            <ellipse cx="82" cy="50" rx="2.5" ry="1.2" fill="${colors.dark}" opacity="0.35" filter="url(#${puid}_blur)">
+              <animate attributeName="opacity" values="0.35;0.05;0.35" dur="2s" repeatCount="indefinite"/>
+              <animate attributeName="cx" values="82;85;82" dur="2s" repeatCount="indefinite"/>
+            </ellipse>
+            <ellipse cx="22" cy="70" rx="2" ry="1" fill="${colors.dark}" opacity="0.3" filter="url(#${puid}_blur)">
+              <animate attributeName="opacity" values="0.3;0.05;0.3" dur="3s" repeatCount="indefinite"/>
+              <animate attributeName="cx" values="22;19;22" dur="3s" repeatCount="indefinite"/>
+            </ellipse>
+            <ellipse cx="78" cy="72" rx="2.5" ry="1.3" fill="${colors.dark}" opacity="0.25" filter="url(#${puid}_blur)">
+              <animate attributeName="opacity" values="0.25;0;0.25" dur="2.2s" repeatCount="indefinite"/>
+              <animate attributeName="cx" values="78;81;78" dur="2.2s" repeatCount="indefinite"/>
+            </ellipse>
+          </g>`,
+      };
+    case "poison":
+      // 3 poison bubbles rising
+      return {
+        defs: "",
+        overlay: `
+          <g>
+            <circle cx="20" cy="60" r="2" fill="${colors.accent}" opacity="0.4">
+              <animate attributeName="cy" values="60;48;60" dur="3s" repeatCount="indefinite"/>
+              <animate attributeName="r" values="2;1.2;2" dur="3s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.4;0.1;0.4" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="80" cy="56" r="1.5" fill="${colors.accent}" opacity="0.35">
+              <animate attributeName="cy" values="56;44;56" dur="2.5s" repeatCount="indefinite"/>
+              <animate attributeName="r" values="1.5;0.8;1.5" dur="2.5s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.35;0.05;0.35" dur="2.5s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="30" cy="74" r="1.8" fill="${colors.accent}" opacity="0.3">
+              <animate attributeName="cy" values="74;62;74" dur="3.5s" repeatCount="indefinite"/>
+              <animate attributeName="r" values="1.8;1;1.8" dur="3.5s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.3;0.05;0.3" dur="3.5s" repeatCount="indefinite"/>
+            </circle>
+          </g>`,
+      };
+    case "earth":
+      // 3 rock fragments
+      return {
+        defs: "",
+        overlay: `
+          <g>
+            <polygon points="16,44 19,40 22,43 20,46" fill="${colors.dark}" opacity="0.35">
+              <animate attributeName="opacity" values="0.35;0.15;0.35" dur="3s" repeatCount="indefinite"/>
+            </polygon>
+            <polygon points="80,50 83,47 85,51 82,53" fill="${colors.dark}" opacity="0.3">
+              <animate attributeName="opacity" values="0.3;0.1;0.3" dur="2.5s" repeatCount="indefinite"/>
+            </polygon>
+            <polygon points="24,76 27,73 29,77 26,79" fill="${colors.dark}" opacity="0.25">
+              <animate attributeName="opacity" values="0.25;0.08;0.25" dur="3.5s" repeatCount="indefinite"/>
+            </polygon>
+          </g>`,
+      };
+    case "wind":
+      // 4 wind swirl lines
+      return {
+        defs: "",
+        overlay: `
+          <g>
+            <path d="M14,38 Q10,36 8,40 Q6,44 10,42" fill="none" stroke="${colors.dark}" stroke-width="1" opacity="0.35" stroke-linecap="round">
+              <animate attributeName="opacity" values="0.35;0.1;0.35" dur="2s" repeatCount="indefinite"/>
+            </path>
+            <path d="M86,32 Q90,30 92,34 Q94,38 90,36" fill="none" stroke="${colors.dark}" stroke-width="0.8" opacity="0.3" stroke-linecap="round">
+              <animate attributeName="opacity" values="0.3;0.05;0.3" dur="2.5s" repeatCount="indefinite"/>
+            </path>
+            <path d="M12,62 Q8,60 6,64 Q4,68 8,66" fill="none" stroke="${colors.dark}" stroke-width="0.9" opacity="0.25" stroke-linecap="round">
+              <animate attributeName="opacity" values="0.25;0.05;0.25" dur="1.8s" repeatCount="indefinite"/>
+            </path>
+            <path d="M88,58 Q92,56 94,60 Q96,64 92,62" fill="none" stroke="${colors.dark}" stroke-width="1" opacity="0.3" stroke-linecap="round">
+              <animate attributeName="opacity" values="0.1;0.35;0.1" dur="2.2s" repeatCount="indefinite"/>
+            </path>
+          </g>`,
+      };
+    case "light":
+      // 4 golden dots that twinkle
+      return {
+        defs: "",
+        overlay: `
+          <g>
+            <circle cx="18" cy="32" r="1.5" fill="#FFD700" opacity="0.6">
+              <animate attributeName="opacity" values="0.6;0.1;0.6" dur="1.5s" repeatCount="indefinite"/>
+              <animate attributeName="r" values="1.5;2;1.5" dur="1.5s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="82" cy="28" r="1.2" fill="#FFEC8B" opacity="0.5">
+              <animate attributeName="opacity" values="0.5;0.05;0.5" dur="2s" repeatCount="indefinite"/>
+              <animate attributeName="r" values="1.2;1.8;1.2" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="22" cy="70" r="1" fill="#FFD700" opacity="0.4">
+              <animate attributeName="opacity" values="0.4;0;0.4" dur="1.8s" repeatCount="indefinite"/>
+              <animate attributeName="r" values="1;1.5;1" dur="1.8s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="78" cy="66" r="1.3" fill="#FFEC8B" opacity="0.45">
+              <animate attributeName="opacity" values="0.1;0.5;0.1" dur="2.2s" repeatCount="indefinite"/>
+              <animate attributeName="r" values="1.3;1.8;1.3" dur="2.2s" repeatCount="indefinite"/>
+            </circle>
+          </g>`,
+      };
+    case "celestial":
+      // 4 star dust with color-cycling
+      return {
+        defs: `
+          <filter id="${puid}_hue">
+            <feColorMatrix type="hueRotate" values="0">
+              <animate attributeName="values" values="0;360" dur="6s" repeatCount="indefinite"/>
+            </feColorMatrix>
+          </filter>`,
+        overlay: `
+          <g filter="url(#${puid}_hue)">
+            <polygon points="18,30 19,32.5 21.5,33 19,33.5 18,36 17,33.5 14.5,33 17,32.5" fill="#FF80B0" opacity="0.55">
+              <animate attributeName="opacity" values="0.55;0.15;0.55" dur="2s" repeatCount="indefinite"/>
+            </polygon>
+            <polygon points="82,26 83,28 85,28.5 83,29 82,31 81,29 79,28.5 81,28" fill="#FFC0D8" opacity="0.45">
+              <animate attributeName="opacity" values="0.2;0.55;0.2" dur="1.8s" repeatCount="indefinite"/>
+            </polygon>
+            <polygon points="22,72 23,74 25,74.5 23,75 22,77 21,75 19,74.5 21,74" fill="#FFE0F0" opacity="0.4">
+              <animate attributeName="opacity" values="0.4;0.1;0.4" dur="2.5s" repeatCount="indefinite"/>
+            </polygon>
+            <polygon points="78,68 79,70 81,70.5 79,71 78,73 77,71 75,70.5 77,70" fill="#FF80B0" opacity="0.35">
+              <animate attributeName="opacity" values="0.1;0.4;0.1" dur="2.2s" repeatCount="indefinite"/>
+            </polygon>
+          </g>`,
+      };
+    default:
+      return { defs: "", overlay: "" };
+  }
+}
+
+// ─── Species Features ───────────────────────────────────────────────────────
+
+function getSpeciesFeatures(speciesId: number, colors: SlimeColors): string {
+  if (speciesId === 0) return "";
+  const featureIndex = speciesHash(speciesId, 200) % 8;
+  const dotColor = darkenColor(colors.body, 20);
+
+  switch (featureIndex) {
+    case 0:
+      // Freckles (4 small dots on cheeks)
+      return `
+        <circle cx="28" cy="54" r="0.8" fill="${dotColor}" opacity="0.3"/>
+        <circle cx="31" cy="56" r="0.7" fill="${dotColor}" opacity="0.25"/>
+        <circle cx="26" cy="57" r="0.6" fill="${dotColor}" opacity="0.28"/>
+        <circle cx="72" cy="54" r="0.8" fill="${dotColor}" opacity="0.3"/>
+        <circle cx="69" cy="56" r="0.7" fill="${dotColor}" opacity="0.25"/>
+        <circle cx="74" cy="57" r="0.6" fill="${dotColor}" opacity="0.28"/>
+      `;
+    case 1:
+      // Beauty mark (single dot near eye)
+      return `<circle cx="28" cy="52" r="1.2" fill="${dotColor}" opacity="0.45"/>`;
+    case 2:
+      // Rosy nose tip (small pink circle)
+      return `<circle cx="50" cy="56" r="2" fill="#FFB0B0" opacity="0.4"/>`;
+    case 3:
+      // Sweat drop (teardrop shape)
+      return `
+        <path d="M74,38 Q75,34 76,38 Q75,42 74,38" fill="#88CCFF" opacity="0.5"/>
+        <circle cx="74.8" cy="36.5" r="0.6" fill="white" opacity="0.4"/>
+      `;
+    case 4:
+      // Eye sparkle (star near eye)
+      return `
+        <polygon points="30,42 30.8,44 33,44.5 31,45.5 31.5,47.5 30,46 28.5,47.5 29,45.5 27,44.5 29.2,44" fill="white" opacity="0.65">
+          <animate attributeName="opacity" values="0.65;0.25;0.65" dur="2s" repeatCount="indefinite"/>
+        </polygon>
+      `;
+    case 5:
+      // Tear mark (small line under eye)
+      return `
+        <path d="M33,56 Q32,60 33,62" fill="none" stroke="#88CCFF" stroke-width="0.8" opacity="0.35" stroke-linecap="round"/>
+      `;
+    case 6:
+      // Blush lines (3 diagonal lines on cheeks)
+      return `
+        <line x1="24" y1="54" x2="26" y2="58" stroke="${colors.blush}" stroke-width="0.7" opacity="0.35" stroke-linecap="round"/>
+        <line x1="26" y1="53" x2="28" y2="57" stroke="${colors.blush}" stroke-width="0.7" opacity="0.3" stroke-linecap="round"/>
+        <line x1="28" y1="54" x2="30" y2="58" stroke="${colors.blush}" stroke-width="0.7" opacity="0.25" stroke-linecap="round"/>
+        <line x1="72" y1="54" x2="74" y2="58" stroke="${colors.blush}" stroke-width="0.7" opacity="0.35" stroke-linecap="round"/>
+        <line x1="74" y1="53" x2="76" y2="57" stroke="${colors.blush}" stroke-width="0.7" opacity="0.3" stroke-linecap="round"/>
+        <line x1="76" y1="54" x2="78" y2="58" stroke="${colors.blush}" stroke-width="0.7" opacity="0.25" stroke-linecap="round"/>
+      `;
+    case 7:
+    default:
+      // None
+      return "";
+  }
+}
+
 // ─── Grade Effects ───────────────────────────────────────────────────────────
 
-function getGradeEffects(grade: string, colors: SlimeColors, uid: string): { defs: string; overlay: string } {
+function getGradeEffects(grade: string, colors: SlimeColors, uid: string, bodyPath: string = ""): { defs: string; overlay: string } {
   switch (grade) {
     case "uncommon":
       return {
         defs: `
           <filter id="aura_${uid}" x="-30%" y="-30%" width="160%" height="160%">
             <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
-            <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.33  0 0 0 0 0.94  0 0 0 0 0.77  0 0 0 0.3 0" result="glow"/>
+            <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.33  0 0 0 0 0.94  0 0 0 0 0.77  0 0 0 0.35 0" result="glow"/>
             <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
           </filter>`,
         overlay: `
-          <!-- Rotating sparkle -->
+          <!-- Rotating sparkle 1 -->
           <g transform="translate(76,32)">
-            <polygon points="0,-3 1,-0.5 3,0 1,0.5 0,3 -1,0.5 -3,0 -1,-0.5" fill="white" opacity="0.7">
-              <animate attributeName="opacity" values="0.7;0.25;0.7" dur="2.5s" repeatCount="indefinite"/>
+            <polygon points="0,-3 1,-0.5 3,0 1,0.5 0,3 -1,0.5 -3,0 -1,-0.5" fill="white" opacity="0.75">
+              <animate attributeName="opacity" values="0.75;0.3;0.75" dur="2.5s" repeatCount="indefinite"/>
               <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="6s" repeatCount="indefinite"/>
+            </polygon>
+          </g>
+          <!-- Rotating sparkle 2 -->
+          <g transform="translate(22,68)">
+            <polygon points="0,-2.5 0.8,-0.4 2.5,0 0.8,0.4 0,2.5 -0.8,0.4 -2.5,0 -0.8,-0.4" fill="white" opacity="0.6">
+              <animate attributeName="opacity" values="0.3;0.7;0.3" dur="2s" repeatCount="indefinite"/>
+              <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="5s" repeatCount="indefinite"/>
             </polygon>
           </g>`,
       };
     case "rare":
-      // 6 four-pointed stars with staggered animation
+      // 6 four-pointed stars with staggered animation + color shimmer
       return {
-        defs: "",
+        defs: `
+          <clipPath id="rareclip_${uid}"><path d="${bodyPath}"/></clipPath>
+          <linearGradient id="rareshimmer_${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="${colors.accent}" stop-opacity="0">
+              <animate attributeName="stop-opacity" values="0;0.12;0" dur="3s" repeatCount="indefinite"/>
+            </stop>
+            <stop offset="50%" stop-color="${colors.light}" stop-opacity="0.06">
+              <animate attributeName="stop-opacity" values="0.06;0.18;0.06" dur="3s" repeatCount="indefinite"/>
+            </stop>
+            <stop offset="100%" stop-color="${colors.accent}" stop-opacity="0">
+              <animate attributeName="stop-opacity" values="0;0.12;0" dur="3s" repeatCount="indefinite"/>
+            </stop>
+          </linearGradient>`,
         overlay: `
+          <!-- Rare shimmer overlay -->
+          <rect x="0" y="0" width="100" height="100" fill="url(#rareshimmer_${uid})" clip-path="url(#rareclip_${uid})"/>
           <g>
             <polygon points="24,28 25.2,31 28,32 25.2,33 24,36 22.8,33 20,32 22.8,31" fill="white" opacity="0.8">
               <animate attributeName="opacity" values="0.8;0.15;0.8" dur="2s" repeatCount="indefinite"/>
@@ -873,13 +1218,19 @@ function getGradeEffects(grade: string, colors: SlimeColors, uid: string): { def
             <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
           </filter>`,
         overlay: `
-          <!-- Rainbow halo ring -->
-          <ellipse cx="50" cy="18" rx="18" ry="4.5" fill="none" stroke="url(#rainbow_${uid})" stroke-width="1.5" opacity="0.45">
-            <animate attributeName="opacity" values="0.45;0.2;0.45" dur="3s" repeatCount="indefinite"/>
-          </ellipse>
-          <!-- 5-point crown -->
-          <polygon points="40,16 42,8 46,14 50,5 54,14 58,8 60,16" fill="${colors.accent}" opacity="0.6"/>
-          <polygon points="42,16 43,10 46,14 50,7 54,14 57,10 58,16" fill="white" opacity="0.2"/>
+          <!-- Rainbow halo ring (rotating) -->
+          <g transform-origin="50 18">
+            <ellipse cx="50" cy="18" rx="18" ry="4.5" fill="none" stroke="url(#rainbow_${uid})" stroke-width="1.5" opacity="0.45">
+              <animate attributeName="opacity" values="0.45;0.2;0.45" dur="3s" repeatCount="indefinite"/>
+            </ellipse>
+            <animateTransform attributeName="transform" type="rotate" from="0 50 18" to="360 50 18" dur="12s" repeatCount="indefinite"/>
+          </g>
+          <!-- 5-point crown (enhanced with jewels) -->
+          <polygon points="40,16 42,8 46,14 50,5 54,14 58,8 60,16" fill="${colors.accent}" opacity="0.7"/>
+          <polygon points="42,16 43,10 46,14 50,7 54,14 57,10 58,16" fill="white" opacity="0.25"/>
+          <circle cx="50" cy="8" r="1.5" fill="#FF6B6B" opacity="0.6"/>
+          <circle cx="44" cy="12" r="1" fill="#48DBFB" opacity="0.5"/>
+          <circle cx="56" cy="12" r="1" fill="#55EFC4" opacity="0.5"/>
           <!-- 4 sparkle stars -->
           <polygon points="24,30 25.5,33.5 29,34.5 25.5,35.5 24,39 22.5,35.5 19,34.5 22.5,33.5" fill="white" opacity="0.7">
             <animate attributeName="opacity" values="0.7;0.2;0.7" dur="2s" repeatCount="indefinite"/>
@@ -930,25 +1281,26 @@ function getGradeEffects(grade: string, colors: SlimeColors, uid: string): { def
           <circle cx="50" cy="6" r="2" fill="#FF6B6B" opacity="0.7"/>
           <circle cx="43" cy="8" r="1.5" fill="#48DBFB" opacity="0.6"/>
           <circle cx="57" cy="8" r="1.5" fill="#55EFC4" opacity="0.6"/>
-          <!-- 6 orbiting gold particles -->
-          <circle cx="18" cy="40" r="2" fill="#FFD700" opacity="0.6">
+          <!-- 6 orbiting gold particles (enlarged) -->
+          <circle cx="18" cy="40" r="2.5" fill="#FFD700" opacity="0.6">
             <animate attributeName="opacity" values="0.6;0.1;0.6" dur="1.5s" repeatCount="indefinite"/>
           </circle>
-          <circle cx="82" cy="35" r="2.2" fill="#FFEAA7" opacity="0.55">
+          <circle cx="82" cy="35" r="2.7" fill="#FFEAA7" opacity="0.55">
             <animate attributeName="opacity" values="0.2;0.7;0.2" dur="2s" repeatCount="indefinite"/>
           </circle>
-          <circle cx="74" cy="68" r="1.5" fill="#FFD700" opacity="0.45">
+          <circle cx="74" cy="68" r="2" fill="#FFD700" opacity="0.45">
             <animate attributeName="opacity" values="0.45;0;0.45" dur="1.8s" repeatCount="indefinite"/>
           </circle>
-          <circle cx="26" cy="72" r="1.3" fill="#FFEAA7" opacity="0.5">
+          <circle cx="26" cy="72" r="1.8" fill="#FFEAA7" opacity="0.5">
             <animate attributeName="opacity" values="0.5;0.1;0.5" dur="2.2s" repeatCount="indefinite"/>
           </circle>
-          <circle cx="14" cy="56" r="1.8" fill="#FFD700" opacity="0.4">
+          <circle cx="14" cy="56" r="2.3" fill="#FFD700" opacity="0.4">
             <animate attributeName="opacity" values="0.1;0.5;0.1" dur="1.6s" repeatCount="indefinite"/>
           </circle>
-          <circle cx="86" cy="55" r="1.5" fill="#FFEAA7" opacity="0.35">
+          <circle cx="86" cy="55" r="2" fill="#FFEAA7" opacity="0.35">
             <animate attributeName="opacity" values="0.35;0;0.35" dur="2.5s" repeatCount="indefinite"/>
-          </circle>`,
+          </circle>
+          <!-- Body micro-pulse -->`,
       };
     case "mythic":
       // Rainbow hue-rotate + feather wings (3 segments) + cosmic particle ring + horns
@@ -965,29 +1317,42 @@ function getGradeEffects(grade: string, colors: SlimeColors, uid: string): { def
           <linearGradient id="wing_${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stop-color="${colors.light}" stop-opacity="0.5"/>
             <stop offset="100%" stop-color="${colors.accent}" stop-opacity="0.2"/>
-          </linearGradient>`,
+          </linearGradient>
+          <linearGradient id="mythicOutline_${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FF6B6B"/>
+            <stop offset="20%" stop-color="#FECA57"/>
+            <stop offset="40%" stop-color="#55EFC4"/>
+            <stop offset="60%" stop-color="#48DBFB"/>
+            <stop offset="80%" stop-color="#A29BFE"/>
+            <stop offset="100%" stop-color="#FF6B6B"/>
+          </linearGradient>
+          <filter id="mythicOutlineHue_${uid}">
+            <feColorMatrix type="hueRotate" values="0">
+              <animate attributeName="values" values="0;360" dur="5s" repeatCount="indefinite"/>
+            </feColorMatrix>
+          </filter>`,
         overlay: `
           <!-- Feather wings (3 segments each) -->
-          <g opacity="0.5">
+          <g opacity="0.65">
             <path d="M18,48 Q6,38 10,22" fill="none" stroke="url(#wing_${uid})" stroke-width="3" stroke-linecap="round">
-              <animate attributeName="opacity" values="0.5;0.25;0.5" dur="2s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.65;0.3;0.65" dur="2s" repeatCount="indefinite"/>
             </path>
-            <path d="M16,44 Q4,32 6,18" fill="none" stroke="${colors.accent}" stroke-width="2.2" opacity="0.35" stroke-linecap="round">
-              <animate attributeName="opacity" values="0.35;0.15;0.35" dur="2.2s" repeatCount="indefinite"/>
+            <path d="M16,44 Q4,32 6,18" fill="none" stroke="${colors.accent}" stroke-width="2.2" opacity="0.45" stroke-linecap="round">
+              <animate attributeName="opacity" values="0.45;0.2;0.45" dur="2.2s" repeatCount="indefinite"/>
             </path>
-            <path d="M20,52 Q10,44 14,30" fill="none" stroke="${colors.light}" stroke-width="2" opacity="0.3" stroke-linecap="round">
-              <animate attributeName="opacity" values="0.3;0.12;0.3" dur="1.8s" repeatCount="indefinite"/>
+            <path d="M20,52 Q10,44 14,30" fill="none" stroke="${colors.light}" stroke-width="2" opacity="0.4" stroke-linecap="round">
+              <animate attributeName="opacity" values="0.4;0.18;0.4" dur="1.8s" repeatCount="indefinite"/>
             </path>
           </g>
-          <g opacity="0.5">
+          <g opacity="0.65">
             <path d="M82,48 Q94,38 90,22" fill="none" stroke="url(#wing_${uid})" stroke-width="3" stroke-linecap="round">
-              <animate attributeName="opacity" values="0.5;0.25;0.5" dur="2s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.65;0.3;0.65" dur="2s" repeatCount="indefinite"/>
             </path>
-            <path d="M84,44 Q96,32 94,18" fill="none" stroke="${colors.accent}" stroke-width="2.2" opacity="0.35" stroke-linecap="round">
-              <animate attributeName="opacity" values="0.35;0.15;0.35" dur="2.2s" repeatCount="indefinite"/>
+            <path d="M84,44 Q96,32 94,18" fill="none" stroke="${colors.accent}" stroke-width="2.2" opacity="0.45" stroke-linecap="round">
+              <animate attributeName="opacity" values="0.45;0.2;0.45" dur="2.2s" repeatCount="indefinite"/>
             </path>
-            <path d="M80,52 Q90,44 86,30" fill="none" stroke="${colors.light}" stroke-width="2" opacity="0.3" stroke-linecap="round">
-              <animate attributeName="opacity" values="0.3;0.12;0.3" dur="1.8s" repeatCount="indefinite"/>
+            <path d="M80,52 Q90,44 86,30" fill="none" stroke="${colors.light}" stroke-width="2" opacity="0.4" stroke-linecap="round">
+              <animate attributeName="opacity" values="0.4;0.18;0.4" dur="1.8s" repeatCount="indefinite"/>
             </path>
           </g>
           <!-- Horns -->
@@ -1019,10 +1384,20 @@ function getGradeEffects(grade: string, colors: SlimeColors, uid: string): { def
           </circle>
           <circle cx="90" cy="58" r="1.2" fill="#FF6B6B" opacity="0.35">
             <animate attributeName="opacity" values="0.35;0;0.35" dur="1.9s" repeatCount="indefinite"/>
-          </circle>`,
+          </circle>
+          <!-- Rainbow outline with hue-rotate animation -->
+          <path d="${bodyPath}" fill="none" stroke="url(#mythicOutline_${uid})" stroke-width="2" opacity="0.4" filter="url(#mythicOutlineHue_${uid})"/>`,
       };
-    default: // common
-      return { defs: "", overlay: "" };
+    default: // common — subtle single sparkle
+      return {
+        defs: "",
+        overlay: `
+          <g transform="translate(78,28)">
+            <polygon points="0,-2.5 0.8,-0.4 2.5,0 0.8,0.4 0,2.5 -0.8,0.4 -2.5,0 -0.8,-0.4" fill="white" opacity="0.5">
+              <animate attributeName="opacity" values="0.5;0.15;0.5" dur="3.5s" repeatCount="indefinite"/>
+            </polygon>
+          </g>`,
+      };
   }
 }
 
@@ -1060,7 +1435,7 @@ export function generateSlimeSvg(
   const uid = `${element}_${grade}_${speciesId}`;
   const bodyPath = getBodyPath(variant);
   const innerPath = getInnerPath(variant);
-  const gradeEffects = getGradeEffects(grade, colors, uid);
+  const gradeEffects = getGradeEffects(grade, colors, uid, bodyPath);
   const bodyFilter = getGradeFilter(grade, uid);
 
   // Pattern + appendage + marking SVG
@@ -1081,8 +1456,17 @@ export function generateSlimeSvg(
   const deeper = darkenColor(colors.dark, 10);
 
   const legendaryShimmer = grade === "legendary"
-    ? `<path d="${bodyPath}" fill="url(#shimmer_${uid})" />`
+    ? `<g transform-origin="50 55">
+        <path d="${bodyPath}" fill="url(#shimmer_${uid})" />
+        <animateTransform attributeName="transform" type="scale" values="1.0;1.02;1.0" dur="2s" repeatCount="indefinite"/>
+      </g>`
     : "";
+
+  // Element particles
+  const elementParticles = getElementParticles(element, colors, uid);
+
+  // Species features
+  const speciesFeaturesSvg = getSpeciesFeatures(speciesId, colors);
 
   // Accessory layers
   let accDefs = "";
@@ -1130,13 +1514,15 @@ export function generateSlimeSvg(
     </filter>
     ${gradeEffects.defs}
     ${patternResult.defs}
+    ${elementParticles.defs}
     ${hiddenDefs}
     ${accDefs}
   </defs>
 
-  <!-- 1. Ground shadow -->
+  <!-- 1. Ground shadow (with bounce sync) -->
   <ellipse cx="50" cy="91" rx="28" ry="5" fill="rgba(0,0,0,0.13)">
     <animate attributeName="rx" values="28;30;28" dur="3s" repeatCount="indefinite"/>
+    <animate attributeName="cy" values="91;92;91" dur="2.5s" repeatCount="indefinite"/>
   </ellipse>
 
   <!-- 2. Appendages (behind body) -->
@@ -1145,8 +1531,11 @@ export function generateSlimeSvg(
   <!-- 3. White outline glow -->
   <path d="${bodyPath}" fill="white" filter="url(#outline_${uid})"/>
 
-  <!-- 4. Body (4-stop radial gradient) -->
-  <path d="${bodyPath}" fill="url(#bg_${uid})" filter="url(#shadow_${uid})" ${bodyFilter}/>
+  <!-- 4. Body (4-stop radial gradient) with breathing -->
+  <g transform-origin="50 55">
+    <path d="${bodyPath}" fill="url(#bg_${uid})" filter="url(#shadow_${uid})" ${bodyFilter}/>
+    <animateTransform attributeName="transform" type="scale" values="1;1.01;1;0.99;1" dur="3s" repeatCount="indefinite"/>
+  </g>
 
   <!-- 5. Pattern overlay -->
   ${patternResult.overlay}
@@ -1189,9 +1578,21 @@ export function generateSlimeSvg(
   <!-- 14. Element decoration -->
   ${getElementDecor(element, colors)}
 
+  <!-- 14b. Element particles -->
+  ${elementParticles.overlay}
+
   <!-- 15. Face (positioned per body shape) -->
   <g transform="translate(${eyeOffX * 0.5},${eyeOffY}) scale(${fScale})">
     ${getEyes(personality, colors.iris)}
+  </g>
+  <!-- 15b. Eye blink animation -->
+  <g transform="translate(${eyeOffX * 0.5},${eyeOffY}) scale(${fScale})">
+    <rect x="27" y="42" width="22" height="14" fill="${colors.body}" opacity="0" rx="4">
+      <animate attributeName="opacity" values="0;0;0;0.95;0;0;0" dur="4.5s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="53" y="42" width="22" height="14" fill="${colors.body}" opacity="0" rx="4">
+      <animate attributeName="opacity" values="0;0;0;0.95;0;0;0" dur="4.5s" repeatCount="indefinite"/>
+    </rect>
   </g>
   <g transform="translate(${eyeOffX * 0.5},${mouthOffY}) scale(${fScale})">
     ${getMouth(personality)}
@@ -1199,6 +1600,9 @@ export function generateSlimeSvg(
 
   <!-- 16. Blush cheeks -->
   ${getBlush(personality, colors.blush, uid)}
+
+  <!-- 16b. Species features -->
+  ${speciesFeaturesSvg}
 
   <!-- 17. Grade overlay effects -->
   ${gradeEffects.overlay}

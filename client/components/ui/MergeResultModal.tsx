@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useGameStore } from "@/lib/store/gameStore";
 import { generateSlimeSvg } from "@/lib/slimeSvg";
 import { gradeColors, gradeNames, gradeRank } from "@/lib/constants";
-import { toastReward } from "./Toast";
+import { toastReward, toastSuccess } from "./Toast";
 
 interface ConfettiPiece {
   id: number;
@@ -73,6 +73,9 @@ export default function MergeResultModal() {
       const { species } = showMergeResult.result;
       if (gradeRank[species.grade] >= 2) {
         toastReward(`${gradeNames[species.grade]} 등급 합성 성공!`, "✨");
+      }
+      if (showMergeResult.new_discovery) {
+        toastSuccess(`새로운 레시피 발견! ${species.name}`, "📖");
       }
     }
   }, [phase, showMergeResult]);

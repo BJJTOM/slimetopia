@@ -23,6 +23,7 @@ export default function CollectionPage({ onClose }: { onClose: () => void }) {
   const {
     slimeSets, fetchSlimeSets, collectionEntries, fetchCollectionEntries,
     species, slimes, equippedAccessories,
+    collectionMilestones, fetchCollectionMilestones, claimCollectionMilestone,
   } = useGameStore();
 
   const [selectedSet, setSelectedSet] = useState<SlimeSetProgress | null>(null);
@@ -30,12 +31,22 @@ export default function CollectionPage({ onClose }: { onClose: () => void }) {
   const [donating, setDonating] = useState(false);
   const [showDonateEffect, setShowDonateEffect] = useState<number | null>(null);
 
+  const [claimingMilestone, setClaimingMilestone] = useState<number | null>(null);
+
   useEffect(() => {
     if (token) {
       if (slimeSets.length === 0) fetchSlimeSets(token);
       fetchCollectionEntries(token);
+      fetchCollectionMilestones(token);
     }
-  }, [token, slimeSets.length, fetchSlimeSets, fetchCollectionEntries]);
+  }, [token, slimeSets.length, fetchSlimeSets, fetchCollectionEntries, fetchCollectionMilestones]);
+
+  const handleClaimMilestone = async (milestone: number) => {
+    if (!token || claimingMilestone) return;
+    setClaimingMilestone(milestone);
+    await claimCollectionMilestone(token, milestone);
+    setClaimingMilestone(null);
+  };
 
   // Map: speciesId -> submitted?
   const submittedMap = useMemo(() => {
@@ -660,6 +671,128 @@ export default function CollectionPage({ onClose }: { onClose: () => void }) {
             </div>
           </div>
         </div>
+
+        {/* Milestone Rewards */}
+        {collectionMilestones.length > 0 && (
+          <div className="rounded-xl p-4 mb-5 overflow-hidden"
+            style={{
+              background: "linear-gradient(160deg, #2C1F15, #1E140D)",
+              border: "1.5px solid rgba(139,105,20,0.25)",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+            }}>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-5 h-5 rounded-md flex items-center justify-center"
+                style={{ background: "linear-gradient(135deg, #C9A84C, #8B6914)" }}>
+                <span className="text-[10px]" style={{ color: "#3D2017" }}>&#9733;</span>
+              </div>
+              <span className="text-[10px] tracking-[0.15em] font-bold" style={{ color: "#C9A84C", fontFamily: "Georgia, serif" }}>
+                MILESTONES
+              </span>
+            </div>
+
+            {/* Milestone progress bar */}
+            {(() => {
+              const nextMilestone = collectionMilestones.find((m) => !m.reached);
+              const prevCount = collectionMilestones.filter((m) => m.reached).length > 0
+                ? collectionMilestones.filter((m) => m.reached).slice(-1)[0]?.count || 0
+                : 0;
+              const nextCount = nextMilestone?.count || collectionMilestones[collectionMilestones.length - 1].count;
+              const currentCount = collectionEntries.length;
+              const pct = nextMilestone
+                ? Math.min(100, Math.round(((currentCount - prevCount) / (nextCount - prevCount)) * 100))
+                : 100;
+              return (
+                <div className="mb-3">
+                  <div className="flex justify-between mb-1">
+                    <span className="text-[9px]" style={{ color: "rgba(201,168,76,0.6)" }}>
+                      {nextMilestone ? `Next: ${nextCount}` : "All milestones reached!"}
+                    </span>
+                    <span className="text-[9px] font-bold" style={{ color: "#C9A84C" }}>
+                      {currentCount}/{nextCount}
+                    </span>
+                  </div>
+                  <div className="h-2 rounded-full overflow-hidden" style={{
+                    background: "rgba(0,0,0,0.3)",
+                    border: "1px solid rgba(139,105,20,0.2)",
+                  }}>
+                    <div className="h-full rounded-full transition-all duration-700" style={{
+                      width: `${pct}%`,
+                      background: "linear-gradient(90deg, #8B6914, #D4AF37)",
+                    }} />
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Milestone items */}
+            <div className="space-y-1.5">
+              {collectionMilestones.map((m) => (
+                <div key={m.count} className="flex items-center gap-2 rounded-lg px-3 py-2"
+                  style={{
+                    background: m.claimed
+                      ? "rgba(46,204,113,0.08)"
+                      : m.reached
+                        ? "rgba(212,175,55,0.1)"
+                        : "rgba(0,0,0,0.15)",
+                    border: m.claimed
+                      ? "1px solid rgba(46,204,113,0.2)"
+                      : m.reached
+                        ? "1px solid rgba(212,175,55,0.25)"
+                        : "1px solid rgba(139,105,20,0.1)",
+                  }}>
+                  {/* Count badge */}
+                  <div className="w-10 h-8 rounded-md flex items-center justify-center shrink-0"
+                    style={{
+                      background: m.reached
+                        ? "linear-gradient(135deg, rgba(201,168,76,0.2), rgba(139,105,20,0.15))"
+                        : "rgba(0,0,0,0.2)",
+                      border: `1px solid ${m.reached ? "rgba(201,168,76,0.3)" : "rgba(139,105,20,0.1)"}`,
+                    }}>
+                    <span className="text-[10px] font-black" style={{
+                      color: m.reached ? "#D4AF37" : "rgba(139,105,20,0.3)",
+                    }}>{m.count}</span>
+                  </div>
+
+                  {/* Rewards info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-bold" style={{ color: m.reached ? "#F5E6C8" : "rgba(245,230,200,0.3)" }}>
+                        {m.gold.toLocaleString()} Gold
+                      </span>
+                      <span className="text-[9px] font-bold" style={{ color: m.reached ? "#74B9FF" : "rgba(116,185,255,0.3)" }}>
+                        {m.gems} Gems
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Action */}
+                  {m.claimed ? (
+                    <span className="text-[9px] font-bold px-2 py-1 rounded" style={{ color: "#2ecc71" }}>
+                      &#10003;
+                    </span>
+                  ) : m.reached ? (
+                    <button
+                      onClick={() => handleClaimMilestone(m.count)}
+                      disabled={claimingMilestone !== null}
+                      className="text-[9px] font-bold px-3 py-1.5 rounded-md active:scale-95 transition-transform"
+                      style={{
+                        background: "linear-gradient(135deg, #D4AF37, #8B6914)",
+                        color: "#3D2017",
+                        boxShadow: "0 2px 8px rgba(212,175,55,0.3)",
+                        opacity: claimingMilestone === m.count ? 0.6 : 1,
+                      }}>
+                      {claimingMilestone === m.count ? "..." : "Claim"}
+                    </button>
+                  ) : (
+                    <span className="text-[9px]" style={{ color: "rgba(139,105,20,0.25)" }}>
+                      &#128274;
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Chapter label */}
         <div className="flex items-center gap-2 mb-3 px-1">
