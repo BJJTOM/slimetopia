@@ -137,17 +137,17 @@ export default function PlayPage() {
   return (
     <div className="game-body">
       <div className="game-frame">
-        {/* Home background overlay */}
-        {activePanel === "home" && homeBgId !== "default" && (
-          <div
-            className={`absolute inset-0 z-0 pointer-events-none ${"animated" in homeBg ? (homeBg.animated || "") : ""}`}
-            style={{ background: homeBg.css, opacity: ("opacity" in homeBg ? homeBg.opacity : undefined) ?? 0.55 }}
-          />
-        )}
         {/* Canvas: always mounted, hidden when not on home tab */}
         <div style={{ display: activePanel === "home" ? "block" : "none" }} className="w-full h-full relative z-[1]">
           <GameCanvas />
         </div>
+        {/* Home background overlay — above canvas (z-[2]), below UI (z-10+) */}
+        {activePanel === "home" && homeBgId !== "default" && (
+          <div
+            className={`absolute inset-0 z-[2] pointer-events-none ${"animated" in homeBg ? (homeBg.animated || "") : ""}`}
+            style={{ background: homeBg.css, opacity: ("opacity" in homeBg ? homeBg.opacity : undefined) ?? 0.55 }}
+          />
+        )}
 
         {/* TopBar: only show on home tab, hide for fullscreen overlays */}
         {activePanel === "home" && !hasFullOverlay && <TopBar />}
