@@ -4,6 +4,19 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// Grade -> instant rewards for collection submission
+var collectionRewards = map[string]struct {
+	Gold int64
+	Gems int
+}{
+	"common":    {100, 0},
+	"uncommon":  {200, 1},
+	"rare":      {500, 3},
+	"epic":      {1000, 5},
+	"legendary": {2500, 10},
+	"mythic":    {5000, 25},
+}
+
 // Grade -> minimum level required for collection submission
 var collectionLevelRequirements = map[string]int{
 	"common":    1,
@@ -69,6 +82,14 @@ func (h *Handler) SubmitToCollection(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "already_submitted"})
 	}
 
+	// 4b. Check if this is the first entry for this species (for 2x reward)
+	var speciesEntryCount int
+	pool.QueryRow(ctx,
+		`SELECT COUNT(*) FROM collection_entries WHERE user_id = $1 AND species_id = $2`,
+		userID, slime.SpeciesID,
+	).Scan(&speciesEntryCount)
+	isFirstOfSpecies := speciesEntryCount == 0
+
 	// 5. Check if slime is on exploration
 	onExp, err := h.explorationRepo.IsSlimeOnExploration(ctx, userID, []string{body.SlimeID})
 	if err != nil {
@@ -100,15 +121,30 @@ func (h *Handler) SubmitToCollection(c *fiber.Ctx) error {
 		"slime_id": body.SlimeID, "species_id": slime.SpeciesID, "grade": species.Grade, "personality": slime.Personality, "level": slime.Level,
 	})
 
-	// 9. Return updated collection count
+	// 9. Grant instant rewards
+	reward := collectionRewards[species.Grade]
+	goldReward := reward.Gold
+	gemReward := reward.Gems
+	if isFirstOfSpecies {
+		goldReward *= 2
+		gemReward *= 2
+	}
+	if goldReward > 0 || gemReward > 0 {
+		h.userRepo.AddCurrency(ctx, userID, goldReward, gemReward, 0)
+	}
+
+	// 10. Return updated collection count + rewards
 	var count int
 	pool.QueryRow(ctx, `SELECT COUNT(*) FROM collection_entries WHERE user_id = $1`, userID).Scan(&count)
 
 	return c.JSON(fiber.Map{
-		"success":          true,
-		"collection_count": count,
-		"species_id":       slime.SpeciesID,
-		"personality":      slime.Personality,
+		"success":             true,
+		"collection_count":    count,
+		"species_id":          slime.SpeciesID,
+		"personality":         slime.Personality,
+		"gold_reward":         goldReward,
+		"gem_reward":          gemReward,
+		"is_first_of_species": isFirstOfSpecies,
 	})
 }
 
